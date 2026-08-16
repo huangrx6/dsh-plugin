@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react'
-import { IconApiOutline14, IconChevronDownOutline14, IconPlayOutline16, IconPlusOutline16, IconRefreshOutline16, IconTrashOutline16, IconWarningOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
-import { JsonTree } from '@deepseek-ai/dsh-client-ui-primitives'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { IconApiOutline14, IconChevronDownOutline14, IconLoadingOutline16, IconPlayOutline16, IconPlusOutline16, IconRefreshOutline16, IconTrashOutline16, IconWarningOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { McpListResponse, McpServerView, McpTestResponse } from '../contracts.ts'
 import type { McpManagerApi } from './api.ts'
 import type { McpManagerLocaleKey } from './locales.ts'
 import { McpEditor, TestResult } from './McpEditor.tsx'
+import { cachedToolsToRows, ToolList } from './ToolList.tsx'
+import { clearCachedTest, loadCachedTest, saveCachedTest, type CachedTest } from './tool-cache.ts'
 
 export interface McpManagerTabProps {
   readonly t: (key: McpManagerLocaleKey) => string
@@ -17,7 +18,7 @@ interface ListState {
   readonly error?: string
 }
 
-/** Plugins-settings tab: MCP server cards with live status, tools and actions. */
+/** Plugins-settings tab: MCP server cards with cached probes, auto-testing and actions. */
 export function McpManagerTab({ t, api }: McpManagerTabProps) {
   const [state, setState] = useState<ListState>({ status: 'loading' })
   const [request, setRequest] = useState(0)
@@ -26,6 +27,9 @@ export function McpManagerTab({ t, api }: McpManagerTabProps) {
   const [busy, setBusy] = useState<string | undefined>(undefined)
   const [actionError, setActionError] = useState<string | undefined>(undefined)
   const [cardTest, setCardTest] = useState<{ entryId: string; result: McpTestResponse } | undefined>(undefined)
+  const [cache, setCache] = useState<Record<string, CachedTest>>({})
+  const [autoTesting, setAutoTesting] = useState<Record<string, true>>({})
+  const probingRef = useRef<string | undefined>(undefined)
 
   const load = useCallback(() => {
     Promise.resolve()
@@ -35,6 +39,71 @@ export function McpManagerTab({ t, api }: McpManagerTabProps) {
   }, [api])
 
   useEffect(() => { load() }, [load, request])
+
+  /** Adopt whatever is already cached for the freshly listed servers. */
+  useEffect(() => {
+    if (state.status !== 'ready' || state.data === undefined) return
+    const listed = state.data.servers
+    setCache(current => {
+      const next = { ...current }
+      for (const server of listed) {
+        if (next[server.serverName] === undefined) {
+          const cached = loadCachedTest(window.localStorage, server.serverName)
+          if (cached !== undefined) next[server.serverName] = cached
+        }
+      }
+      return next
+    })
+  }, [state])
+
+  const runProbe = useCallback(async (serverName: string, config: NonNullable<McpServerView['config']>): Promise<CachedTest | undefined> => {
+    try {
+      const result = await api.test(config)
+      const saved = saveCachedTest(window.localStorage, serverName, result)
+      if (saved !== undefined) setCache(current => ({ ...current, [serverName]: saved }))
+      return saved
+    } catch (error) {
+      // a transport-level failure still caches, so we don't re-probe forever
+      const fallback: CachedTest = { ok: false, durationMs: 0, error: error instanceof Error ? error.message : String(error), tools: [], testedAt: Date.now() }
+      saveCachedTest(window.localStorage, serverName, { ok: false, durationMs: 0, error: fallback.error })
+      setCache(current => ({ ...current, [serverName]: fallback }))
+      return fallback
+    }
+  }, [api])
+
+  /**
+   * Auto-probe queue: enabled servers the user has never tested get one
+   * background probe (sequentially — npx spawns are not free), so tool lists
+   * appear without anyone clicking 测试连接. localStorage is checked directly
+   * so a cached result from a previous session suppresses the probe even
+   * before the adoption effect has merged it into state (avoids a re-probe
+   * race on every page load).
+   */
+  const servers = state.status === 'ready' && state.data !== undefined ? state.data.servers : []
+  useEffect(() => {
+    const candidate = servers.find(server =>
+      !server.disabled && server.config !== undefined
+      && cache[server.serverName] === undefined
+      && autoTesting[server.serverName] === undefined)
+    if (candidate === undefined || candidate.config === undefined) return
+    const persisted = loadCachedTest(window.localStorage, candidate.serverName)
+    if (persisted !== undefined) {
+      setCache(current => current[candidate.serverName] === undefined ? { ...current, [candidate.serverName]: persisted } : current)
+      return
+    }
+    if (probingRef.current === candidate.serverName) return
+    probingRef.current = candidate.serverName
+    setAutoTesting(current => ({ ...current, [candidate.serverName]: true }))
+    void runProbe(candidate.serverName, candidate.config)
+      .finally(() => {
+        probingRef.current = undefined
+        setAutoTesting(current => {
+          const next = { ...current }
+          delete next[candidate.serverName]
+          return next
+        })
+      })
+  }, [servers, cache, autoTesting, runProbe])
 
   /** Writes go through HMR; poll a few times so status settles visibly. */
   const settleRefresh = useCallback(() => {
@@ -72,8 +141,6 @@ export function McpManagerTab({ t, api }: McpManagerTabProps) {
       />
     )
   }
-
-  const servers = state.status === 'ready' && state.data !== undefined ? state.data.servers : []
 
   return (
     <div className="dshmcp-tab" aria-busy={state.status === 'loading'}>
@@ -127,10 +194,26 @@ export function McpManagerTab({ t, api }: McpManagerTabProps) {
                   server={server}
                   open={expanded === server.entryId}
                   busy={busy}
+                  cache={cache[server.serverName]}
+                  autoTesting={autoTesting[server.serverName] === true}
                   cardTest={cardTest !== undefined && cardTest.entryId === server.entryId ? cardTest.result : undefined}
                   onToggleOpen={() => { setExpanded(current => current === server.entryId ? undefined : server.entryId) }}
                   onEdit={() => { setEditing(server) }}
-                  onToggle={() => { void withGuard(server.entryId, async () => { await api.toggle(server.entryId, !server.disabled) }) }}
+                  onToggle={() => {
+                    void withGuard(server.entryId, async () => {
+                      const enabling = server.disabled
+                      await api.toggle(server.entryId, !server.disabled)
+                      // re-verify freshly enabled servers instead of showing stale data
+                      if (enabling) {
+                        clearCachedTest(window.localStorage, server.serverName)
+                        setCache(current => {
+                          const next = { ...current }
+                          delete next[server.serverName]
+                          return next
+                        })
+                      }
+                    })
+                  }}
                   onDelete={() => {
                     if (!window.confirm(t('deleteConfirm'))) return
                     void withGuard(server.entryId, async () => { await api.deleteServer(server.entryId) })
@@ -141,6 +224,8 @@ export function McpManagerTab({ t, api }: McpManagerTabProps) {
                     try {
                       const result = await api.test(server.config)
                       setCardTest({ entryId: server.entryId, result })
+                      const saved = saveCachedTest(window.localStorage, server.serverName, result)
+                      if (saved !== undefined) setCache(current => ({ ...current, [server.serverName]: saved }))
                     } catch (error) {
                       setCardTest({ entryId: server.entryId, result: { ok: false, durationMs: 0, error: error instanceof Error ? error.message : String(error) } })
                     } finally {
@@ -157,11 +242,13 @@ export function McpManagerTab({ t, api }: McpManagerTabProps) {
   )
 }
 
-function ServerCard({ t, server, open, busy, cardTest, onToggleOpen, onEdit, onToggle, onDelete, onTest }: {
+function ServerCard({ t, server, open, busy, cache, autoTesting, cardTest, onToggleOpen, onEdit, onToggle, onDelete, onTest }: {
   readonly t: (key: McpManagerLocaleKey) => string
   readonly server: McpServerView
   readonly open: boolean
   readonly busy: string | undefined
+  readonly cache: CachedTest | undefined
+  readonly autoTesting: boolean
   readonly cardTest: McpTestResponse | undefined
   readonly onToggleOpen: () => void
   readonly onEdit: () => void
@@ -169,18 +256,31 @@ function ServerCard({ t, server, open, busy, cardTest, onToggleOpen, onEdit, onT
   readonly onDelete: () => void
   readonly onTest: () => Promise<void>
 }) {
-  const [openTool, setOpenTool] = useState<string | undefined>(undefined)
   const phase = server.fiberPhase
   const summary = server.config === undefined
     ? '—'
     : server.config.transport === 'stdio'
       ? `${server.config.command ?? ''} ${(server.config.args ?? []).join(' ')}`.trim()
       : server.config.url ?? ''
-  const toolsLabel = server.tools.length === 1 ? t('toolsCountOne') : t('toolsCountMany').replace('{n}', String(server.tools.length))
+  const liveCount = server.tools.length
+  const cachedCount = cache?.toolCount ?? cache?.tools.length ?? 0
+  const shownCount = liveCount > 0 ? liveCount : cachedCount
+  const toolsLabel = shownCount === 1 ? t('toolsCountOne') : t('toolsCountMany').replace('{n}', String(shownCount))
+  const testedAtLabel = cache !== undefined ? formatTime(cache.testedAt) : undefined
   const unhealthy = phase === 'failed'
+  const toolRows = liveCount > 0
+    ? server.tools.map(tool => ({ name: tool.publicName, description: tool.description, schema: tool.parameters as Record<string, unknown> | undefined }))
+    : cache !== undefined && cache.ok ? cachedToolsToRows(cache.tools) : []
   return (
     <li className="dshmcp-card" data-server={server.serverName} data-open={open ? 'true' : undefined}>
-      <button type="button" className="dshmcp-cardContent" aria-expanded={open} onClick={onToggleOpen}>
+      <div
+        className="dshmcp-cardContent"
+        role="button"
+        tabIndex={0}
+        aria-expanded={open}
+        onClick={onToggleOpen}
+        onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onToggleOpen() } }}
+      >
         <span className={`dshmcp-tile ${server.disabled ? 'dshmcp-tileMuted' : unhealthy ? 'dshmcp-tileError' : ''}`}>
           <IconApiOutline14 size={17} aria-hidden="true" />
         </span>
@@ -189,12 +289,26 @@ function ServerCard({ t, server, open, busy, cardTest, onToggleOpen, onEdit, onT
           <span className="dshmcp-summary">{server.config?.transport === 'streamable-http' ? `${t('transportHttp')} · ${summary}` : `${t('transportStdio')} · ${summary}`}</span>
         </span>
         <span className="dshmcp-cardTrailing">
-          {!server.disabled && server.tools.length > 0 ? <span className="dshmcp-tag dshmcp-tagCode">{toolsLabel}</span> : null}
+          {autoTesting
+            ? <IconLoadingOutline16 size={14} className="dshmcp-spin" aria-hidden="true" />
+            : shownCount > 0
+              ? <span className="dshmcp-tag dshmcp-tagCode" title={testedAtLabel !== undefined ? t('lastTestAt').replace('{time}', testedAtLabel) : undefined}>{toolsLabel}</span>
+              : null}
           {!server.disabled ? <span className="dshmcp-statusDot" data-phase={phase ?? 'unobserved'} role="img" aria-label={phaseLabel(t, phase)} title={phaseLabel(t, phase)} /> : null}
-          <span className={`dshmcp-tag ${server.disabled ? 'dshmcp-tagWarn' : 'dshmcp-tagOk'}`}>{server.disabled ? t('disabledTag') : t('enabledTag')}</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={!server.disabled}
+            aria-label={server.disabled ? t('enableButton') : t('disableButton')}
+            className={`dshmcp-switch${server.disabled ? '' : ' is-on'}`}
+            disabled={busy !== undefined}
+            onClick={event => { event.stopPropagation(); onToggle() }}
+          >
+            <span className="dshmcp-switchKnob" />
+          </button>
           <IconChevronDownOutline14 size={12} aria-hidden="true" />
         </span>
-      </button>
+      </div>
       {open
         ? (
           <div className="dshmcp-cardDetails">
@@ -212,7 +326,6 @@ function ServerCard({ t, server, open, busy, cardTest, onToggleOpen, onEdit, onT
             </dl>
             <div className="dshmcp-actions">
               <button type="button" className="dshmcp-button" disabled={server.config === undefined || busy !== undefined} onClick={onEdit}>{t('editButton')}</button>
-              <button type="button" className="dshmcp-button" disabled={busy !== undefined} onClick={onToggle}>{server.disabled ? t('enableButton') : t('disableButton')}</button>
               <button type="button" className="dshmcp-button" disabled={server.config === undefined || busy !== undefined} onClick={() => { void onTest() }}>
                 <IconPlayOutline16 size={14} aria-hidden="true" />
                 {busy === `${server.entryId}:test` ? t('testRunning') : t('testButton')}
@@ -225,35 +338,30 @@ function ServerCard({ t, server, open, busy, cardTest, onToggleOpen, onEdit, onT
             </div>
             {cardTest !== undefined ? <TestResult t={t} result={cardTest} /> : null}
             <div>
-              <h4 className="dshmcp-toolBodyLabel">{t('toolsHeading')} · {toolsLabel}</h4>
-              {server.tools.length === 0
-                ? <p className="dshmcp-status">{t('toolNone')}</p>
-                : (
-                  <ul className="dshmcp-toolList">
-                    {server.tools.map(tool => (
-                      <li key={tool.publicName} className="dshmcp-tool">
-                        <button type="button" className="dshmcp-toolHead" aria-expanded={openTool === tool.publicName} onClick={() => { setOpenTool(current => current === tool.publicName ? undefined : tool.publicName) }}>
-                          <span className="dshmcp-toolName">{tool.publicName}</span>
-                          <span className="dshmcp-toolDesc">{tool.description}</span>
-                        </button>
-                        {openTool === tool.publicName
-                          ? (
-                            <div className="dshmcp-toolBody">
-                              <span className="dshmcp-toolBodyLabel">{t('toolParameters')}</span>
-                              <JsonTree data={tool.parameters} label={tool.publicName} copyable expandTopLevel />
-                            </div>
-                          )
-                          : null}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+              <h4 className="dshmcp-toolsHeading">
+                {t('toolsHeading')}
+                {toolRows.length > 0 || cachedCount > 0 ? ` · ${toolsLabel}` : ''}
+                {testedAtLabel !== undefined && shownCount > 0
+                  ? <span className="dshmcp-toolsMeta">{cache?.ok === true ? t('lastTestAt').replace('{time}', testedAtLabel) : t('lastTestFailed').replace('{time}', testedAtLabel)}</span>
+                  : null}
+              </h4>
+              {autoTesting
+                ? <p className="dshmcp-status dshmcp-autoTest"><IconLoadingOutline16 size={13} className="dshmcp-spin" aria-hidden="true" /> {t('autoTesting')}</p>
+                : toolRows.length > 0
+                  ? <ToolList t={t} tools={toolRows} />
+                  : cache !== undefined && !cache.ok
+                    ? <p className="dshmcp-status">{t('lastTestFailed').replace('{time}', testedAtLabel ?? '')}{cache.error !== undefined ? `：${cache.error}` : ''}</p>
+                    : <p className="dshmcp-status">{t('toolNone')}</p>}
             </div>
           </div>
         )
         : null}
     </li>
   )
+}
+
+function formatTime(timestamp: number): string {
+  return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
 function phaseLabel(t: (key: McpManagerLocaleKey) => string, phase: string | null): string {

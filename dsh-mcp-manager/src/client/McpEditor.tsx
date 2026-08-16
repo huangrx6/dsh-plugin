@@ -4,6 +4,8 @@ import { IconCheckOutline14, IconCloseOutline16, IconCodeOutline16, IconPlayOutl
 import type { McpJsExprValue, McpServerConfig, McpServerView, McpTestResponse, McpTransport } from '../contracts.ts'
 import type { McpManagerApi } from './api.ts'
 import type { McpManagerLocaleKey } from './locales.ts'
+import { ToolList } from './ToolList.tsx'
+import { saveCachedTest } from './tool-cache.ts'
 
 export interface McpEditorProps {
   readonly t: (key: McpManagerLocaleKey) => string
@@ -83,7 +85,11 @@ export function McpEditor({ t, api, original, onSaved, onCancel }: McpEditorProp
     setTesting(true)
     setTestResult(undefined)
     try {
-      setTestResult(await api.test(config))
+      const result = await api.test(config)
+      // persist so the tab's card can show tools without re-testing
+      const serverName = typeof config.serverName === 'string' ? config.serverName : undefined
+      if (serverName !== undefined && serverName !== '') saveCachedTest(window.localStorage, serverName, result)
+      setTestResult(result)
     } catch (error) {
       setTestResult({ ok: false, durationMs: 0, error: error instanceof Error ? error.message : String(error) })
     } finally {
@@ -280,7 +286,6 @@ function KeyValueEditor({ t, label, rows, onChange, onAdd, onRemove }: {
 }
 
 export function TestResult({ t, result }: { readonly t: (key: McpManagerLocaleKey) => string; readonly result: McpTestResponse }) {
-  const [openTool, setOpenTool] = useState<string | undefined>(undefined)
   return (
     <div className={`dshmcp-testPanel ${result.ok ? 'dshmcp-testOk' : 'dshmcp-testFail'}`} role="status">
       <div className="dshmcp-testHead">
@@ -299,26 +304,7 @@ export function TestResult({ t, result }: { readonly t: (key: McpManagerLocaleKe
           : null}
       </div>
       {result.ok && result.tools !== undefined && result.tools.length > 0
-        ? (
-          <ul className="dshmcp-toolList">
-            {result.tools.slice(0, 50).map(tool => (
-              <li key={tool.name} className="dshmcp-tool">
-                <button type="button" className="dshmcp-toolHead" aria-expanded={openTool === tool.name} onClick={() => { setOpenTool(current => current === tool.name ? undefined : tool.name) }}>
-                  <span className="dshmcp-toolName">{tool.name}</span>
-                  <span className="dshmcp-toolDesc">{tool.description}</span>
-                </button>
-                {openTool === tool.name
-                  ? (
-                    <div className="dshmcp-toolBody">
-                      <span className="dshmcp-toolBodyLabel">{t('toolParameters')}</span>
-                      <pre>{JSON.stringify(tool.inputSchema, null, 2)}</pre>
-                    </div>
-                  )
-                  : null}
-              </li>
-            ))}
-          </ul>
-        )
+        ? <ToolList t={t} tools={result.tools.map(tool => ({ name: tool.name, description: tool.description, schema: tool.inputSchema as Record<string, unknown> | undefined }))} />
         : null}
       {!result.ok && result.error !== undefined ? <pre>{result.error}</pre> : null}
     </div>

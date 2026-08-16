@@ -93,10 +93,11 @@ export class ComposerWorkbench {
         for (const root of roots) {
           if (
             root.matches(
-              '[data-slot="conversation.composer.bar"], [data-dsh-layout-workbench]',
+              '[data-slot="conversation.composer.bar"], [data-slot="conversation.view"], [data-slot^="conversation.chat."], [data-dsh-layout-workbench]',
             ) ||
-            root.querySelector('[data-slot="conversation.composer.bar"]') !==
-              null ||
+            root.querySelector(
+              '[data-slot="conversation.composer.bar"], [data-slot="conversation.view"], [data-slot^="conversation.chat."]',
+            ) !== null ||
             (this.doc.querySelector("[data-dsh-layout-workbench]") !== null &&
               (root.matches(
                 '[data-dsh-layout-dock], [data-dsh-layout-dock-item], [data-queue-dock], [data-slot="conversation.input.dock"]',
@@ -174,6 +175,12 @@ export class ComposerWorkbench {
       // ratio (width overrides can shrink the stack itself).
       const phase = stack.closest("[data-phase]")?.getAttribute("data-phase");
       if (phase === "hero" || phase === "settling") continue;
+      // The trace/trajectory tab swaps the message column for its own canvas:
+      // the composer stays mounted but its scroller shrinks around the
+      // canvas, so the workbench geometry (absolute seat, scroll margin)
+      // must not apply there. No chat turns = not the conversation view.
+      const scrollRoot = findScrollAncestor(stack, this.doc);
+      if (scrollRoot !== undefined && scrollRoot.querySelector('[data-slot^="conversation.chat."]') === null) continue;
 
       toggleMark(stack, WORKBENCH_ATTR);
       keep.add(stack);
@@ -221,7 +228,6 @@ export class ComposerWorkbench {
       }
       // The conversation scroller (no overscroll rubber-band) stays structural;
       // the composer width var lives on the chat root (see ShellRuntime).
-      const scrollRoot = findScrollAncestor(stack, this.doc);
       if (scrollRoot !== undefined) {
         toggleMark(scrollRoot, SCROLL_ATTR);
         keep.add(scrollRoot);
