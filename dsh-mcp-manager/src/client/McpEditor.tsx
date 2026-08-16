@@ -346,6 +346,12 @@ function mapOf(rows: readonly KeyValueRow[], original: Readonly<Record<string, s
       }
     }
     if (row.value.trim() === '') continue
+    // typing `!!js <expr>` in the form creates a real expression entry,
+    // so users don't end up with a quoted literal string in the patch file
+    if (row.value.startsWith('!!js ') && row.value.slice(5).trim() !== '') {
+      out[row.key] = { __jsExpr: row.value.slice(5).trim() }
+      continue
+    }
     out[row.key] = row.value
   }
   return out

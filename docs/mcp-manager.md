@@ -57,12 +57,13 @@ const schema = yaml.JSON_SCHEMA.extend(JsExprType)
 
 和平台 `dsh-mcp-client` 同样的姿势拉起连接，但**什么都不注册**：
 
-- stdio：`StdioClientTransport({ command, args, env: {...cleanProcessEnv(), ...plainEntries(env)} })`——env 合成语义照抄平台（继承宿主环境 + 配置覆盖）；`!!js` 表达式值在探测中**跳过**（loader 求值发生在真实装载时，探测进程拿不到已求值配置）
+- stdio：`StdioClientTransport({ command, args, env: {...cleanProcessEnv(), ...resolvedEntries(env)} })`——env 合成语义照抄平台（继承宿主环境 + 配置覆盖）；`!!js` 表达式值用 `evaluateJsExpr`（间接 eval，全局作用域）在宿主进程内按 loader 同样语义**现场求值**，求值失败或结果非标量时仅丢弃该条目
+- 表单模式里直接输入 `!!js <表达式>` 会被识别为表达式条目（不再是带引号的字面量字符串——引号包裹的 `'!!js …'` 是普通字符串，loader 不会求值，这是最常见的踩坑点）
 - streamable-http：`StreamableHTTPClientTransport` + headers
 - initialize 握手 + `tools/list` 分页拉全（上限 50 页），返回耗时 / 服务器版本 / 工具清单（含 inputSchema）
 - 30s 超时（AbortController），`finally` 里必关连接——探测失败也绝不留孤儿进程
 
-已知取舍：需要 `!!js` env 的服务器测试可能因缺变量失败，但真实运行正常；界面文案已说明。
+注意：求值用的是 **dsh 宿主进程**的环境——shell 里改了变量要重启 dsh web，测试连接与真实装载才会拿到新值。
 
 ## client —— 卡片与双模式编辑器
 

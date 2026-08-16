@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { dumpYamlConfig, isJsExpr, PatchLayer, parseYamlConfig, parseYamlPatches } from '../src/patch-file.ts'
+import { dumpYamlConfig, evaluateJsExpr, isJsExpr, PatchLayer, parseYamlConfig, parseYamlPatches, resolveEntryValue } from '../src/patch-file.ts'
 
 let dir: string
 let previousHome: string | undefined
@@ -68,5 +68,37 @@ describe('patch dialect round-trip', () => {
   it('parses config objects only', () => {
     expect(parseYamlConfig('serverName: x\ntransport: stdio')).toEqual({ serverName: 'x', transport: 'stdio' })
     expect(() => parseYamlConfig('- a\n- b')).toThrow(/对象/)
+  })
+})
+
+describe('js expression evaluation (probe semantics)', () => {
+  it('reads the live host environment like the loader does', () => {
+    process.env['DSHM_PROBE_TEST_VAR'] = 'probe-value'
+    try {
+      expect(evaluateJsExpr('process.env.DSHM_PROBE_TEST_VAR')).toBe('probe-value')
+      expect(resolveEntryValue({ __jsExpr: 'process.env.DSHM_PROBE_TEST_VAR' })).toBe('probe-value')
+    } finally {
+      delete process.env['DSHM_PROBE_TEST_VAR']
+    }
+  })
+
+  it('passes plain strings through and drops undefined / non-scalar results', () => {
+    expect(resolveEntryValue('literal')).toBe('literal')
+    expect(resolveEntryValue({ __jsExpr: 'process.env.DSHM_PROBE_MISSING' })).toBeUndefined()
+    expect(resolveEntryValue({ __jsExpr: '1 + 2' })).toBe('3')
+  })
+
+  it('throws on syntax errors so callers can decide', () => {
+    expect(() => evaluateJsExpr('process.env.(')).toThrow()
+  })
+
+  it('a quoted literal is a string, never an expression node', () => {
+    const parsed = parseYamlPatches("- insert:\n  - id: x\n    config:\n      env:\n        K: '!!js process.env.X'\n") as [{ insert: [{ config: { env: Record<string, unknown> } }] }]
+    const value = parsed[0]?.insert[0]?.config.env['K']
+    expect(typeof value).toBe('string')
+    expect(isJsExpr(value)).toBe(false)
+    // …while the unquoted tag form round-trips as an expression node
+    const parsedExpr = parseYamlPatches('- insert:\n  - id: x\n    config:\n      env:\n        K: !!js process.env.X\n') as [{ insert: [{ config: { env: Record<string, unknown> } }] }]
+    expect(isJsExpr(parsedExpr[0]?.insert[0]?.config.env['K'])).toBe(true)
   })
 })

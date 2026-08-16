@@ -7,7 +7,8 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
-import type { McpServerConfig, McpTestResponse, McpTestTool } from './contracts.ts'
+import type { McpJsExprValue, McpServerConfig, McpTestResponse, McpTestTool } from './contracts.ts'
+import { resolveEntryValue } from './patch-file.ts'
 
 const TEST_TIMEOUT_MS = 30_000
 const MAX_TOOL_PAGES = 50
@@ -64,22 +65,28 @@ function createTransport(config: McpServerConfig) {
       const parameters: { command: string; args: string[]; env: Record<string, string>; cwd?: string } = {
         command: config.command ?? '',
         args: config.args !== undefined ? [...config.args] : [],
-        env: { ...cleanProcessEnv(), ...plainEntries(config.env) },
+        env: { ...cleanProcessEnv(), ...resolvedEntries(config.env) },
       }
       if (config.cwd !== undefined && config.cwd !== '') parameters.cwd = config.cwd
       return new StdioClientTransport(parameters)
     }
     case 'streamable-http':
-      return new StreamableHTTPClientTransport(new URL(config.url ?? ''), { requestInit: { headers: plainEntries(config.headers) } })
+      return new StreamableHTTPClientTransport(new URL(config.url ?? ''), { requestInit: { headers: resolvedEntries(config.headers) } })
   }
 }
 
-/** Expression values cannot be evaluated here; they are skipped for the probe. */
-function plainEntries(map: Readonly<Record<string, string | { readonly __jsExpr: string }>> | undefined): Record<string, string> {
+/**
+ * Env / headers entries for the probe. Plain strings pass through;
+ * `!!js` expressions evaluate with loader semantics against the live host
+ * environment (a failed evaluation drops just that entry, like an
+ * expression that resolves to undefined).
+ */
+function resolvedEntries(map: Readonly<Record<string, string | McpJsExprValue>> | undefined): Record<string, string> {
   const out: Record<string, string> = {}
   if (map === undefined) return out
   for (const [key, value] of Object.entries(map)) {
-    if (typeof value === 'string') out[key] = value
+    const resolved = resolveEntryValue(value)
+    if (resolved !== undefined) out[key] = resolved
   }
   return out
 }

@@ -82,4 +82,25 @@ export function containsJsExpr(value: unknown): boolean {
   return false
 }
 
+/**
+ * Evaluate one `!!js` expression with the same semantics the loader uses
+ * (`with (ctx) { return eval(expr) }` in the host process), for the
+ * connection probe. Indirect eval runs in global scope, so expressions like
+ * `process.env.FOO` read the live host environment. Throws on bad syntax —
+ * callers decide whether that fails the probe or just drops the entry.
+ */
+export function evaluateJsExpr(expr: string): unknown {
+  const evaluate = new Function('"use strict"; return (0, eval)(arguments[0])') as (expr: string) => unknown
+  return evaluate(expr)
+}
+
+/** Resolve an env/headers entry for a probe: strings pass through, `!!js` values evaluate, anything else drops. */
+export function resolveEntryValue(value: string | McpJsExprValue): string | undefined {
+  if (typeof value === 'string') return value
+  const result = evaluateJsExpr(value.__jsExpr)
+  if (typeof result === 'string') return result
+  if (typeof result === 'number' && Number.isFinite(result)) return String(result)
+  return undefined
+}
+
 export type { McpJsExprValue }
