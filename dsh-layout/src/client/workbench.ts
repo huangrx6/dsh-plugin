@@ -175,12 +175,10 @@ export class ComposerWorkbench {
       // ratio (width overrides can shrink the stack itself).
       const phase = stack.closest("[data-phase]")?.getAttribute("data-phase");
       if (phase === "hero" || phase === "settling") continue;
-      // The trace/trajectory tab swaps the message column for its own canvas:
-      // the composer stays mounted but its scroller shrinks around the
-      // canvas, so the workbench geometry (absolute seat, scroll margin)
-      // must not apply there. No chat turns = not the conversation view.
+      // The trace tab swaps the message column for its own canvas but keeps
+      // the composer mounted: the plate/width/rows configuration applies
+      // there exactly as in the conversation view.
       const scrollRoot = findScrollAncestor(stack, this.doc);
-      if (scrollRoot !== undefined && scrollRoot.querySelector('[data-slot^="conversation.chat."]') === null) continue;
 
       toggleMark(stack, WORKBENCH_ATTR);
       keep.add(stack);

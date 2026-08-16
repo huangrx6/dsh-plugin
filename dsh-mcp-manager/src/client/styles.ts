@@ -159,22 +159,31 @@ const CSS = `
 @media (width <= 680px) { .dstmcp-details, .dshmcp-details { grid-template-columns: 76px minmax(0, 1fr); } .dshmcp-cardTrailing .dshmcp-tag:not(.dshmcp-tagWarn):not(.dshmcp-tagError) { display: none; } }
 
 /* ── tools list (shared by card + editor test panel) ────────────────────── */
-.dstmcp-toolsHeading, .dshmcp-toolsHeading { margin: 12px 0 6px; font-size: 12px; font-weight: 600; color: var(--dsw-alias-label-secondary); display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.dstmcp-toolsMeta, .dshmcp-toolsMeta { font-size: 11px; font-weight: 400; color: var(--dsw-alias-label-tertiary); font-variant-numeric: tabular-nums; }
-.dstmcp-tool, .dshmcp-tool { border: 1px solid var(--dsw-alias-border-l1); border-radius: 9px; background: var(--dsw-alias-bg-layer-1); overflow: hidden; }
-.dstmcp-toolHead, .dshmcp-toolHead { width: 100%; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: background-color .13s var(--ds-ease-in-out); }
-.dstmcp-toolHead:hover, .dshmcp-toolHead:hover { background: var(--dsw-alias-interactive-bg-hover); }
-.dstmcp-toolHead:focus-visible, .dshmcp-toolHead:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary); outline-offset: -2px; }
-.dstmcp-toolName, .dshmcp-toolName { font-family: var(--ds-font-family-code); font-size: 12px; font-weight: 600; color: var(--dsw-alias-label-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dstmcp-toolChevron, .dshmcp-toolChevron { flex: none; display: inline-flex; color: var(--dsw-alias-label-tertiary); transition: transform .14s var(--ds-ease-in-out); }
-.dstmcp-toolChevron.is-open, .dshmcp-toolChevron.is-open { transform: rotate(180deg); }
-.dstmcp-toolDesc, .dshmcp-toolDesc { margin: 0; padding: 0 10px 9px; color: var(--dsw-alias-label-secondary); font-size: 11.5px; line-height: 17px; white-space: normal; overflow-wrap: anywhere; }
-.dstmcp-toolBody, .dshmcp-toolBody { border-top: 1px solid var(--dsw-alias-border-l1); padding: 10px; display: flex; flex-direction: column; gap: 6px; background: var(--dsw-alias-bg-module-platform); }
-.dstmcp-toolBodyLabel, .dshmcp-toolBodyLabel { font-size: 11px; font-weight: 600; color: var(--dsw-alias-label-tertiary); text-transform: uppercase; letter-spacing: .05em; }
-.dstmcp-autoTest, .dshmcp-autoTest { display: flex; align-items: center; gap: 7px; }
+.dshmcp-toolsBlock { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.dstmcp-toolsHead, .dshmcp-toolsHead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dstmcp-toolsHead h4, .dshmcp-toolsHead h4 { margin: 0; font-size: 12px; font-weight: 600; color: var(--dsw-alias-label-secondary); }
+.dstmcp-toolsMeta, .dshmcp-toolsMeta { font-size: 11px; color: var(--dsw-alias-label-tertiary); font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 5px; }
+.dstmcp-toolsMeta.is-ok, .dshmcp-toolsMeta.is-ok { color: var(--dsw-alias-state-success-primary); }
+.dstmcp-toolsMeta.is-fail, .dshmcp-toolsMeta.is-fail { color: var(--dsw-alias-state-error-primary); }
+.dstmcp-buttonGhostSm, .dshmcp-buttonGhostSm { height: 26px; padding: 0 10px; font-size: 12px; border-radius: 7px; }
+.dstmcp-autoTest, .dshmcp-autoTest { display: inline-flex; align-items: center; gap: 5px; }
 .dstmcp-spin, .dshmcp-spin { animation: dstmcp-rotate 1s linear infinite; }
 @keyframes dstmcp-rotate { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .dstmcp-spin, .dshmcp-spin { animation: none !important; } }
+.dstmcp-toolList, .dshmcp-toolList { margin: 0; padding: 0; list-style: none; border: 1px solid var(--dsw-alias-border-l1); border-radius: 10px; background: var(--dsw-alias-bg-layer-1); overflow: hidden; }
+.dstmcp-tool + .dstmcp-tool, .dshmcp-tool + .dshmcp-tool { border-top: 1px solid var(--dsw-alias-border-l1); }
+.dstmcp-toolHead, .dshmcp-toolHead { width: 100%; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: background-color .13s var(--ds-ease-in-out); }
+.dstmcp-toolHead:hover, .dshmcp-toolHead:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.dstmcp-toolHead:focus-visible, .dshmcp-toolHead:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary); outline-offset: -2px; }
+.dstmcp-toolDot, .dshmcp-toolDot { flex: none; width: 6px; height: 6px; border-radius: 3px; background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 65%, transparent); }
+.dstmcp-tool.is-open .dshmcp-toolDot, .dshmcp-tool.is-open .dshmcp-toolDot { background: var(--dsw-alias-state-business-primary); }
+.dstmcp-toolName, .dshmcp-toolName { font-family: var(--ds-font-family-code); font-size: 12px; font-weight: 600; color: var(--dsw-alias-label-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dstmcp-toolChevron, .dshmcp-toolChevron { flex: none; display: inline-flex; color: var(--dsw-alias-label-tertiary); transition: transform .14s var(--ds-ease-in-out); }
+.dstmcp-toolChevron.is-open, .dshmcp-toolChevron.is-open { transform: rotate(180deg); color: var(--dsw-alias-state-business-primary); }
+.dstmcp-toolDesc, .dshmcp-toolDesc { margin: 0; padding: 0 12px 9px 26px; color: var(--dsw-alias-label-tertiary); font-size: 11.5px; line-height: 17px; white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.dstmcp-tool.is-open .dshmcp-toolDesc, .dshmcp-tool.is-open .dshmcp-toolDesc { -webkit-line-clamp: unset; color: var(--dsw-alias-label-secondary); padding-bottom: 10px; }
+.dstmcp-toolBody, .dshmcp-toolBody { border-top: 1px dashed var(--dsw-alias-border-l1); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; background: var(--dsw-alias-bg-module-platform); }
+.dstmcp-toolBodyLabel, .dshmcp-toolBodyLabel { font-size: 11px; font-weight: 600; color: var(--dsw-alias-label-tertiary); text-transform: uppercase; letter-spacing: .05em; }
 
 /* ── enable/disable switch (card head) ──────────────────────────────────── */
 .dstmcp-switch, .dshmcp-switch { flex: none; width: 32px; height: 19px; padding: 0; border-radius: 999px; border: 1px solid var(--dsw-alias-border-l2); background: var(--dsw-alias-bg-module-platform); cursor: pointer; position: relative; transition: background-color .16s var(--ds-ease-in-out), border-color .16s var(--ds-ease-in-out); }

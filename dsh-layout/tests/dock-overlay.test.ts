@@ -216,15 +216,22 @@ describe("dock overlay regression locks", () => {
     // height — the log physically ends above the input, plate stays clear.
     const seat =
       css.match(
-        /html\[data-dsh-layout-footer-plate='above'\] \[data-dsh-layout-chat-root\]:has\(\[data-dsh-layout-workbench\]\) \[data-composer-seat\] \{[^}]*\}/,
+        /html\[data-dsh-layout-footer-plate='above'\] \[data-dsh-layout-chat-root\]:has\(\[data-dsh-layout-workbench\]\):not\(:has\(\[data-conversation-composer-overlay\]\)\) \[data-composer-seat\] \{[^}]*\}/,
       )?.[0] ?? "";
     expect(seat).toContain("position: absolute !important");
     expect(seat).toContain("bottom: 0 !important");
     const scroller =
       css.match(
-        /html\[data-dsh-layout-footer-plate='above'\] \[data-dsh-layout-chat-root\]:has\(\[data-dsh-layout-workbench\]\) \[data-conversation-scroll\] \{[^}]*\}/,
+        /html\[data-dsh-layout-footer-plate='above'\] \[data-dsh-layout-chat-root\]:has\(\[data-dsh-layout-workbench\]\):not\(:has\(\[data-conversation-composer-overlay\]\)\) \[data-conversation-scroll\] \{[^}]*\}/,
       )?.[0] ?? "";
     expect(scroller).toContain("margin-bottom: var(--dsh-layout-seat-height, 0px)");
+    // Trace view keeps DSH's own seat positioning and reserves the canvas
+    // tail with padding instead (a margin would float the seat mid-air).
+    const trace =
+      css.match(
+        /html\[data-dsh-layout-footer-plate='above'\] \[data-dsh-layout-chat-root\]:has\(\[data-dsh-layout-workbench\]\):has\(\[data-conversation-composer-overlay\]\) \[data-conversation-scroll\] \{[^}]*\}/,
+      )?.[0] ?? "";
+    expect(trace).toContain("padding-bottom: var(--dsh-layout-seat-height, 0px)");
     // The sticky-mode width stretch must not apply to the absolute seat.
     expect(css).toMatch(
       /html:not\(\[data-dsh-layout-footer-plate='above'\]\).*\[data-composer-seat\]/,

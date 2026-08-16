@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { IconApiOutline14, IconChevronDownOutline14, IconLoadingOutline16, IconPlayOutline16, IconPlusOutline16, IconRefreshOutline16, IconTrashOutline16, IconWarningOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconApiOutline14, IconChevronDownOutline14, IconLoadingOutline16, IconPlusOutline16, IconRefreshOutline16, IconTrashOutline16, IconWarningOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { McpListResponse, McpServerView, McpTestResponse } from '../contracts.ts'
 import type { McpManagerApi } from './api.ts'
 import type { McpManagerLocaleKey } from './locales.ts'
-import { McpEditor, TestResult } from './McpEditor.tsx'
+import { McpEditor } from './McpEditor.tsx'
 import { cachedToolsToRows, ToolList } from './ToolList.tsx'
 import { clearCachedTest, loadCachedTest, saveCachedTest, type CachedTest } from './tool-cache.ts'
 
@@ -26,7 +26,6 @@ export function McpManagerTab({ t, api }: McpManagerTabProps) {
   const [editing, setEditing] = useState<McpServerView | undefined | 'add'>(undefined)
   const [busy, setBusy] = useState<string | undefined>(undefined)
   const [actionError, setActionError] = useState<string | undefined>(undefined)
-  const [cardTest, setCardTest] = useState<{ entryId: string; result: McpTestResponse } | undefined>(undefined)
   const [cache, setCache] = useState<Record<string, CachedTest>>({})
   const [autoTesting, setAutoTesting] = useState<Record<string, true>>({})
   const probingRef = useRef<string | undefined>(undefined)
@@ -196,7 +195,6 @@ export function McpManagerTab({ t, api }: McpManagerTabProps) {
                   busy={busy}
                   cache={cache[server.serverName]}
                   autoTesting={autoTesting[server.serverName] === true}
-                  cardTest={cardTest !== undefined && cardTest.entryId === server.entryId ? cardTest.result : undefined}
                   onToggleOpen={() => { setExpanded(current => current === server.entryId ? undefined : server.entryId) }}
                   onEdit={() => { setEditing(server) }}
                   onToggle={() => {
@@ -223,11 +221,10 @@ export function McpManagerTab({ t, api }: McpManagerTabProps) {
                     setBusy(`${server.entryId}:test`)
                     try {
                       const result = await api.test(server.config)
-                      setCardTest({ entryId: server.entryId, result })
                       const saved = saveCachedTest(window.localStorage, server.serverName, result)
                       if (saved !== undefined) setCache(current => ({ ...current, [server.serverName]: saved }))
                     } catch (error) {
-                      setCardTest({ entryId: server.entryId, result: { ok: false, durationMs: 0, error: error instanceof Error ? error.message : String(error) } })
+                      setCache(current => ({ ...current, [server.serverName]: { ok: false, durationMs: 0, error: error instanceof Error ? error.message : String(error), tools: [], testedAt: Date.now() } }))
                     } finally {
                       setBusy(undefined)
                     }
@@ -242,14 +239,13 @@ export function McpManagerTab({ t, api }: McpManagerTabProps) {
   )
 }
 
-function ServerCard({ t, server, open, busy, cache, autoTesting, cardTest, onToggleOpen, onEdit, onToggle, onDelete, onTest }: {
+function ServerCard({ t, server, open, busy, cache, autoTesting, onToggleOpen, onEdit, onToggle, onDelete, onTest }: {
   readonly t: (key: McpManagerLocaleKey) => string
   readonly server: McpServerView
   readonly open: boolean
   readonly busy: string | undefined
   readonly cache: CachedTest | undefined
   readonly autoTesting: boolean
-  readonly cardTest: McpTestResponse | undefined
   readonly onToggleOpen: () => void
   readonly onEdit: () => void
   readonly onToggle: () => void
@@ -326,31 +322,32 @@ function ServerCard({ t, server, open, busy, cache, autoTesting, cardTest, onTog
             </dl>
             <div className="dshmcp-actions">
               <button type="button" className="dshmcp-button" disabled={server.config === undefined || busy !== undefined} onClick={onEdit}>{t('editButton')}</button>
-              <button type="button" className="dshmcp-button" disabled={server.config === undefined || busy !== undefined} onClick={() => { void onTest() }}>
-                <IconPlayOutline16 size={14} aria-hidden="true" />
-                {busy === `${server.entryId}:test` ? t('testRunning') : t('testButton')}
-              </button>
               <span className="dshmcp-spacer" />
               <button type="button" className="dshmcp-button dshmcp-buttonDanger" disabled={!server.removable || busy !== undefined} onClick={onDelete} title={server.removable ? undefined : t('notRemovable')}>
                 <IconTrashOutline16 size={14} aria-hidden="true" />
                 {t('deleteButton')}
               </button>
             </div>
-            {cardTest !== undefined ? <TestResult t={t} result={cardTest} /> : null}
-            <div>
-              <h4 className="dshmcp-toolsHeading">
-                {t('toolsHeading')}
-                {toolRows.length > 0 || cachedCount > 0 ? ` · ${toolsLabel}` : ''}
-                {testedAtLabel !== undefined && shownCount > 0
-                  ? <span className="dshmcp-toolsMeta">{cache?.ok === true ? t('lastTestAt').replace('{time}', testedAtLabel) : t('lastTestFailed').replace('{time}', testedAtLabel)}</span>
-                  : null}
-              </h4>
+            <div className="dshmcp-toolsBlock">
+              <div className="dshmcp-toolsHead">
+                <h4>{t('toolsHeading')}</h4>
+                {shownCount > 0 ? <span className="dshmcp-count">{shownCount}</span> : null}
+                {autoTesting
+                  ? <span className="dshmcp-toolsMeta dshmcp-autoTest"><IconLoadingOutline16 size={12} className="dshmcp-spin" aria-hidden="true" />{t('autoTesting')}</span>
+                  : testedAtLabel !== undefined
+                    ? <span className={`dshmcp-toolsMeta${cache?.ok === true ? ' is-ok' : ' is-fail'}`}>{cache?.ok === true ? t('testOk') : t('testFailed')} · {t('lastTestAt').replace('{time}', testedAtLabel)}</span>
+                    : null}
+                <span className="dshmcp-spacer" />
+                <button type="button" className="dshmcp-button dshmcp-buttonGhostSm" disabled={server.config === undefined || busy !== undefined} onClick={() => { void onTest() }}>
+                  {busy === `${server.entryId}:test` ? t('testRunning') : t('testButton')}
+                </button>
+              </div>
               {autoTesting
-                ? <p className="dshmcp-status dshmcp-autoTest"><IconLoadingOutline16 size={13} className="dshmcp-spin" aria-hidden="true" /> {t('autoTesting')}</p>
+                ? null
                 : toolRows.length > 0
                   ? <ToolList t={t} tools={toolRows} />
                   : cache !== undefined && !cache.ok
-                    ? <p className="dshmcp-status">{t('lastTestFailed').replace('{time}', testedAtLabel ?? '')}{cache.error !== undefined ? `：${cache.error}` : ''}</p>
+                    ? <p className="dshmcp-callout dshmcp-calloutError" role="alert">{cache.error !== undefined ? cache.error : t('testFailed')}</p>
                     : <p className="dshmcp-status">{t('toolNone')}</p>}
             </div>
           </div>

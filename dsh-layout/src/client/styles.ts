@@ -291,7 +291,10 @@ html[data-dsh-layout-footer-plate='solid'] [data-dsh-layout-workbench] {
    card) keeps the native in-flow composer — yanking that seat to the bottom
    would drag the welcome card down with it. */
 html[data-dsh-layout-footer-plate='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]) { position: relative; }
-html[data-dsh-layout-footer-plate='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]) [data-composer-seat] {
+/* Conversation view (DSH marks the trace view with a composer-overlay
+   attribute): the seat pins against the conversation root and the scroller
+   physically ends above it via a bottom margin. */
+html[data-dsh-layout-footer-plate='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]):not(:has([data-conversation-composer-overlay])) [data-composer-seat] {
   position: absolute !important;
   left: 0 !important;
   right: 0 !important;
@@ -299,8 +302,15 @@ html[data-dsh-layout-footer-plate='above'] [data-dsh-layout-chat-root]:has([data
   top: auto !important;
   z-index: 1;
 }
-html[data-dsh-layout-footer-plate='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]) [data-conversation-scroll] {
+html[data-dsh-layout-footer-plate='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]):not(:has([data-conversation-composer-overlay])) [data-conversation-scroll] {
   margin-bottom: var(--dsh-layout-seat-height, 0px);
+}
+/* Trace view: DSH pins the seat inside the (positioned) scroller itself —
+   our absolute override would glue it to the margin-raised scroller bottom
+   and float it mid-air. Keep DSH's positioning and reserve the canvas tail
+   with padding so the trace ends above the input. */
+html[data-dsh-layout-footer-plate='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]):has([data-conversation-composer-overlay]) [data-conversation-scroll] {
+  padding-bottom: var(--dsh-layout-seat-height, 0px);
 }
 /* The input card: opaque in every mode — the content material's base color,
    falling back to the footer base, then the panel token. Separation comes
