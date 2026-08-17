@@ -532,11 +532,11 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   }
   [data-dsh-layout-composer-tools] {
     display: flex !important;
+    flex-wrap: wrap;
     grid-column: 1 / -1;
     grid-row: 1;
     min-width: 0 !important;
     width: auto !important;
-    overflow: hidden;
     gap: 6px !important;
   }
   [data-dsh-layout-composer-tools] > * { flex: none !important; min-width: 0 !important; }
@@ -652,8 +652,8 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     cursor: pointer;
   }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger > span {
-    width: 2px;
-    height: 2px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: currentColor;
   }
