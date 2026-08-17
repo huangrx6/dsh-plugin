@@ -589,7 +589,9 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     box-sizing: border-box;
     padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px);
     border: 0 !important;
-    background: var(--dsh-layout-solid, var(--dsw-alias-bg-layer-2));
+    /* Deterministically opaque: the drawer must never show the scrim (blur +
+       dim) through a translucent surface — that reads as a foggy mask. */
+    background: var(--dsw-specific-sidebar-fill, var(--dsw-alias-bg-layer-2)) !important;
     overflow: hidden;
     transition: inset-inline-start 220ms ease;
     box-shadow: var(--dsw-shadow-lv2);
@@ -605,7 +607,7 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     border: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
-    background: transparent !important;
+    background: var(--dsw-specific-sidebar-fill, var(--dsw-alias-bg-layer-2)) !important;
   }
   /* Drawer top row: keep the brand, drop the app's own collapse toggle (the
      floating X owns closing) and clear space for that X button. */
