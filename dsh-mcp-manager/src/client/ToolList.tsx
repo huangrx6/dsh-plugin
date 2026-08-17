@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { IconChevronRightOutline14, IconCloseOutline16, IconSearchOutline16, JsonTree } from '@deepseek-ai/dsh-client-ui-primitives'
+import { useMemo, useState } from 'react'
+import { IconChevronRightOutline14, IconSearchOutline16, JsonTree, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { McpManagerLocaleKey } from './locales.ts'
 import type { CachedTool } from './tool-cache.ts'
 
@@ -77,73 +77,53 @@ export function ToolList({ t, tools, withSearch = false }: {
             ))}
           </ul>
         )}
-      {selectedTool !== undefined ? <ToolDrawer t={t} tool={selectedTool} onClose={() => { setSelected(undefined) }} /> : null}
+      {selectedTool !== undefined ? <ToolDetails t={t} tool={selectedTool} onClose={() => { setSelected(undefined) }} /> : null}
     </div>
   )
 }
 
-/** Right-side overlay drawer: description, parameter table, raw schema. */
-function ToolDrawer({ t, tool, onClose }: {
+/** Tool detail dialog on top of the settings dialog: description, parameter table, raw schema. */
+function ToolDetails({ t, tool, onClose }: {
   readonly t: (key: McpManagerLocaleKey) => string
   readonly tool: ToolRow
   readonly onClose: () => void
 }) {
-  useEffect(() => {
-    // capture phase + stopPropagation: Escape closes the drawer without
-    // also dismissing the surrounding settings dialog
-    const onKey = (event: KeyboardEvent): void => {
-      if (event.key !== 'Escape') return
-      event.stopPropagation()
-      onClose()
-    }
-    window.addEventListener('keydown', onKey, true)
-    return () => { window.removeEventListener('keydown', onKey, true) }
-  }, [onClose])
   const params = paramRows(tool.schema)
   return (
-    <aside className="dshmcp-toolDrawer" role="dialog" aria-label={tool.name}>
-      <header className="dshmcp-toolDrawerHead">
-        <span className="dshmcp-toolDot" aria-hidden="true" />
-        <h5 className="dshmcp-toolDrawerName">{tool.name}</h5>
-        <button type="button" className="dshmcp-toolDrawerClose" aria-label={t('drawerClose')} onClick={onClose}>
-          <IconCloseOutline16 size={14} aria-hidden="true" />
-        </button>
-      </header>
-      <div className="dshmcp-toolDrawerBody">
-        {tool.description.trim() !== ''
+    <Modal open onClose={onClose} title={tool.name} closeLabel={t('drawerClose')} contentClassName="dshmcp-toolModalBody">
+      {tool.description.trim() !== ''
+        ? (
+          <section>
+            <h6>{t('drawerDescription')}</h6>
+            <p className="dshmcp-toolModalDesc">{tool.description}</p>
+          </section>
+        )
+        : null}
+      <section>
+        <h6>{t('drawerParameters')}</h6>
+        {params.length > 0
           ? (
-            <section>
-              <h6>{t('drawerDescription')}</h6>
-              <p className="dshmcp-toolDrawerDesc">{tool.description}</p>
-            </section>
+            <table className="dshmcp-paramTable">
+              <tbody>
+                {params.map(row => (
+                  <tr key={row.name}>
+                    <td className="dshmcp-paramName">{row.name}</td>
+                    <td className="dshmcp-paramType">{row.type}</td>
+                    <td className={row.required ? 'dshmcp-paramRequired' : 'dshmcp-paramOptional'}>{row.required ? t('paramRequired') : t('paramOptional')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )
-          : null}
-        <section>
-          <h6>{t('drawerParameters')}</h6>
-          {params.length > 0
-            ? (
-              <table className="dshmcp-paramTable">
-                <tbody>
-                  {params.map(row => (
-                    <tr key={row.name}>
-                      <td className="dshmcp-paramName">{row.name}</td>
-                      <td className="dshmcp-paramType">{row.type}</td>
-                      <td className={row.required ? 'dshmcp-paramRequired' : 'dshmcp-paramOptional'}>{row.required ? t('paramRequired') : t('paramOptional')}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )
-            : <p className="dshmcp-status">{t('toolNoParams')}</p>}
-        </section>
-        <section>
-          <h6>{t('drawerSchema')}</h6>
-          {tool.schema !== undefined && Object.keys(tool.schema).length > 0
-            ? <JsonTree data={tool.schema as Record<string, unknown>} label={tool.name} copyable expandTopLevel />
-            : <p className="dshmcp-status">{t('toolNoParams')}</p>}
-        </section>
-      </div>
-    </aside>
+          : <p className="dshmcp-status">{t('toolNoParams')}</p>}
+      </section>
+      <section>
+        <h6>{t('drawerSchema')}</h6>
+        {tool.schema !== undefined && Object.keys(tool.schema).length > 0
+          ? <JsonTree data={tool.schema as Record<string, unknown>} label={tool.name} copyable expandTopLevel />
+          : <p className="dshmcp-status">{t('toolNoParams')}</p>}
+      </section>
+    </Modal>
   )
 }
 

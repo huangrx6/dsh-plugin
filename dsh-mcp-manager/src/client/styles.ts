@@ -157,16 +157,9 @@ const CSS = `
 .dstmcp-toolParamsHint, .dshmcp-toolParamsHint { flex: none; font-size: 10.5px; color: var(--dsw-alias-label-tertiary); background: var(--dsw-alias-bg-module-platform); border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; padding: 2px 7px; white-space: nowrap; }
 .dstmcp-toolChevron, .dstmcp-toolChevron, .dshmcp-toolChevron { flex: none; display: inline-flex; color: var(--dsw-alias-label-tertiary); }
 .dstmcp-toolHead:hover .dshmcp-toolChevron, .dshmcp-toolHead:hover .dshmcp-toolChevron { color: var(--dsw-alias-state-business-primary); }
-.dstmcp-card, .dshmcp-card { position: relative; }
-.dstmcp-editor, .dshmcp-editor { position: relative; }
-.dstmcp-toolDrawer, .dshmcp-toolDrawer { position: absolute; top: 0; right: 0; bottom: 0; width: min(400px, 92%); z-index: 6; display: flex; flex-direction: column; background: var(--dsw-alias-bg-layer-3); border-left: 1px solid var(--dsw-alias-border-l2); border-radius: 0 10px 10px 0; box-shadow: var(--dsw-shadow-lv2); }
-.dstmcp-toolDrawerHead, .dstmcp-toolDrawerHead, .dshmcp-toolDrawerHead { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--dsw-alias-border-l1); background: var(--dsw-alias-bg-module-platform); border-radius: 0 10px 0 0; }
-.dstmcp-toolDrawerName, .dshmcp-toolDrawerName { flex: 1; min-width: 0; margin: 0; font-family: var(--ds-font-family-code); font-size: 12.5px; font-weight: 600; color: var(--dsw-alias-label-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dstmcp-toolDrawerClose, .dshmcp-toolDrawerClose { flex: none; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 6px; background: none; color: var(--dsw-alias-label-tertiary); cursor: pointer; }
-.dstmcp-toolDrawerClose:hover, .dshmcp-toolDrawerClose:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
-.dstmcp-toolDrawerBody, .dshmcp-toolDrawerBody { flex: 1; overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 14px; }
-.dstmcp-toolDrawerBody h6, .dshmcp-toolDrawerBody h6 { margin: 0 0 6px; font-size: 11px; font-weight: 600; color: var(--dsw-alias-label-tertiary); text-transform: uppercase; letter-spacing: .05em; }
-.dstmcp-toolDrawerDesc, .dstmcp-toolDrawerDesc, .dshmcp-toolDrawerDesc { margin: 0; font-size: 12.5px; line-height: 19px; color: var(--dsw-alias-label-secondary); white-space: normal; overflow-wrap: anywhere; }
+.dstmcp-toolModalBody, .dshmcp-toolModalBody { display: flex; flex-direction: column; gap: 14px; }
+.dstmcp-toolModalBody h6, .dshmcp-toolModalBody h6 { margin: 0 0 6px; font-size: 11px; font-weight: 600; color: var(--dsw-alias-label-tertiary); text-transform: uppercase; letter-spacing: .05em; }
+.dstmcp-toolModalDesc, .dshmcp-toolModalDesc { margin: 0; font-size: 12.5px; line-height: 19px; color: var(--dsw-alias-label-secondary); white-space: normal; overflow-wrap: anywhere; }
 .dstmcp-paramTable, .dshmcp-paramTable { width: 100%; border-collapse: collapse; font-size: 12px; }
 .dstmcp-paramTable td, .dshmcp-paramTable td { padding: 5px 8px; border-bottom: 1px solid var(--dsw-alias-border-l1); vertical-align: top; }
 .dstmcp-paramTable tr:last-child td, .dshmcp-paramTable tr:last-child td { border-bottom: 0; }
