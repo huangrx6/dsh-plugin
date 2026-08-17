@@ -556,6 +556,20 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   [data-dsh-layout-composer-trailing] [class*='_trigger'] { max-width: 100%; min-width: 0 !important; overflow: hidden; }
   [data-dsh-layout-composer-trailing] [class*='_primary'] { width: 36px !important; min-width: 36px !important; }
   [data-dsh-layout-composer-tools] [class*='_triggerLabel'] { max-width: 118px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* 每条 AI 回复末尾的运行统计脚注（DSH MessageIconActions）：原生
+     timeStart/timeEnd 是 white-space:nowrap，在手机上整行溢出。允许换行，
+     统计行折到下一行显示。 */
+  [data-time-hover-root] [class*='actions'] {
+    flex-wrap: wrap;
+    height: auto !important;
+    min-height: 28px;
+    row-gap: 4px;
+  }
+  [data-time-hover-root] [class*='timeStart'],
+  [data-time-hover-root] [class*='timeEnd'] {
+    white-space: normal !important;
+  }
 }
 
 /* ── 手机抽屉（< 768px）───────────────────────────────────────────────────
