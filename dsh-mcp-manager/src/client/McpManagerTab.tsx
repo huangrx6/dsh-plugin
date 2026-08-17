@@ -309,6 +309,7 @@ function ServerCard({ t, server, open, busy, cache, autoTesting, onToggleOpen, o
         ? (
           <div className="dshmcp-cardDetails">
             {server.config === undefined ? <p className="dshmcp-status">{t('notRemovable')}</p> : null}
+            <div className="dshmcp-toolsHead"><h4>{t('basicInfo')}</h4></div>
             <dl className="dshmcp-details">
               <div><dt>{t('detailEntryId')}</dt><dd className="dshmcp-path">{server.entryId}</dd></div>
               <div><dt>{t('detailOrigin')}</dt><dd>{originLabel(t, server.origin)}</dd></div>
@@ -334,21 +335,28 @@ function ServerCard({ t, server, open, busy, cache, autoTesting, onToggleOpen, o
                 {shownCount > 0 ? <span className="dshmcp-count">{shownCount}</span> : null}
                 {autoTesting
                   ? <span className="dshmcp-toolsMeta dshmcp-autoTest"><IconLoadingOutline16 size={12} className="dshmcp-spin" aria-hidden="true" />{t('autoTesting')}</span>
-                  : testedAtLabel !== undefined
-                    ? <span className={`dshmcp-toolsMeta${cache?.ok === true ? ' is-ok' : ' is-fail'}`}>{cache?.ok === true ? t('testOk') : t('testFailed')} · {t('lastTestAt').replace('{time}', testedAtLabel)}</span>
+                  : cache !== undefined
+                    ? (
+                      <span className={`dshmcp-chipStatus${cache.ok ? ' is-ok' : ' is-fail'}`}>
+                        <span className="dshmcp-chipDot" aria-hidden="true" />
+                        {cache.ok ? t('chipConnected') : t('chipFailed')}
+                      </span>
+                    )
                     : null}
+                {testedAtLabel !== undefined ? <span className="dshmcp-toolsMeta">{t('lastTestAt').replace('{time}', testedAtLabel)}</span> : null}
                 <span className="dshmcp-spacer" />
                 <button type="button" className="dshmcp-button dshmcp-buttonGhostSm" disabled={server.config === undefined || busy !== undefined} onClick={() => { void onTest() }}>
-                  {busy === `${server.entryId}:test` ? t('testRunning') : t('testButton')}
+                  {busy === `${server.entryId}:test` ? t('testRunning') : t('retestButton')}
                 </button>
               </div>
+              {cache !== undefined && !cache.ok && !autoTesting
+                ? <p className="dshmcp-callout dshmcp-calloutError" role="alert">{cache.error !== undefined ? cache.error : t('testFailed')}</p>
+                : null}
               {autoTesting
                 ? null
                 : toolRows.length > 0
-                  ? <ToolList t={t} tools={toolRows} />
-                  : cache !== undefined && !cache.ok
-                    ? <p className="dshmcp-callout dshmcp-calloutError" role="alert">{cache.error !== undefined ? cache.error : t('testFailed')}</p>
-                    : <p className="dshmcp-status">{t('toolNone')}</p>}
+                  ? <ToolList t={t} tools={toolRows} withSearch />
+                  : <p className="dshmcp-status">{t('toolNone')}</p>}
             </div>
           </div>
         )

@@ -55,6 +55,22 @@ html[data-dsh-layout-bubble='glass'] [data-dsh-layout-chat-column] [class*='_bub
   border-radius: var(--dsh-layout-radius-user-lg, 18px) !important;
   box-shadow: none !important;
 }
+/* ── Trace tab ───────────────────────────────────────────────────────────────
+   The trace view marks its scroller with a composer-overlay attribute, so
+   both rules scope to it without touching the conversation. DSH paints the
+   canvas as stacked white layers (_root/_plot/_split suffix classes); the
+   clear mode drops them so the content glass shows through, and the inset
+   mode pads the canvas root to the header row's 28px rhythm. */
+html[data-dsh-layout-trace-bg='clear'] [data-conversation-scroll]:has([data-conversation-composer-overlay]) [class$='_root'],
+html[data-dsh-layout-trace-bg='clear'] [data-conversation-scroll]:has([data-conversation-composer-overlay]) [class$='_plot'],
+html[data-dsh-layout-trace-bg='clear'] [data-conversation-scroll]:has([data-conversation-composer-overlay]) [class$='_split'] {
+  background: transparent !important;
+}
+html[data-dsh-layout-trace-width='inset'] [data-conversation-scroll]:has([data-conversation-composer-overlay]) [data-slot='conversation.view'] > [class$='_root'] {
+  padding-left: calc(28px / var(--dsh-layout-scale-factor, 1)) !important;
+  padding-right: calc(28px / var(--dsh-layout-scale-factor, 1)) !important;
+}
+
 html[data-dsh-layout-bubble='glass'][data-dsh-layout-bg]:not([data-dsh-layout-fluid]) [data-dsh-layout-chat-column] [class*='_bubble'] {
   -webkit-backdrop-filter: blur(var(--dsh-glass-content-blur, 16px)) saturate(var(--dsh-glass-content-sat, 120%));
   backdrop-filter: blur(var(--dsh-glass-content-blur, 16px)) saturate(var(--dsh-glass-content-sat, 120%));

@@ -13,6 +13,8 @@ import {
   coreSettings,
   type BackgroundMode,
   type BubbleMode,
+  type TraceBackground,
+  type TraceWidth,
   type FooterPlate,
   type GlassMaterial,
   type LayoutProfile,
@@ -149,6 +151,10 @@ export function normalizeSettings(value: unknown): LayoutSettings {
       scale: number(contentInput.scale, 100, SCALE_LIMITS),
       scrollbar: isScrollbarMode(contentInput.scrollbar) ? contentInput.scrollbar : 'native',
       bubble: isBubbleMode(contentInput.bubble) ? contentInput.bubble : 'native',
+      trace: Object.freeze({
+        background: isTraceBackground(isRecord(contentInput.trace) ? contentInput.trace.background : undefined) ? (contentInput.trace as { background: TraceBackground }).background : 'native',
+        width: isTraceWidth(isRecord(contentInput.trace) ? contentInput.trace.width : undefined) ? (contentInput.trace as { width: TraceWidth }).width : 'full',
+      }),
     }),
     footer: Object.freeze({
       // Full-width configs predating the plate kept the log above the input —
@@ -306,6 +312,14 @@ function isScrollbarMode(value: unknown): value is ScrollbarMode {
 
 function isBubbleMode(value: unknown): value is BubbleMode {
   return value === 'native' || value === 'glass'
+}
+
+function isTraceBackground(value: unknown): value is TraceBackground {
+  return value === 'native' || value === 'clear'
+}
+
+function isTraceWidth(value: unknown): value is TraceWidth {
+  return value === 'full' || value === 'inset'
 }
 
 function isStatsMode(value: unknown): value is StatsMode {

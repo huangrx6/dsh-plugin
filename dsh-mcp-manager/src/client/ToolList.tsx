@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { IconChevronDownOutline14, JsonTree } from '@deepseek-ai/dsh-client-ui-primitives'
+import { useEffect, useMemo, useState } from 'react'
+import { IconChevronRightOutline14, IconCloseOutline16, IconSearchOutline16, JsonTree } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { McpManagerLocaleKey } from './locales.ts'
 import type { CachedTool } from './tool-cache.ts'
 
@@ -11,54 +11,165 @@ export interface ToolRow {
 }
 
 /**
- * Tool listing shared by the server card and the editor's test panel:
- * one compact row per tool (name + 2-line clamped description); clicking a
- * row unclamps the full description and reveals the parameter schema.
+ * Master–detail tool list: compact rows (dot + name + clamped description +
+ * parameter count) that stay scannable, and a right-side drawer carrying
+ * everything worth reading — full description, parameter table and the raw
+ * schema — so the list itself never turns into documentation.
  */
-export function ToolList({ t, tools }: {
+export function ToolList({ t, tools, withSearch = false }: {
   readonly t: (key: McpManagerLocaleKey) => string
   readonly tools: readonly ToolRow[]
+  readonly withSearch?: boolean
 }) {
-  const [openTool, setOpenTool] = useState<string | undefined>(undefined)
+  const [query, setQuery] = useState('')
+  const [selected, setSelected] = useState<string | undefined>(undefined)
+
+  const needle = query.trim().toLowerCase()
+  const filtered = useMemo(
+    () => needle === ''
+      ? tools
+      : tools.filter(tool => tool.name.toLowerCase().includes(needle) || tool.description.toLowerCase().includes(needle)),
+    [tools, needle],
+  )
+  const selectedTool = selected !== undefined ? tools.find(tool => tool.name === selected) : undefined
+
   if (tools.length === 0) return null
   return (
-    <ul className="dshmcp-toolList">
-      {tools.map(tool => {
-        const open = openTool === tool.name
-        return (
-          <li key={tool.name} className={`dshmcp-tool${open ? ' is-open' : ''}`}>
-            <button
-              type="button"
-              className="dshmcp-toolHead"
-              aria-expanded={open}
-              title={open ? undefined : t('toolExpandHint')}
-              onClick={() => { setOpenTool(current => current === tool.name ? undefined : tool.name) }}
-            >
-              <span className="dshmcp-toolDot" aria-hidden="true" />
-              <span className="dshmcp-toolName">{tool.name}</span>
-              <span className="dshmcp-spacer" />
-              <span className={`dshmcp-toolChevron${open ? ' is-open' : ''}`}>
-                <IconChevronDownOutline14 size={12} aria-hidden="true" />
-              </span>
-            </button>
-            {tool.description.trim() !== ''
-              ? <p className="dshmcp-toolDesc">{tool.description}</p>
-              : null}
-            {open
-              ? (
-                <div className="dshmcp-toolBody">
-                  <span className="dshmcp-toolBodyLabel">{t('toolParameters')}</span>
-                  {tool.schema !== undefined && Object.keys(tool.schema).length > 0
-                    ? <JsonTree data={tool.schema as Record<string, unknown>} label={tool.name} copyable expandTopLevel />
-                    : <p className="dshmcp-status">{t('toolNoParams')}</p>}
-                </div>
-              )
-              : null}
-          </li>
+    <div className="dshmcp-toolsArea">
+      {withSearch
+        ? (
+          <div className="dshmcp-toolSearch">
+            <IconSearchOutline16 size={14} aria-hidden="true" />
+            <input
+              type="search"
+              value={query}
+              placeholder={t('toolSearch')}
+              aria-label={t('toolSearch')}
+              onChange={event => { setQuery(event.currentTarget.value) }}
+            />
+            {query.trim() !== '' ? <span className="dshmcp-toolSearchCount">{filtered.length}/{tools.length}</span> : null}
+          </div>
         )
-      })}
-    </ul>
+        : null}
+      {filtered.length === 0
+        ? <p className="dshmcp-status">{t('toolSearchEmpty')}</p>
+        : (
+          <ul className="dshmcp-toolList">
+            {filtered.map(tool => (
+              <li key={tool.name}>
+                <button
+                  type="button"
+                  className={`dshmcp-toolHead${selected === tool.name ? ' is-selected' : ''}`}
+                  aria-expanded={selected === tool.name}
+                  onClick={() => { setSelected(current => current === tool.name ? undefined : tool.name) }}
+                >
+                  <span className="dshmcp-toolDot" aria-hidden="true" />
+                  <span className="dshmcp-toolMain">
+                    <span className="dshmcp-toolName">{tool.name}</span>
+                    {tool.description.trim() !== ''
+                      ? <span className="dshmcp-toolDesc" title={tool.description}>{tool.description}</span>
+                      : null}
+                  </span>
+                  <span className="dshmcp-toolParamsHint">{paramsHint(t, tool.schema)}</span>
+                  <span className="dshmcp-toolChevron"><IconChevronRightOutline14 size={12} aria-hidden="true" /></span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      {selectedTool !== undefined ? <ToolDrawer t={t} tool={selectedTool} onClose={() => { setSelected(undefined) }} /> : null}
+    </div>
   )
+}
+
+/** Right-side overlay drawer: description, parameter table, raw schema. */
+function ToolDrawer({ t, tool, onClose }: {
+  readonly t: (key: McpManagerLocaleKey) => string
+  readonly tool: ToolRow
+  readonly onClose: () => void
+}) {
+  useEffect(() => {
+    // capture phase + stopPropagation: Escape closes the drawer without
+    // also dismissing the surrounding settings dialog
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key !== 'Escape') return
+      event.stopPropagation()
+      onClose()
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => { window.removeEventListener('keydown', onKey, true) }
+  }, [onClose])
+  const params = paramRows(tool.schema)
+  return (
+    <aside className="dshmcp-toolDrawer" role="dialog" aria-label={tool.name}>
+      <header className="dshmcp-toolDrawerHead">
+        <span className="dshmcp-toolDot" aria-hidden="true" />
+        <h5 className="dshmcp-toolDrawerName">{tool.name}</h5>
+        <button type="button" className="dshmcp-toolDrawerClose" aria-label={t('drawerClose')} onClick={onClose}>
+          <IconCloseOutline16 size={14} aria-hidden="true" />
+        </button>
+      </header>
+      <div className="dshmcp-toolDrawerBody">
+        {tool.description.trim() !== ''
+          ? (
+            <section>
+              <h6>{t('drawerDescription')}</h6>
+              <p className="dshmcp-toolDrawerDesc">{tool.description}</p>
+            </section>
+          )
+          : null}
+        <section>
+          <h6>{t('drawerParameters')}</h6>
+          {params.length > 0
+            ? (
+              <table className="dshmcp-paramTable">
+                <tbody>
+                  {params.map(row => (
+                    <tr key={row.name}>
+                      <td className="dshmcp-paramName">{row.name}</td>
+                      <td className="dshmcp-paramType">{row.type}</td>
+                      <td className={row.required ? 'dshmcp-paramRequired' : 'dshmcp-paramOptional'}>{row.required ? t('paramRequired') : t('paramOptional')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )
+            : <p className="dshmcp-status">{t('toolNoParams')}</p>}
+        </section>
+        <section>
+          <h6>{t('drawerSchema')}</h6>
+          {tool.schema !== undefined && Object.keys(tool.schema).length > 0
+            ? <JsonTree data={tool.schema as Record<string, unknown>} label={tool.name} copyable expandTopLevel />
+            : <p className="dshmcp-status">{t('toolNoParams')}</p>}
+        </section>
+      </div>
+    </aside>
+  )
+}
+
+interface ParamRow {
+  readonly name: string
+  readonly type: string
+  readonly required: boolean
+}
+
+function paramRows(schema: ToolRow['schema']): readonly ParamRow[] {
+  if (schema === undefined || typeof schema !== 'object') return []
+  const properties = schema['properties']
+  if (typeof properties !== 'object' || properties === null) return []
+  const required = Array.isArray(schema['required']) ? schema['required'] : []
+  return Object.entries(properties as Record<string, unknown>).map(([name, property]) => {
+    const record = typeof property === 'object' && property !== null ? property as Record<string, unknown> : {}
+    const type = Array.isArray(record['enum']) ? 'enum' : typeof record['type'] === 'string' ? record['type'] : '—'
+    return { name, type, required: required.includes(name) }
+  })
+}
+
+function paramsHint(t: (key: McpManagerLocaleKey) => string, schema: ToolRow['schema']): string {
+  const rows = paramRows(schema)
+  if (rows.length === 0) return t('toolNoParamsShort')
+  const required = rows.filter(row => row.required).length
+  return required > 0 ? t('paramCountRequired').replace('{n}', String(rows.length)).replace('{r}', String(required)) : t('paramCount').replace('{n}', String(rows.length))
 }
 
 export function cachedToolsToRows(cached: readonly CachedTool[]): readonly ToolRow[] {

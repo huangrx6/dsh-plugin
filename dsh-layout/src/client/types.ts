@@ -10,6 +10,15 @@ export type FooterPlate = 'native' | 'above' | 'solid'
 export type ScrollbarMode = 'native' | 'hidden'
 /** Message bubbles: native keeps DSH's blue-tinted fill; glass frosts them. */
 export type BubbleMode = 'native' | 'glass'
+/** Trace tab: native keeps DSH's white canvas; clear shows the content glass. */
+export type TraceBackground = 'native' | 'clear'
+/** Trace tab: full keeps DSH's edge-to-edge canvas; inset aligns to the header row. */
+export type TraceWidth = 'full' | 'inset'
+
+export interface TraceSettings {
+  readonly background: TraceBackground
+  readonly width: TraceWidth
+}
 /** null keeps the native reading measure; 'full' lets the column fill the window. */
 export type ReadWidth = 'native' | 'full' | number
 export type StatsMetric = 'turns' | 'steps' | 'llm' | 'tools' | 'ttft' | 'speed' | 'cache' | 'tokens'
@@ -64,6 +73,7 @@ export interface ContentSettings {
   readonly scrollbar: ScrollbarMode
   /** Message bubbles: frosted glass instead of DSH's blue-tinted fill. */
   readonly bubble: BubbleMode
+  readonly trace: TraceSettings
 }
 
 export interface FooterSettings {
@@ -152,6 +162,7 @@ export const DEFAULT_SETTINGS: LayoutSettings = Object.freeze({
     scale: 100,
     scrollbar: 'native' as const,
     bubble: 'native' as const,
+    trace: Object.freeze({ background: 'native' as const, width: 'full' as const }),
   }),
   footer: Object.freeze({
     plate: 'native' as const,

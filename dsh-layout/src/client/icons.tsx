@@ -24,5 +24,6 @@ export const BubbleIcon = (): React.ReactElement => <Svg><path d="M13.5 7.2c0 2.
 export const RangeIcon = (): React.ReactElement => <Svg><path d="M3 3.5h10M3 12.5h10" opacity=".55" /><path d="M8 5.5v5.2M8 5.5 6 7.5M8 5.5l2 2" /></Svg>
 export const RowsIcon = (): React.ReactElement => <Svg><rect x="2.5" y="2.5" width="11" height="3.6" rx="1.2" /><rect x="2.5" y="9.9" width="11" height="3.6" rx="1.2" /></Svg>
 export const StatsIcon = (): React.ReactElement => <Svg><path d="M3 13.5V9M6.8 13.5V4.5M10.5 13.5V6.8M14 13.5H2" /></Svg>
+export const TraceIcon = (): React.ReactElement => <Svg><circle cx="4" cy="11.5" r="1.7" /><circle cx="8" cy="4.5" r="1.7" /><circle cx="12.4" cy="9" r="1.7" /><path d="M5.4 10.3 6.9 6M9.5 5.4l1.7 2.2M6.6 12.5l4.3-2.5" /></Svg>
 export const BookmarkIcon = (): React.ReactElement => <Svg><path d="M4 2.8h8a.8.8 0 0 1 .8.8V14L8 11 3.2 14V3.6a.8.8 0 0 1 .8-.8Z" /></Svg>
 export const FileIcon = (): React.ReactElement => <Svg><path d="M9.5 2H4.8A1.3 1.3 0 0 0 3.5 3.3v9.4A1.3 1.3 0 0 0 4.8 14h6.4a1.3 1.3 0 0 0 1.3-1.3V5Z" /><path d="M9.5 2v3h3" /></Svg>

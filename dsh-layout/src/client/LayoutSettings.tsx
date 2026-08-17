@@ -20,6 +20,7 @@ import {
   ScaleIcon,
   ScrollbarIcon,
   StatsIcon,
+  TraceIcon,
   WidthIcon,
 } from './icons.tsx'
 import {
@@ -269,6 +270,18 @@ function ContentCard({ store, settings }: { store: LayoutStore; settings: Layout
       <div className="dsh-layout-segmented">
         <SegmentedButton pressed={content.bubble === 'native'} onClick={() => setContent({ bubble: 'native' })}>原生</SegmentedButton>
         <SegmentedButton pressed={content.bubble === 'glass'} onClick={() => setContent({ bubble: 'glass' })}>磨砂</SegmentedButton>
+      </div>
+    </Field>
+    <Field icon={<TraceIcon />} label="轨迹页背景">
+      <div className="dsh-layout-segmented">
+        <SegmentedButton pressed={content.trace.background === 'native'} onClick={() => setContent({ trace: { ...content.trace, background: 'native' } })}>原生白</SegmentedButton>
+        <SegmentedButton pressed={content.trace.background === 'clear'} onClick={() => setContent({ trace: { ...content.trace, background: 'clear' } })}>透明磨砂</SegmentedButton>
+      </div>
+    </Field>
+    <Field icon={<WidthIcon />} label="轨迹页宽度">
+      <div className="dsh-layout-segmented">
+        <SegmentedButton pressed={content.trace.width === 'full'} onClick={() => setContent({ trace: { ...content.trace, width: 'full' } })}>原生全宽</SegmentedButton>
+        <SegmentedButton pressed={content.trace.width === 'inset'} onClick={() => setContent({ trace: { ...content.trace, width: 'inset' } })}>对齐头部</SegmentedButton>
       </div>
     </Field>
     <Field icon={<ScrollbarIcon />} label="滚动条">
