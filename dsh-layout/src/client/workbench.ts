@@ -3,6 +3,10 @@ import type { LayoutStore } from "./store.ts";
 import type { LayoutSettings } from "./types.ts";
 
 const WORKBENCH_ATTR = "data-dsh-layout-workbench";
+/** Set on a marked hero/settling stack: the phone grid re-layout still needs
+    the marks, but the 收笔/全宽 geometry must leave the hero alone (pinning
+    its seat drags the welcome card to the bottom). */
+const HERO_ATTR = "data-dsh-layout-hero";
 const CARD_ATTR = "data-dsh-layout-composer-card";
 const CARD_ACTIONS_ATTR = "data-dsh-layout-composer-actions";
 const CARD_TOOLS_ATTR = "data-dsh-layout-composer-tools";
@@ -12,7 +16,7 @@ const CARD_TEXT_ATTR = "data-dsh-layout-composer-text";
 const CARD_BACKDROP_ATTR = "data-dsh-layout-composer-backdrop";
 const ROOT_ATTR = "data-dsh-layout-composer-root";
 const SCROLL_ATTR = "data-dsh-layout-scroll-root";
-const MARK_SELECTOR = `[${WORKBENCH_ATTR}], [${ROOT_ATTR}], [${CARD_ATTR}], [${CARD_ACTIONS_ATTR}], [${CARD_TOOLS_ATTR}], [${CARD_TRAILING_ATTR}], [${ADD_BUTTON_ATTR}], [${CARD_TEXT_ATTR}], [${CARD_BACKDROP_ATTR}], [${SCROLL_ATTR}]`;
+const MARK_SELECTOR = `[${WORKBENCH_ATTR}], [${HERO_ATTR}], [${ROOT_ATTR}], [${CARD_ATTR}], [${CARD_ACTIONS_ATTR}], [${CARD_TOOLS_ATTR}], [${CARD_TRAILING_ATTR}], [${ADD_BUTTON_ATTR}], [${CARD_TEXT_ATTR}], [${CARD_BACKDROP_ATTR}], [${SCROLL_ATTR}]`;
 
 /** Writes a data marker only when absent — silent in the steady state. */
 function toggleMark(element: HTMLElement, attribute: string): void {
@@ -176,6 +180,14 @@ export class ComposerWorkbench {
       const phase = stack.closest("[data-phase]")?.getAttribute("data-phase");
       const narrow = (this.doc.defaultView?.innerWidth ?? 0) < 768;
       if (!narrow && (phase === "hero" || phase === "settling")) continue;
+      // On phones (and anywhere the composer tree cannot reach the
+      // conversation's data-phase), the hero is recognized by DSH's own
+      // composerHero class instead — a marked hero still gets the grid
+      // re-layout but carries the hero flag so geometry rules stand down.
+      const hero = phase === "hero" || phase === "settling" ||
+        bar.closest('[class*="composerHero"]') !== null;
+      if (hero) toggleMark(stack, HERO_ATTR);
+      else stack.removeAttribute(HERO_ATTR);
       // The trace tab swaps the message column for its own canvas but keeps
       // the composer mounted: the scroll-end/rows configuration applies
       // there exactly as in the conversation view.
@@ -239,6 +251,7 @@ export class ComposerWorkbench {
     for (const node of this.doc.querySelectorAll<HTMLElement>(MARK_SELECTOR)) {
       if (keep.has(node)) continue;
       node.removeAttribute(WORKBENCH_ATTR);
+      node.removeAttribute(HERO_ATTR);
       node.removeAttribute(ROOT_ATTR);
       node.removeAttribute(CARD_ATTR);
       node.removeAttribute(CARD_ACTIONS_ATTR);
@@ -284,6 +297,7 @@ export class ComposerWorkbench {
     // mutation-free once everything is gone.
     for (const node of this.doc.querySelectorAll<HTMLElement>(MARK_SELECTOR)) {
       node.removeAttribute(WORKBENCH_ATTR);
+      node.removeAttribute(HERO_ATTR);
       node.removeAttribute(ROOT_ATTR);
       node.removeAttribute(CARD_ATTR);
       node.removeAttribute(CARD_ACTIONS_ATTR);

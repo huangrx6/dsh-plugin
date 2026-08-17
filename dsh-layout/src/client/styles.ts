@@ -30,7 +30,7 @@ body {
   overflow: hidden !important;
   overscroll-behavior: none !important;
 }
-html:has([data-dsh-layout-workbench]) { overflow-x: hidden !important; overscroll-behavior: none !important; }
+html:has([data-dsh-layout-workbench]:not([data-dsh-layout-hero])) { overflow-x: hidden !important; overscroll-behavior: none !important; }
 [data-dsh-layout-scroll-root] { overscroll-behavior: none !important; }
 
 /* ── 滚动条（全局）─────────────────────────────────────────────────────────
@@ -256,17 +256,17 @@ html[data-dsh-layout-trace-width='inset'] [data-conversation-scroll]:has([data-c
    window edges and puts messages, card and header on one 28px line — nothing
    else. The native hero posture (new-session centered card) is skipped via
    the workbench mark, so it keeps the native 748px rhythm. */
-html[data-dsh-layout-read-width='full'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]) { --dsh-chat-content-width: none; }
-[data-dsh-layout-chat-root]:has([data-dsh-layout-workbench])[data-dsh-layout-composer-width='full'] { --dsh-composer-card-max-width: none; }
+html[data-dsh-layout-read-width='full'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]:not([data-dsh-layout-hero])) { --dsh-chat-content-width: none; }
+[data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]:not([data-dsh-layout-hero]))[data-dsh-layout-composer-width='full'] { --dsh-composer-card-max-width: none; }
 /* The composer seat is sticky inside the conversation scroller, so it spans
    the client area minus a classic-scrollbar gutter while the header above
    spans the full column — stretching the seat by the measured gutter keeps
    both edges aligned. Skipped in 'above' mode: the seat pins to the
    conversation root there and stretches via left/right. */
-html:not([data-dsh-layout-scroll-end='above']) [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench])[data-dsh-layout-composer-width='full'] [data-composer-seat] {
+html:not([data-dsh-layout-scroll-end='above']) [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]:not([data-dsh-layout-hero]))[data-dsh-layout-composer-width='full'] [data-composer-seat] {
   width: calc(100% + var(--dsh-layout-scroll-gutter, 0px));
 }
-[data-dsh-layout-chat-root]:has([data-dsh-layout-workbench])[data-dsh-layout-composer-width='full'] [data-dsh-layout-workbench] {
+[data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]:not([data-dsh-layout-hero]))[data-dsh-layout-composer-width='full'] [data-dsh-layout-workbench]:not([data-dsh-layout-hero]) {
   padding-left: var(--dsh-layout-pad-composer-start, 28px) !important;
   padding-right: var(--dsh-layout-pad-composer-end, 28px) !important;
 }
@@ -318,8 +318,8 @@ html[data-dsh-layout-padding-custom] [data-dsh-layout-composer-root] {
    physically ends above the input. The composer itself keeps every native
    surface — radius, buttons, colors — untouched. Scoped through the
    workbench mark: the hero posture keeps the native in-flow composer. */
-html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]) { position: relative; }
-html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]):not(:has([data-conversation-composer-overlay])) [data-composer-seat] {
+html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]:not([data-dsh-layout-hero])) { position: relative; }
+html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]:not([data-dsh-layout-hero])):not(:has([data-conversation-composer-overlay])) [data-composer-seat] {
   position: absolute !important;
   left: 0 !important;
   right: 0 !important;
@@ -335,17 +335,17 @@ html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-d
    scrollbars); full width keeps spanning everything to stay aligned with
    the header row. The seat still lives inside the scroller in the DOM, so
    the gutter var set on the scroll root reaches it by inheritance. */
-html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]):not(:has([data-conversation-composer-overlay])):not([data-dsh-layout-composer-width='full']) [data-composer-seat] {
+html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]:not([data-dsh-layout-hero])):not(:has([data-conversation-composer-overlay])):not([data-dsh-layout-composer-width='full']) [data-composer-seat] {
   right: var(--dsh-layout-scroll-gutter, 0px) !important;
 }
-html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]):not(:has([data-conversation-composer-overlay])) [data-conversation-scroll] {
+html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]:not([data-dsh-layout-hero])):not(:has([data-conversation-composer-overlay])) [data-conversation-scroll] {
   margin-bottom: var(--dsh-layout-seat-height, 0px);
 }
 /* Trace view: DSH pins the seat inside the (positioned) scroller itself —
    our absolute override would glue it to the margin-raised scroller bottom
    and float it mid-air. Keep DSH's positioning and reserve the canvas tail
    with padding so the trace ends above the input. */
-html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]):has([data-conversation-composer-overlay]) [data-conversation-scroll] {
+html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]:not([data-dsh-layout-hero])):has([data-conversation-composer-overlay]) [data-conversation-scroll] {
   padding-bottom: var(--dsh-layout-seat-height, 0px);
 }
 /* DSH pins the scroll-to-bottom slot sticky at calc(var(--dsh-composer-
@@ -354,7 +354,7 @@ html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-d
    re-anchoring to the native 16px gap keeps its on-screen position
    unchanged. The button itself is an unpositioned flex child — only the
    slot carries the sticky offset. */
-html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]):not(:has([data-conversation-composer-overlay])) [data-conversation-scroll] [class*='_toBottomSlot'] {
+html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]:not([data-dsh-layout-hero])):not(:has([data-conversation-composer-overlay])) [data-conversation-scroll] [class*='_toBottomSlot'] {
   bottom: 16px !important;
 }
 
@@ -373,7 +373,7 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
    so focus scrolling routes to the real scroller. Visually clip === hidden.
    Scoped to the settings panel (_panel): centered z-1000 modals portal to
    document.body and must stay untouched. */
-[role='dialog'][class*='_panel'] { overflow: clip !important; }
+[role='dialog'][class*='_panel']:has(> nav) { overflow: clip !important; }
 
 /* 统计入口 */
 .dsh-layout-root { position: relative; display: inline-flex; flex: none; color: var(--dsw-alias-label-secondary); }
@@ -520,7 +520,10 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   /* DSH's outer settings panel is desktop row-based by default (188px nav
      + a tiny content column at phone widths). SettingsTopbarRuntime wraps the
      nav + close into a 52px topbar; the content scrolls below. */
-  [role='dialog'][class*='_panel'] {
+  /* Scoped via :has(> nav): only the settings dialog owns a nav rail. DSH's
+     context-usage panel is also role=dialog + _panel — the broad selector
+     blew it up to a fullscreen sheet (太大/太高溢出). */
+  [role='dialog'][class*='_panel']:has(> nav) {
     width: 100vw !important;
     max-width: none !important;
     height: 100dvh !important;

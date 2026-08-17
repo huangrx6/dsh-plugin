@@ -24,7 +24,7 @@ describe("one setting, one concern — stylesheet regression locks", () => {
   });
 
   it("full width is geometry only — the composer keeps its native surfaces", () => {
-    const workbench = rule("[data-dsh-layout-chat-root]:has([data-dsh-layout-workbench])[data-dsh-layout-composer-width='full'] [data-dsh-layout-workbench]");
+    const workbench = rule("[data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]:not([data-dsh-layout-hero]))[data-dsh-layout-composer-width='full'] [data-dsh-layout-workbench]:not([data-dsh-layout-hero])");
     expect(workbench).toContain("padding-left: var(--dsh-layout-pad-composer-start, 28px)");
     expect(workbench).toContain("padding-right: var(--dsh-layout-pad-composer-end, 28px)");
     expect(workbench).not.toMatch(/border|background|box-shadow|border-radius/);
@@ -38,7 +38,7 @@ describe("one setting, one concern — stylesheet regression locks", () => {
 
   it("full-width composer spans the scrollbar gutter to match the header edge", () => {
     expect(css).toContain(
-      "html:not([data-dsh-layout-scroll-end='above']) [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench])[data-dsh-layout-composer-width='full'] [data-composer-seat]",
+      "html:not([data-dsh-layout-scroll-end='above']) [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]:not([data-dsh-layout-hero]))[data-dsh-layout-composer-width='full'] [data-composer-seat]",
     );
     expect(css).toContain("width: calc(100% + var(--dsh-layout-scroll-gutter, 0px))");
     expect(css).toContain("--dsh-composer-card-max-width: none");
@@ -46,25 +46,25 @@ describe("one setting, one concern — stylesheet regression locks", () => {
 
   it("keeps the hero card on the native measure", () => {
     expect(css).toContain(
-      "html[data-dsh-layout-read-width='full'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]) { --dsh-chat-content-width: none; }",
+      "html[data-dsh-layout-read-width='full'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]:not([data-dsh-layout-hero])) { --dsh-chat-content-width: none; }",
     );
   });
 
   it("收笔 pins the seat and bounds the scroller — nothing else changes", () => {
-    const seat = rule("html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]):not(:has([data-conversation-composer-overlay])) [data-composer-seat]");
+    const seat = rule("html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]:not([data-dsh-layout-hero])):not(:has([data-conversation-composer-overlay])) [data-composer-seat]");
     expect(seat).toContain("position: absolute !important");
     expect(seat).not.toMatch(/border|background|box-shadow|border-radius|padding/);
     // The pinned seat spans the root INCLUDING the classic-scrollbar gutter;
     // native reading width re-anchors its right edge so the centered card
     // keeps the column's axis (full width stays flush with the header).
-    expect(css).toContain("html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]):not(:has([data-conversation-composer-overlay])):not([data-dsh-layout-composer-width='full']) [data-composer-seat]");
+    expect(css).toContain("html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]:not([data-dsh-layout-hero])):not(:has([data-conversation-composer-overlay])):not([data-dsh-layout-composer-width='full']) [data-composer-seat]");
     expect(css).toContain("right: var(--dsh-layout-scroll-gutter, 0px) !important;");
     expect(css).toContain("margin-bottom: var(--dsh-layout-seat-height, 0px);");
     expect(css).toContain("padding-bottom: var(--dsh-layout-seat-height, 0px);");
     // The floating scroll-to-bottom button keeps its native on-screen spot:
     // DSH anchors its sticky slot at composer-height + 16px from the
     // scrollport bottom, so the bounded scroller re-anchors it to 16px.
-    expect(css).toContain("html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]):not(:has([data-conversation-composer-overlay])) [data-conversation-scroll] [class*='_toBottomSlot']");
+    expect(css).toContain("html[data-dsh-layout-scroll-end='above'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]:not([data-dsh-layout-hero])):not(:has([data-conversation-composer-overlay])) [data-conversation-scroll] [class*='_toBottomSlot']");
     expect(css).toContain("bottom: 16px !important;");
     expect(css).not.toMatch(/_scrollBottom|_jumpToBottom/);
   });
@@ -99,6 +99,18 @@ describe("one setting, one concern — stylesheet regression locks", () => {
     ]) {
       expect(css).not.toContain(gone);
     }
+  });
+
+
+  it("phones: the context-usage panel keeps its anchored size; the hero keeps native geometry", () => {
+    // The context meter panel is role=dialog + _panel (no nav) — the settings
+    // fullscreen collapse must be scoped to dialogs that own a nav rail.
+    expect(css).toContain("[role='dialog'][class*='_panel']:has(> nav) {");
+    expect(css).not.toMatch(/\[role='dialog'\]\[class\*='_panel'\]\s*\{[^}]*100vw/);
+    // A marked hero (phone grid re-layout) must not receive 收笔/全宽 geometry:
+    // pinning its seat drags the welcome card to the bottom.
+    expect(css).toContain(":has([data-dsh-layout-workbench]:not([data-dsh-layout-hero]))");
+    expect(css).not.toContain(":has([data-dsh-layout-workbench])");
   });
 
   it("global blocks stay self-contained: background canvas, radius whitelist, dialog size, padding tokens", () => {
