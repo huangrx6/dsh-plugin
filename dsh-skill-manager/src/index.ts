@@ -32,7 +32,7 @@ export function apply(ctx: Context): void {
   ctx.effect(() => ctx.connection.rpc.handle(
     DSH_SKILL_MANAGER_CHANNEL,
     (endpoint, payload) => handle(ctx, endpoint, payload),
-    { authority: 'loopback' },
+    { authority: 'trusted-host' },
   ), 'dsh-skill-manager: rpc')
 }
 

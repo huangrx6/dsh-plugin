@@ -142,7 +142,7 @@ export function apply(ctx: Context): void {
   ctx.effect(() => ctx.connection.rpc.handle(
     DSH_REMOTE_ACCESS_CHANNEL,
     (endpoint, payload) => handle(ctx, endpoint, payload),
-    { authority: 'loopback' },
+    { authority: 'trusted-host' },
   ), 'dsh-remote-access: rpc')
 
   // tapIndex 属可选能力：无 webServer 的组合（headless 等）下静默跳过。
