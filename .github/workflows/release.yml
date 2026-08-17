@@ -38,11 +38,15 @@ jobs:
             (cd "$pkg" && pnpm install --no-frozen-lockfile && pnpm run build && pnpm pack --pack-destination ../dist)
             echo "::endgroup::"
           done
-          # 去掉版本号后缀，让 /releases/latest/download/ 固定链接永远可用。
-          # 例：dsh-remote-access-0.1.0.tgz → dsh-remote-access.tgz
-          # （不 cd：包名本身不含连字符规则可靠，用路径内联操作避免改变 cwd）
-          for f in dist/*-*.tgz; do
-            mv "$f" "dist/$(basename "$f" | sed 's/-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*.*\.tgz$/.tgz/')"
+          # 每个包保留两个产物：
+          #   1) 版本化名（pnpm pack 默认，如 dsh-remote-access-0.1.0.tgz）——升级/安装的
+          #      主路径。URL 含版本号，pnpm 缓存按 URL 区分，永远不撞 TARBALL_INTEGRITY
+          #      （latest 固定链接 + 内容变化是 integrity 冲突的根因）。
+          #   2) 固定名（如 dsh-remote-access.tgz）——仅供 /releases/latest/download/
+          #      一次性试用；不用于升级。
+          cd dist
+          for f in *-*.tgz; do
+            cp "$f" "$(basename "$f" | sed 's/-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*.*\.tgz$/.tgz/')"
           done
           ls -lh dist/
 

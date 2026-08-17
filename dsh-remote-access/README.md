@@ -46,11 +46,13 @@ Remote Access
 
 ## 安装
 
-通过 GitHub Release 预构建包安装（已含构建产物，无需本机构建）：
+通过 GitHub Release 预构建包安装（已含构建产物，无需本机构建）。**用版本化 URL**（含版本号，pnpm 缓存按 URL 区分，升级永不撞 integrity）：
 
 ```bash
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/latest/download/dsh-remote-access.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/v0.3.1/dsh-remote-access-0.1.0.tgz
 ```
+
+tag 号以 [Releases 页](https://github.com/huangrx6/dsh-plugin/releases) 最新为准；**升级 = 换 tag 号重跑**。装完重启 dsh（或 `/reload`）。
 
 链接指向最新版；升级时重跑同一条命令。需要钉住历史版本时，到 [Releases 页](https://github.com/huangrx6/dsh-plugin/releases) 把 `latest/download` 换成 `download/<tag>`。装完重启 dsh（或 `/reload`）。
 
