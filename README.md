@@ -29,10 +29,12 @@ dsh plugin --profile web add "github:huangrx6/dsh-plugin#main&path:/dsh-skill-ma
 dsh plugin --profile web add "github:huangrx6/dsh-plugin#main&path:/dsh-mcp-manager"
 ```
 
-pnpm（≥ 9）会克隆本仓库的对应子目录、安装依赖并执行 `prepare` 完成构建。`dsh plugin` 随后会自动对账 `dsh.profile.bundles`——包声明了 `dsh.bundle` 即自动加入加载层，**无需手改任何配置文件**。更新：
+pnpm（≥ 9）会克隆本仓库的对应子目录、安装依赖并执行 `prepare` 完成构建。`dsh plugin` 随后会自动对账 `dsh.profile.bundles`——包声明了 `dsh.bundle` 即自动加入加载层，**无需手改任何配置文件**。更新时重新执行上面的 add 命令（带完整 spec）。
+
+> ⚠️ 请勿使用 `dsh plugin update`：它会把 spec 里的 `#main&path:` 截断，导致装进整个仓库而非对应子包。
 
 ```bash
-dsh plugin --profile web update dsh-layout
+dsh plugin --profile web add "github:huangrx6/dsh-plugin#main&path:/dsh-layout"
 ```
 
 没有本地 `dsh` 命令时用 `npx @deepseek-ai/dsh plugin --profile web add ...`。
@@ -44,7 +46,6 @@ dsh plugin --profile web update dsh-layout
 ```bash
 dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<tag>/dsh-layout-<version>.tgz
 ```
-
 
 ### 本地开发（clone + link）
 
