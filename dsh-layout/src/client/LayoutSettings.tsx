@@ -131,6 +131,11 @@ const TABS: readonly { readonly id: TabId; readonly label: string }[] = [
   { id: 'profiles', label: '方案' },
 ]
 
+/** A light band header that segments a dense card into groups. */
+function Group({ label }: { label: string }): React.ReactElement {
+  return <div className="dsh-layout-settings__group">{label}</div>
+}
+
 /** A settings row: icon + label on the left rail, controls in one column. */
 function Field({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }): React.ReactElement {
   return <div className="dsh-layout-settings__field">
@@ -240,7 +245,9 @@ function ContentCard({ store, settings }: { store: LayoutStore; settings: Layout
   const customWidth = typeof content.width === 'number'
   return <section className="dsh-layout-settings__card">
     <CardHeading icon={<GlassIcon />} title="对话内容区" hint="内容列与顶部标题栏共用的磨砂材质；阅读宽度同时决定输入框宽度。" />
+    <Group label="材质" />
     <GlassFields material={content.glass} onChange={glass => setContent({ glass })} />
+    <Group label="阅读与排版" />
     <Field icon={<WidthIcon />} label="阅读宽度">
       <div className="dsh-layout-segmented">
         <SegmentedButton pressed={content.width === 'native'} onClick={() => setContent({ width: 'native' })}>原生</SegmentedButton>
@@ -266,6 +273,14 @@ function ContentCard({ store, settings }: { store: LayoutStore; settings: Layout
         {content.scale !== 100 && <output>{content.scale}%</output>}
       </div>
     </Field>
+    <Field icon={<ScrollbarIcon />} label="滚动条">
+      <div className="dsh-layout-segmented">
+        {(['native', 'hidden'] as const).map((mode: ScrollbarMode) => (
+          <SegmentedButton key={mode} pressed={content.scrollbar === mode} onClick={() => setContent({ scrollbar: mode })}>{mode === 'native' ? '原生' : '隐藏'}</SegmentedButton>
+        ))}
+      </div>
+    </Field>
+    <Group label="气泡与轨迹页" />
     <Field icon={<BubbleIcon />} label="对话气泡">
       <div className="dsh-layout-segmented">
         <SegmentedButton pressed={content.bubble === 'native'} onClick={() => setContent({ bubble: 'native' })}>原生</SegmentedButton>
@@ -288,13 +303,6 @@ function ContentCard({ store, settings }: { store: LayoutStore; settings: Layout
       <div className="dsh-layout-segmented">
         <SegmentedButton pressed={content.trace.tableTail === 'native'} onClick={() => setContent({ trace: { ...content.trace, tableTail: 'native' } })}>原生</SegmentedButton>
         <SegmentedButton pressed={content.trace.tableTail === 'none'} onClick={() => setContent({ trace: { ...content.trace, tableTail: 'none' } })}>移除</SegmentedButton>
-      </div>
-    </Field>
-    <Field icon={<ScrollbarIcon />} label="滚动条">
-      <div className="dsh-layout-segmented">
-        {(['native', 'hidden'] as const).map((mode: ScrollbarMode) => (
-          <SegmentedButton key={mode} pressed={content.scrollbar === mode} onClick={() => setContent({ scrollbar: mode })}>{mode === 'native' ? '原生' : '隐藏'}</SegmentedButton>
-        ))}
       </div>
     </Field>
   </section>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { IconApiOutline14, IconChevronDownOutline14, IconLoadingOutline16, IconPlusOutline16, IconRefreshOutline16, IconTrashOutline16, IconWarningOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconApiOutline14, IconChevronDownOutline14, IconLoadingOutline16, IconPlusOutline16, IconRefreshOutline16, IconSearchOutline16, IconTrashOutline16, IconWarningOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { McpListResponse, McpServerView, McpTestResponse } from '../contracts.ts'
 import type { McpManagerApi } from './api.ts'
 import type { McpManagerLocaleKey } from './locales.ts'
@@ -252,6 +252,7 @@ function ServerCard({ t, server, open, busy, cache, autoTesting, onToggleOpen, o
   readonly onDelete: () => void
   readonly onTest: () => Promise<void>
 }) {
+  const [toolQuery, setToolQuery] = useState('')
   const phase = server.fiberPhase
   const summary = server.config === undefined
     ? '—'
@@ -342,21 +343,43 @@ function ServerCard({ t, server, open, busy, cache, autoTesting, onToggleOpen, o
               <div className="dshmcp-toolsHead">
                 <h4>{t('toolsHeading')}</h4>
                 {shownCount > 0 ? <span className="dshmcp-count">{shownCount}</span> : null}
-                {autoTesting
-                  ? <span className="dshmcp-toolsMeta dshmcp-autoTest"><IconLoadingOutline16 size={12} className="dshmcp-spin" aria-hidden="true" />{t('autoTesting')}</span>
-                  : cache !== undefined
-                    ? (
-                      <span className={`dshmcp-chipStatus${cache.ok ? ' is-ok' : ' is-fail'}`}>
-                        <span className="dshmcp-chipDot" aria-hidden="true" />
-                        {cache.ok ? t('chipConnected') : t('chipFailed')}
-                      </span>
-                    )
-                    : null}
-                {testedAtLabel !== undefined ? <span className="dshmcp-toolsMeta">{t('lastTestAt').replace('{time}', testedAtLabel)}</span> : null}
                 <span className="dshmcp-spacer" />
                 <button type="button" className="dshmcp-button dshmcp-buttonGhostSm" disabled={server.config === undefined || busy !== undefined} onClick={() => { void onTest() }}>
                   {busy === `${server.entryId}:test` ? t('testRunning') : t('retestButton')}
                 </button>
+              </div>
+              <div className="dshmcp-toolsBar">
+                {autoTesting
+                  ? <span className="dshmcp-toolsMeta dshmcp-autoTest"><IconLoadingOutline16 size={12} className="dshmcp-spin" aria-hidden="true" />{t('autoTesting')}</span>
+                  : cache !== undefined
+                    ? (
+                      <>
+                        <span className={`dshmcp-chipStatus${cache.ok ? ' is-ok' : ' is-fail'}`}>
+                          <span className="dshmcp-chipDot" aria-hidden="true" />
+                          {cache.ok ? t('chipConnected') : t('chipFailed')}
+                        </span>
+                        {testedAtLabel !== undefined ? <span className="dshmcp-toolsMeta">{t('lastTestAt').replace('{time}', testedAtLabel)}</span> : null}
+                      </>
+                    )
+                    : null}
+                {toolRows.length > 1
+                  ? (
+                    <>
+                      <span className="dshmcp-spacer" />
+                      <span className="dshmcp-toolSearch">
+                      <IconSearchOutline16 size={13} aria-hidden="true" />
+                      <input
+                        type="search"
+                        value={toolQuery}
+                        placeholder={t('toolSearch')}
+                        aria-label={t('toolSearch')}
+                        onChange={event => { setToolQuery(event.currentTarget.value) }}
+                      />
+                        {toolQuery.trim() !== '' ? <span className="dshmcp-toolSearchCount">{toolRows.filter(tool => tool.name.toLowerCase().includes(toolQuery.trim().toLowerCase()) || tool.description.toLowerCase().includes(toolQuery.trim().toLowerCase())).length}/{toolRows.length}</span> : null}
+                      </span>
+                    </>
+                  )
+                  : null}
               </div>
               {cache !== undefined && !cache.ok && !autoTesting
                 ? <p className="dshmcp-callout dshmcp-calloutError" role="alert">{cache.error !== undefined ? cache.error : t('testFailed')}</p>
@@ -364,7 +387,7 @@ function ServerCard({ t, server, open, busy, cache, autoTesting, onToggleOpen, o
               {autoTesting
                 ? null
                 : toolRows.length > 0
-                  ? <ToolList t={t} tools={toolRows} withSearch />
+                  ? <ToolList t={t} tools={toolRows} query={toolQuery} />
                   : <p className="dshmcp-status">{t('toolNone')}</p>}
             </div>
           </div>

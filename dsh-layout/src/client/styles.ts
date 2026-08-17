@@ -69,6 +69,12 @@ html[data-dsh-layout-trace-bg='clear'] [data-conversation-scroll]:has([data-conv
 html[data-dsh-layout-trace-bg='clear'] [data-conversation-scroll]:has([data-conversation-composer-overlay]) [class$='_table'] {
   background: transparent !important;
 }
+/* DSH's trace seat reserves the scrollbar gutter (right: var(--dsh-scrollbar-
+   width), 8px) so it never sits under the scrollbar. Once the conversation
+   scrollbar is hidden that gutter is dead space — stretch the seat flush. */
+html[data-dsh-layout-scrollbar='hidden'] [data-conversation-scroll]:has([data-conversation-composer-overlay]) > [data-composer-seat] {
+  right: 0 !important;
+}
 /* The ledger pane's 202px tail keeps the last rows clear of the floating
    input; with the above-plate reserving its own tail it is dead space. */
 html[data-dsh-layout-trace-tail='none'] [data-conversation-scroll]:has([data-conversation-composer-overlay]) [class$='_tablePane'] {
@@ -491,7 +497,12 @@ html[data-dsh-layout-footer-plate='above'] [data-dsh-layout-chat-root]:has([data
 .dsh-layout-tabs button[aria-selected='true'] { background: var(--dsw-specific-input-major); color: var(--dsw-alias-label-primary); box-shadow: 0 1px 4px rgb(0 0 0 / 9%); }
 /* Two-rail field rows: icon + label on the left, controls in one aligned
    column on the right — every control starts at the same x, nothing drifts. */
-.dsh-layout-settings__field { display: grid; grid-template-columns: 168px minmax(0, 1fr); gap: 6px 20px; align-items: start; padding: 11px 0; border-bottom: 1px solid color-mix(in srgb, var(--dsh-layout-line) 30%, transparent); }
+.dsh-layout-settings__field { display: grid; grid-template-columns: 168px minmax(0, 1fr); gap: 6px 20px; align-items: center; padding: 11px 0; border-bottom: 1px solid color-mix(in srgb, var(--dsh-layout-line) 30%, transparent); }
+/* Light group headers segment a dense card (the content tab) into scannable
+   bands; a hairline trails the label to the right edge. */
+.dsh-layout-settings__group { display: flex; align-items: center; gap: 12px; margin: 18px 0 2px; color: var(--dsw-alias-label-tertiary); font-size: 11px; font-weight: 600; letter-spacing: .07em; }
+.dsh-layout-settings__group::after { content: ''; flex: 1; height: 1px; background: color-mix(in srgb, var(--dsh-layout-line) 45%, transparent); }
+.dsh-layout-settings__group:first-child { margin-top: 2px; }
 .dsh-layout-settings__field:last-child { border-bottom: 0; padding-bottom: 2px; }
 .dsh-layout-settings__field:first-of-type { padding-top: 13px; }
 .dsh-layout-settings__label { display: flex; align-items: center; gap: 9px; min-width: 0; }

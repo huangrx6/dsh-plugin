@@ -135,9 +135,9 @@ const CSS = `
 
 /* ── tools list ─────────────────────────────────────────────────────────── */
 .dstmcp-toolsArea, .dshmcp-toolsArea { display: flex; flex-direction: column; gap: 8px; position: static; }
-.dstmcp-toolSearch, .dstmcp-toolSearch, .dshmcp-toolSearch { display: flex; align-items: center; gap: 8px; position: relative; color: var(--dsw-alias-label-tertiary); }
+.dstmcp-toolSearch, .dshmcp-toolSearch { flex: none; display: inline-flex; align-items: center; gap: 8px; position: relative; color: var(--dsw-alias-label-tertiary); }
 .dstmcp-toolSearch > svg, .dshmcp-toolSearch > svg { pointer-events: none; position: absolute; left: 10px; z-index: 1; }
-.dstmcp-toolSearch input, .dshmcp-toolSearch input { flex: 1; height: 30px; box-sizing: border-box; border: 1px solid var(--dsw-alias-border-l2); background: var(--dsw-alias-bg-layer-1); color: var(--dsw-alias-label-primary); font: inherit; font-size: 12.5px; border-radius: 8px; outline: none; padding: 0 10px 0 30px; }
+.dstmcp-toolSearch input, .dshmcp-toolSearch input { width: min(210px, 46vw); height: 28px; box-sizing: border-box; border: 1px solid var(--dsw-alias-border-l2); background: var(--dsw-alias-bg-layer-1); color: var(--dsw-alias-label-primary); font: inherit; font-size: 12.5px; border-radius: 8px; outline: none; padding: 0 10px 0 30px; }
 .dstmcp-toolSearch input:focus-visible, .dshmcp-toolSearch input:focus-visible { border-color: var(--dsw-alias-state-business-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--dsw-alias-state-business-primary) 14%, transparent); }
 .dstmcp-toolSearch input::placeholder, .dshmcp-toolSearch input::placeholder { color: var(--dsw-alias-label-tertiary); }
 .dstmcp-toolSearchCount, .dshmcp-toolSearchCount { position: absolute; right: 10px; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--dsw-alias-label-tertiary); }
@@ -178,6 +178,19 @@ const CSS = `
 .dstmcp-switch[disabled], .dshmcp-switch[disabled] { opacity: .5; cursor: default; }
 .dstmcp-switchKnob, .dshmcp-switchKnob { position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 999px; background: #fff; box-shadow: var(--dsw-shadow-lv1); transition: transform .16s var(--ds-ease-in-out); display: block; }
 .dstmcp-switch.is-on .dshmcp-switchKnob, .dshmcp-switch.is-on .dshmcp-switchKnob { transform: translateX(13px); }
+
+/* ── tools section chrome (head row + status bar + retest) ──────────────── */
+.dstmcp-toolsBlock, .dshmcp-toolsBlock { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.dstmcp-toolsHead, .dshmcp-toolsHead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dstmcp-toolsHead h4, .dshmcp-toolsHead h4 { margin: 0; font-size: 12px; font-weight: 600; color: var(--dsw-alias-label-secondary); }
+.dstmcp-toolsBar, .dshmcp-toolsBar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.dstmcp-toolsMeta, .dshmcp-toolsMeta { font-size: 11px; color: var(--dsw-alias-label-tertiary); font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 5px; }
+.dstmcp-buttonGhostSm, .dshmcp-buttonGhostSm { height: 26px; padding: 0 10px; font-size: 12px; border-radius: 7px; }
+.dstmcp-autoTest, .dshmcp-autoTest { display: inline-flex; align-items: center; gap: 5px; }
+.dstmcp-spin, .dshmcp-spin { animation: dstmcp-rotate 1s linear infinite; }
+@keyframes dstmcp-rotate { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .dstmcp-spin, .dshmcp-spin { animation: none !important; } }
+
 `
 
 export function installStyles(doc: Document): () => void {

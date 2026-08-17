@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { IconChevronRightOutline14, IconSearchOutline16, JsonTree, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
+import { useState } from 'react'
+import { IconChevronRightOutline14, JsonTree, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { McpManagerLocaleKey } from './locales.ts'
 import type { CachedTool } from './tool-cache.ts'
 
@@ -16,41 +16,23 @@ export interface ToolRow {
  * everything worth reading — full description, parameter table and the raw
  * schema — so the list itself never turns into documentation.
  */
-export function ToolList({ t, tools, withSearch = false }: {
+export function ToolList({ t, tools, query = '' }: {
   readonly t: (key: McpManagerLocaleKey) => string
   readonly tools: readonly ToolRow[]
-  readonly withSearch?: boolean
+  /** Filter string (name or description, case-insensitive); owned by the host card. */
+  readonly query?: string
 }) {
-  const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<string | undefined>(undefined)
 
   const needle = query.trim().toLowerCase()
-  const filtered = useMemo(
-    () => needle === ''
-      ? tools
-      : tools.filter(tool => tool.name.toLowerCase().includes(needle) || tool.description.toLowerCase().includes(needle)),
-    [tools, needle],
-  )
+  const filtered = needle === ''
+    ? tools
+    : tools.filter(tool => tool.name.toLowerCase().includes(needle) || tool.description.toLowerCase().includes(needle))
   const selectedTool = selected !== undefined ? tools.find(tool => tool.name === selected) : undefined
 
   if (tools.length === 0) return null
   return (
     <div className="dshmcp-toolsArea">
-      {withSearch
-        ? (
-          <div className="dshmcp-toolSearch">
-            <IconSearchOutline16 size={14} aria-hidden="true" />
-            <input
-              type="search"
-              value={query}
-              placeholder={t('toolSearch')}
-              aria-label={t('toolSearch')}
-              onChange={event => { setQuery(event.currentTarget.value) }}
-            />
-            {query.trim() !== '' ? <span className="dshmcp-toolSearchCount">{filtered.length}/{tools.length}</span> : null}
-          </div>
-        )
-        : null}
       {filtered.length === 0
         ? <p className="dshmcp-status">{t('toolSearchEmpty')}</p>
         : (
