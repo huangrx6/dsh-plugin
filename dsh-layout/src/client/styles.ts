@@ -31,14 +31,18 @@ html:has([data-dsh-layout-workbench]) { overflow-x: hidden !important; overscrol
 html[data-dsh-layout-scrollbar='hidden'] [data-conversation-scroll],
 html[data-dsh-layout-scrollbar='hidden'] [data-dsh-layout-scroll-root],
 html[data-dsh-layout-scrollbar='hidden'] [data-dsh-layout-scroll-root] [data-conversation-scroll],
-html[data-dsh-layout-scrollbar='hidden'] [data-dsh-layout-sidebar-list] {
+html[data-dsh-layout-scrollbar='hidden'] [data-dsh-layout-sidebar-list],
+html[data-dsh-layout-scrollbar='hidden'] [role='dialog'][class*='_panel'] [class*='_options'],
+html[data-dsh-layout-scrollbar='hidden'] [role='dialog'][class*='_panel'] [class*='_content'] {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
 }
 html[data-dsh-layout-scrollbar='hidden'] [data-conversation-scroll]::-webkit-scrollbar,
 html[data-dsh-layout-scrollbar='hidden'] [data-dsh-layout-scroll-root]::-webkit-scrollbar,
 html[data-dsh-layout-scrollbar='hidden'] [data-dsh-layout-scroll-root] [data-conversation-scroll]::-webkit-scrollbar,
-html[data-dsh-layout-scrollbar='hidden'] [data-dsh-layout-sidebar-list]::-webkit-scrollbar {
+html[data-dsh-layout-scrollbar='hidden'] [data-dsh-layout-sidebar-list]::-webkit-scrollbar,
+html[data-dsh-layout-scrollbar='hidden'] [role='dialog'][class*='_panel'] [class*='_options']::-webkit-scrollbar,
+html[data-dsh-layout-scrollbar='hidden'] [role='dialog'][class*='_panel'] [class*='_content']::-webkit-scrollbar {
   width: 0 !important; height: 0 !important; display: none !important;
 }
 
@@ -404,52 +408,19 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
 /* ── 设置页 ───────────────────────────────────────────────────────────────── */
 .dsh-layout-settings { display: grid; gap: 16px; max-width: 880px; color: var(--dsw-alias-label-primary); }
 .dsh-layout-settings * { box-sizing: border-box; }
-.dsh-layout-settings-close { display: none; }
 @media (max-width: 767px) {
-  /* 设置面板：右上角 X 关闭按钮（与侧边栏抽屉一致） */
-  .dsh-layout-settings-close {
-    position: fixed;
-    z-index: 10;
-    inset-block-start: calc(env(safe-area-inset-top, 0px) + 10px);
-    inset-inline-end: 12px;
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: color-mix(in srgb, var(--dsw-alias-bg-layer-3) 82%, transparent);
-    color: var(--dsw-alias-label-primary);
-    box-shadow: var(--dsw-shadow-lv1);
-    display: grid;
-    place-items: center;
-    cursor: pointer;
-  }
-  .dsh-layout-settings-close > span { position: relative; width: 16px; height: 16px; }
-  .dsh-layout-settings-close > span::before,
-  .dsh-layout-settings-close > span::after {
-    content: '';
-    position: absolute;
-    inset-inline-start: 1px;
-    inset-block-start: 7px;
-    width: 14px;
-    height: 2px;
-    background: currentColor;
-    border-radius: 1px;
-  }
-  .dsh-layout-settings-close > span::before { transform: rotate(45deg); }
-  .dsh-layout-settings-close > span::after { transform: rotate(-45deg); }
-  /* 隐藏 DSH 原生关闭按钮，避免出现两个 X */
-  [role='dialog'][class*='_panel'] [class*='_close'] { display: none !important; }
+  /* 隐藏 DSH 头部里的「打开配置文件」动作（桌面操作，手机端拥挤） */
+  [role='dialog'][class*='_panel'] [class$='_action'] { display: none !important; }
 }
 .dsh-layout-settings__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 4px 2px 6px; }
 .dsh-layout-settings h2 { margin: 0 0 6px; font-size: 19px; letter-spacing: .01em; line-height: 26px; }
 .dsh-layout-settings h3 { margin: 0; font-size: 14px; line-height: 20px; }
 .dsh-layout-settings p { margin: 5px 0 0; color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 19px; }
-/* Tab bar: one raised rail, content-sized segments, the active pill lifts. */
-.dsh-layout-tabs { display: inline-flex; justify-self: start; gap: 2px; padding: 3px; border-radius: 10px; background: var(--dsw-alias-interactive-bg-hover); }
-.dsh-layout-tabs button { flex: none; min-height: 32px; padding: 4px 16px; border: 0; border-radius: 7px; background: transparent; color: var(--dsw-alias-label-secondary); font: inherit; font-size: 13px; font-weight: 550; white-space: nowrap; cursor: pointer; transition: color .14s ease, background-color .14s ease, box-shadow .14s ease; }
+/* Tab bar: clean underline tabs — active gets a colored underline, no pills. */
+.dsh-layout-tabs { display: inline-flex; justify-self: start; gap: 2px; padding: 0 2px; border-bottom: 1px solid color-mix(in srgb, var(--dsh-layout-line) 30%, transparent); }
+.dsh-layout-tabs button { flex: none; min-height: 34px; padding: 4px 14px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: var(--dsw-alias-label-secondary); font: inherit; font-size: 13px; font-weight: 550; white-space: nowrap; cursor: pointer; transition: color .14s ease, border-color .14s ease; }
 .dsh-layout-tabs button:hover { color: var(--dsw-alias-label-primary); }
-.dsh-layout-tabs button[aria-selected='true'] { background: var(--dsw-specific-input-major); color: var(--dsw-alias-label-primary); box-shadow: 0 1px 4px rgb(0 0 0 / 9%); }
+.dsh-layout-tabs button[aria-selected='true'] { background: transparent; color: var(--dsw-alias-label-primary); border-bottom-color: #3678ea; }
 /* Two-rail field rows: icon + label on the left, controls in one aligned
    column on the right — every control starts at the same x, nothing drifts. */
 .dsh-layout-settings__field { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 6px 16px; align-items: center; padding: 10px 0; border-bottom: 1px solid color-mix(in srgb, var(--dsh-layout-line) 30%, transparent); }
