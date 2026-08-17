@@ -136,7 +136,8 @@ function StatsPanel({ store, t, useProjection, mode }: StatsPanelProps): React.R
           ref={panelRef}
           id={panelId}
           className="dsh-layout-panel"
-          role="tooltip"
+          role="dialog"
+          aria-label={t('stats')}
           style={anchor === undefined
             ? { visibility: 'hidden' } as React.CSSProperties
             : {
