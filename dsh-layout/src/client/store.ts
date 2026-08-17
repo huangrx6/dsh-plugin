@@ -118,7 +118,7 @@ export function normalizeSettings(value: unknown): LayoutSettings {
       narrow: Object.freeze({
         headerWrap: !isRecord(globalInput.narrow) || globalInput.narrow.headerWrap !== false,
         sidebar: isMobileSidebarMode(isRecord(globalInput.narrow) ? globalInput.narrow.sidebar : undefined)
-          ? (globalInput.narrow as { sidebar: 'native' | 'fullscreen' }).sidebar
+          ? (globalInput.narrow as { sidebar: MobileSidebarMode }).sidebar
           : 'native',
       }),
     }),
@@ -224,7 +224,7 @@ function isBackgroundMode(value: unknown): value is BackgroundMode {
 }
 
 function isMobileSidebarMode(value: unknown): value is MobileSidebarMode {
-  return value === 'native' || value === 'fullscreen'
+  return value === 'native' || value === 'fullscreen' || value === 'float'
 }
 
 function normalizePadding(value: unknown): LayoutSettings['global']['padding'] {
