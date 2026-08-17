@@ -1,10 +1,10 @@
-import type { DomSync } from './dom-sync.ts'
+import type { DomSync } from "./dom-sync.ts";
 
-const PANEL_SELECTOR = '[role="dialog"][class*="_panel"]'
-const TOPBAR_CLASS = 'dsh-layout-settings-topbar'
-const TABS_CLASS = 'dsh-layout-settings-tabs'
-const CLOSE_CLASS = 'dsh-layout-settings-close'
-const CONTENT_CLASS = 'dsh-layout-settings-content'
+const PANEL_SELECTOR = '[role="dialog"][class*="_panel"]';
+const TOPBAR_CLASS = "dsh-layout-settings-topbar";
+const TABS_CLASS = "dsh-layout-settings-tabs";
+const CLOSE_CLASS = "dsh-layout-settings-close";
+const CONTENT_CLASS = "dsh-layout-settings-content";
 
 /**
  * On phones, restructure DSH's settings panel into a clean topbar layout: a
@@ -16,7 +16,7 @@ const CONTENT_CLASS = 'dsh-layout-settings-content'
  * (or a future DSH version) ignores them.
  */
 export class SettingsTopbarRuntime {
-  private unregister: (() => void) | undefined
+  private unregister: (() => void) | undefined;
 
   constructor(
     private readonly doc: Document,
@@ -25,46 +25,62 @@ export class SettingsTopbarRuntime {
 
   install(): () => void {
     this.unregister = this.sync.register({
-      onFull: () => { this.restructure() },
-      onStructural: roots => {
+      onFull: () => {
+        this.restructure();
+      },
+      onStructural: (roots) => {
         for (const root of roots) {
-          if (root.matches(PANEL_SELECTOR) || root.querySelector(PANEL_SELECTOR) !== null) {
-            this.restructure()
-            return
+          if (
+            root.matches(PANEL_SELECTOR) ||
+            root.querySelector(PANEL_SELECTOR) !== null
+          ) {
+            this.restructure();
+            return;
           }
         }
       },
-    })
-    this.restructure()
-    return () => { this.dispose() }
+    });
+    this.restructure();
+    return () => {
+      this.dispose();
+    };
   }
 
   dispose(): void {
-    this.unregister?.()
-    this.unregister = undefined
+    this.unregister?.();
+    this.unregister = undefined;
   }
 
   private restructure(): void {
-    const view = this.doc.defaultView
-    if (view === null || view.matchMedia('(max-width: 767px)').matches !== true) return
-    const panel = this.doc.querySelector<HTMLElement>(PANEL_SELECTOR)
-    if (panel === null || panel.querySelector(`:scope > .${TOPBAR_CLASS}`) !== null) return
-    const nav = panel.querySelector<HTMLElement>(':scope > nav')
-    const content = panel.querySelector<HTMLElement>(':scope > [class*="_content"]')
-    const close = panel.querySelector<HTMLElement>('[class*="_close"]')
-    if (nav === null || content === null || close === null) return
+    const view = this.doc.defaultView;
+    if (view === null || view.matchMedia("(max-width: 767px)").matches !== true)
+      return;
+    const panel = this.doc.querySelector<HTMLElement>(PANEL_SELECTOR);
+    if (
+      panel === null ||
+      panel.querySelector(`:scope > .${TOPBAR_CLASS}`) !== null
+    )
+      return;
+    const nav = panel.querySelector<HTMLElement>(":scope > nav");
+    const content = panel.querySelector<HTMLElement>(
+      ':scope > [class*="_content"]',
+    );
+    const close = panel.querySelector<HTMLElement>('[class*="_close"]');
+    if (nav === null || content === null || close === null) return;
 
-    nav.classList.add(TABS_CLASS)
-    close.classList.add(CLOSE_CLASS)
-    content.classList.add(CONTENT_CLASS)
+    nav.classList.add(TABS_CLASS);
+    close.classList.add(CLOSE_CLASS);
+    content.classList.add(CONTENT_CLASS);
 
-    const topbar = this.doc.createElement('div')
-    topbar.className = TOPBAR_CLASS
-    topbar.append(nav, close)
-    panel.prepend(topbar)
+    const topbar = this.doc.createElement("div");
+    topbar.className = TOPBAR_CLASS;
+    topbar.append(nav, close);
+    panel.prepend(topbar);
 
     // The header that used to hold the close button is now empty — collapse it.
-    const header = content.querySelector<HTMLElement>(':scope > [class*="_header"]')
-    if (header !== null) header.style.display = 'none'
+    const header = content.querySelector<HTMLElement>(
+      ':scope > [class*="_header"]',
+    );
+    if (header !== null) header.style.display = "none";
   }
 }

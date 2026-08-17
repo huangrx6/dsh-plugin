@@ -22,6 +22,14 @@ const STYLE_ID = "dsh-layout-styles";
 const CSS = `${TOKENS_CSS}
 
 /* ── Behaviour guards ────────────────────────────────────────────────────── */
+/* 全局视口锁：PC 与手机都固定 100% 视口，页面本体不产生拖拽/弹性位移。
+   对话滚动、设置弹窗等都在各自的内部容器里滚，body 永久不滚。 */
+html,
+body {
+  height: 100%;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
 html:has([data-dsh-layout-workbench]) { overflow-x: hidden !important; overscroll-behavior: none !important; }
 [data-dsh-layout-scroll-root] { overscroll-behavior: none !important; }
 
@@ -514,6 +522,7 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     align-items: center;
     flex: none;
     height: 52px;
+    margin-bottom: 16px;
     border-bottom: 1px solid color-mix(in srgb, var(--dsh-layout-line) 55%, transparent);
   }
   .dsh-layout-settings-tabs {
@@ -562,6 +571,7 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     min-width: 0;
     min-height: 0;
     overflow: hidden;
+    /* 顶栏与内容的间距由 topbar 的 margin-bottom 提供（16px）。 */
   }
   .dsh-layout-settings-content > [class*='_options'] {
     min-width: 0;
@@ -668,6 +678,25 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   }
   html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-center-col] { grid-column: 1; min-width: 0; }
   html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-details-col] { grid-column: 2; }
+  /* 全屏形态：抽屉铺满整个视口（100% 宽 + safe-area 内边距）。
+     float 模式（任意宽度生效）的定位/面板规则在媒体查询外的通用层，
+     这里只覆盖「铺满」这一窄屏专属差异。 */
+  html[data-dsh-layout-mobile-sidebar]:not([data-dsh-layout-sidebar-float]) [data-dsh-layout-sidebar-col] {
+    width: 100% !important;
+    border-radius: 0 !important;
+    padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px);
+  }
+  html[data-dsh-layout-mobile-sidebar]:not([data-dsh-layout-sidebar-float]) [data-dsh-layout-sidebar-col] > div > div {
+    border-radius: 0 !important;
+  }
+}
+
+/* ── 通用层（任意视口）：off-canvas 抽屉的定位、面板、开关、mask ───────────────
+   属性 data-dsh-layout-mobile-sidebar 由运行时在 fullscreen（窄屏）或
+   float（任意宽度）时写入。这里的规则不依赖视口宽：抽屉永远 fixed 贴左、
+   隐藏于画布外（inset-inline-start: -100%），打开态归零；mask/handle/X 按钮
+   同理。PC 窄窗选 float 时，内容列 grid 独占（见下 float 专属规则），
+   侧边栏悬浮其上，内容永不重排。 */
   /* Off-canvas via inset-inline-start, NOT transform: a transformed ancestor
      becomes the containing block for fixed-position descendants, and DSH
      mounts its settings dialog inside the sidebar column — with a transform
@@ -678,12 +707,7 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     z-index: 42;
     inset-block-start: 0;
     inset-inline-start: -100%;
-    width: 100% !important;
-    height: 100vh;
-    height: 100dvh;
     box-sizing: border-box;
-    padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px);
-    border: 0 !important;
     /* Deterministically opaque: the drawer must never show the scrim (blur +
        dim) through a translucent surface — that reads as a foggy mask. */
     background: var(--dsw-specific-sidebar-fill, var(--dsw-alias-bg-layer-2)) !important;
@@ -707,7 +731,6 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     height: 100%;
     padding-inline: 8px !important;
     border: 0 !important;
-    border-radius: 0 !important;
     box-shadow: none !important;
     background: var(--dsw-specific-sidebar-fill, var(--dsw-alias-bg-layer-2)) !important;
   }
@@ -732,7 +755,8 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   }
   /* 工作区区块头的操作按钮（新增工作区 + / 搜索 / 更多）：DSH 宽态下把
      headerActions 限到 60px 并溢出裁剪，而触摸屏没有 hover 展开，导致最左
-     的「新增工作区」+ 被裁掉。移动抽屉里放开，三个按钮都可见。 */
+     的「新增工作区」+ 被裁掉。off-canvas 抽屉（fullscreen 与 float）里
+     放开，三个按钮都可见。 */
   html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-sidebar-col] [class*='headerActions'] {
     max-width: none !important;
   }
@@ -827,6 +851,20 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     display: block;
   }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-mask[hidden] { display: none; }
+
+/* ── float 模式（任意宽度）：定宽悬浮面板 + 内容列独占 grid ─────────────────
+   侧边栏不挤压内容：内容列永远独占第一列，侧边栏是 fixed 定宽浮层
+   （min(320px, 86vw)），盖在内容上方；抽屉内是 DSH 真实宽态内容。 */
+html[data-dsh-layout-sidebar-float] [data-dsh-layout-frame] {
+  grid-template-columns: minmax(0, 1fr) var(--dsh-layout-details, 0px) !important;
+}
+html[data-dsh-layout-sidebar-float] [data-dsh-layout-center-col] { grid-column: 1; min-width: 0; }
+html[data-dsh-layout-sidebar-float] [data-dsh-layout-details-col] { grid-column: 2; }
+html[data-dsh-layout-sidebar-float] [data-dsh-layout-sidebar-col] {
+  width: min(320px, 86vw) !important;
+  height: 100vh;
+  height: 100dvh;
+  border-radius: 0 14px 14px 0 !important;
 }
 
 /* ── 触屏提示气泡 ─────────────────────────────────────────────────────────────

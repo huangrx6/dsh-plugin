@@ -100,10 +100,13 @@ export const PAD_PRESETS = Object.freeze({
   }),
 })
 
-/** Narrow-viewport (< 768px) adaptation: header wrapping against crowding,
-    and the sidebar presentation — native keeps DSH's squeezed rail, fullscreen
-    turns it into an off-canvas overlay owning the whole viewport. */
-export type MobileSidebarMode = 'native' | 'fullscreen'
+/** Narrow-viewport adaptation: header wrapping against crowding, and the
+    sidebar presentation — native keeps DSH's squeezed rail, fullscreen
+    turns it into an off-canvas overlay owning the whole viewport (phones,
+    < 768px), float turns it into a fixed-width off-canvas overlay at ANY
+    viewport so the content column never reflows when the sidebar opens
+    (narrow desktop windows included). */
+export type MobileSidebarMode = 'native' | 'fullscreen' | 'float'
 
 export interface NarrowSettings {
   readonly headerWrap: boolean
