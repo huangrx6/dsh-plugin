@@ -181,8 +181,7 @@ export class MobileSidebarRuntime {
       return
     }
     this.doc.documentElement.setAttribute('data-dsh-layout-mobile-sidebar', '')
-    const trigger = this.ensureTrigger()
-    trigger.hidden = this.isOpen()
+    this.ensureTrigger()
     this.ensureMask()
   }
 
@@ -190,7 +189,6 @@ export class MobileSidebarRuntime {
     const root = this.doc.documentElement
     root.toggleAttribute(ROOT_ATTR, open && this.isMobile())
     if (this.trigger !== undefined) {
-      this.trigger.hidden = open
       this.trigger.setAttribute('aria-expanded', open ? 'true' : 'false')
       this.trigger.setAttribute('aria-label', open ? '关闭侧边栏' : '打开侧边栏')
     }
@@ -205,8 +203,10 @@ export class MobileSidebarRuntime {
     trigger.setAttribute('aria-controls', 'dsh-layout-mobile-sidebar')
     trigger.setAttribute('aria-expanded', 'false')
     trigger.setAttribute('aria-label', '打开侧边栏')
-    trigger.innerHTML = '<span aria-hidden="true"></span>'
-    trigger.addEventListener('click', event => { event.stopPropagation(); this.open() })
+    const glyph = this.doc.createElement('span')
+    glyph.setAttribute('aria-hidden', 'true')
+    trigger.append(glyph)
+    trigger.addEventListener('click', event => { event.stopPropagation(); if (this.isOpen()) this.close(); else this.open() })
     this.doc.body.append(trigger)
     this.trigger = trigger
     return trigger

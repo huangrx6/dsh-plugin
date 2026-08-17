@@ -629,20 +629,19 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     min-height: 44px;
   }
 
-  /* Open affordance: a slim edge handle at mid-height — no floating box over
-     the header, nothing occludes content. Hidden entirely while the drawer
-     is open (the mask owns closing). */
+  /* Edge handle: a slim bar at mid-height. Closed it shows a tiny dot and
+     opens the drawer; open it becomes a close (X) button — never hidden. */
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger {
     position: fixed;
     z-index: 44;
     inset-block-start: 50%;
     inset-inline-start: 0;
-    width: 22px;
+    width: 6px;
     height: 60px;
     margin-block-start: -30px;
     padding: 0;
     border: 0;
-    border-radius: 0 12px 12px 0;
+    border-radius: 0 6px 6px 0;
     background: color-mix(in srgb, var(--dsw-alias-bg-layer-3) 82%, transparent);
     color: var(--dsw-alias-label-primary);
     box-shadow: var(--dsw-shadow-lv1);
@@ -653,13 +652,31 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     cursor: pointer;
   }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger > span {
-    width: 8px;
-    height: 8px;
-    border-right: 2px solid currentColor;
-    border-bottom: 2px solid currentColor;
-    transform: rotate(-45deg);
-    margin-inline-start: -3px;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: currentColor;
   }
+  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger[aria-expanded='true'] > span {
+    width: 6px;
+    height: 6px;
+    border-radius: 0;
+    background: transparent;
+    position: relative;
+  }
+  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger[aria-expanded='true'] > span::before,
+  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger[aria-expanded='true'] > span::after {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0;
+    inset-block-start: 2px;
+    width: 6px;
+    height: 2px;
+    background: currentColor;
+    border-radius: 1px;
+  }
+  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger[aria-expanded='true'] > span::before { transform: rotate(45deg); }
+  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger[aria-expanded='true'] > span::after { transform: rotate(-45deg); }
   /* Mask: a quiet dim BELOW #root's stacking context. #root lifts to z:1
      when a background or material is on, which would trap the drawer (z:42)
      under a z:41 mask — drop the mask to z:0 so it never fogs or covers the
