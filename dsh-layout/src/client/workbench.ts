@@ -168,8 +168,14 @@ export class ComposerWorkbench {
       // first message settles the view. The conversation root carries the
       // native data-phase attribute, which is more reliable than a width
       // ratio (width overrides can shrink the stack itself).
+      // On narrow viewports the skip is itself harmful: the hero card still
+      // carries the full tool row (model chip + effort + context + send ≈
+      // 257px of non-shrinking controls) and, with our stats chip injected,
+      // the trailing row overflows the viewport (send button off-screen).
+      // The phone grid re-layout needs the markers regardless of phase.
       const phase = stack.closest("[data-phase]")?.getAttribute("data-phase");
-      if (phase === "hero" || phase === "settling") continue;
+      const narrow = (this.doc.defaultView?.innerWidth ?? 0) < 768;
+      if (!narrow && (phase === "hero" || phase === "settling")) continue;
       // The trace tab swaps the message column for its own canvas but keeps
       // the composer mounted: the scroll-end/rows configuration applies
       // there exactly as in the conversation view.
