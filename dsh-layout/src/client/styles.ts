@@ -499,10 +499,9 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   .dsh-layout-tiers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
   /* DSH's outer settings panel is desktop row-based by default (188px nav
-     + a tiny content column at phone widths). Collapse it into a full-width
-     vertical sheet: horizontal section navigation on top, content below. */
+     + a tiny content column at phone widths). SettingsTopbarRuntime wraps the
+     nav + close into a 52px topbar; the content scrolls below. */
   [role='dialog'][class*='_panel'] {
-    position: relative;
     width: 100vw !important;
     max-width: none !important;
     height: 100dvh !important;
@@ -510,23 +509,28 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     border-radius: 0 !important;
     flex-direction: column !important;
   }
-  [role='dialog'][class*='_panel'] > nav {
-    flex: none !important;
-    width: 100% !important;
-    height: auto !important;
-    min-height: 44px;
-    max-height: 52px;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    padding-right: 44px;
+  .dsh-layout-settings-topbar {
+    display: flex;
+    align-items: center;
+    flex: none;
+    height: 52px;
     border-bottom: 1px solid color-mix(in srgb, var(--dsh-layout-line) 55%, transparent);
+  }
+  .dsh-layout-settings-tabs {
+    flex: 1;
+    min-width: 0;
+    width: auto !important;
+    height: 100%;
+    padding: 0 !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
     scrollbar-width: thin;
   }
-  [role='dialog'][class*='_panel'] > nav::-webkit-scrollbar { height: 3px; }
-  [role='dialog'][class*='_panel'] > nav::-webkit-scrollbar-thumb { border-radius: 999px; background: color-mix(in srgb, var(--dsw-alias-label-tertiary) 35%, transparent); }
-  [role='dialog'][class*='_panel'] > nav > * { white-space: nowrap; }
-  [role='dialog'][class*='_panel'] > nav [class*='_navTitle'] { display: none !important; }
-  [role='dialog'][class*='_panel'] > nav [class*='_navList'] {
+  .dsh-layout-settings-tabs::-webkit-scrollbar { height: 3px; }
+  .dsh-layout-settings-tabs::-webkit-scrollbar-thumb { border-radius: 999px; background: color-mix(in srgb, var(--dsw-alias-label-tertiary) 35%, transparent); }
+  .dsh-layout-settings-tabs [class*='_navTitle'] { display: none !important; }
+  .dsh-layout-settings-tabs [class*='_navList'] {
     display: flex !important;
     flex-direction: row !important;
     align-items: center;
@@ -536,7 +540,7 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     gap: 4px;
     padding: 8px 0 !important;
   }
-  [role='dialog'][class*='_panel'] > nav [class*='_navCell'] {
+  .dsh-layout-settings-tabs [class*='_navCell'] {
     flex: none !important;
     width: auto !important;
     min-width: max-content;
@@ -544,33 +548,26 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     padding-inline: 12px !important;
     white-space: nowrap;
   }
-  [role='dialog'][class*='_panel'] > nav [class*='_navLabel'] { width: auto !important; white-space: nowrap; }
-  /* 头部只留 X 关闭按钮：绝对定位到面板右上角，与 nav 同一行 */
-  [role='dialog'][class*='_panel'] [class*='_header'] {
-    height: 0;
-    padding: 0;
-    overflow: visible;
-    border: 0;
+  .dsh-layout-settings-tabs [class*='_navLabel'] { width: auto !important; white-space: nowrap; }
+  .dsh-layout-settings-close {
+    flex: 0 0 52px;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-  [role='dialog'][class*='_panel'] [class*='_header'] > [class*='actions'] { display: none !important; }
-  [role='dialog'][class*='_panel'] [class*='_close'] {
-    position: absolute;
-    inset-block-start: 6px;
-    inset-inline-end: 10px;
-    z-index: 3;
+  .dsh-layout-settings-content {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
   }
-  [role='dialog'][class*='_panel'] > [class*='_content'] {
-    flex: 1 1 auto !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-  }
-  [role='dialog'][class*='_panel'] > [class*='_content'] > [class*='_options'] {
-    min-width: 0 !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    padding-inline: 16px !important;
+  .dsh-layout-settings-content > [class*='_options'] {
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-inline: 16px;
   }
 
   /* Narrow header wrap: the crowded row flows to a second line instead of
