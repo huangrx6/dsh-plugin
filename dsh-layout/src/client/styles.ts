@@ -609,11 +609,15 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     box-shadow: none !important;
     background: var(--dsw-specific-sidebar-fill, var(--dsw-alias-bg-layer-2)) !important;
   }
-  /* Drawer top row: keep the brand, drop the app's own collapse toggle (the
-     floating X owns closing) and clear space for that X button. */
-  html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-sidebar-col] [class*='logoRow'] {
-    padding-inline-start: 52px !important;
+  /* Frosted material drives the drawer too: clear the opaque fills so the
+     material ::before sheet (blur/opacity/saturation from the 材质 setting)
+     shows through the fullscreen drawer. */
+  html[data-dsh-layout-mobile-sidebar][data-dsh-layout-material='on'] [data-dsh-layout-sidebar-col],
+  html[data-dsh-layout-mobile-sidebar][data-dsh-layout-material='on'] [data-dsh-layout-sidebar-col] > div > div {
+    background: transparent !important;
   }
+  /* Drawer top row: keep the brand, drop the app's own collapse toggle (the
+     floating handle owns opening/closing). */
   html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-sidebar-col] [class*='logoRow'] button[class*='toggle'] { display: none; }
   /* Compact native-app list rows; inline nodes ignore min-height, so the
      suffix match can only affect the row boxes themselves. */
@@ -656,15 +660,19 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     transform: rotate(-45deg);
     margin-inline-start: -3px;
   }
+  /* Mask: a quiet dim BELOW #root's stacking context. #root lifts to z:1
+     when a background or material is on, which would trap the drawer (z:42)
+     under a z:41 mask — drop the mask to z:0 so it never fogs or covers the
+     drawer, and never blurs. */
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-mask {
     position: fixed;
-    z-index: 41;
+    z-index: 0;
     inset: 0;
     border: 0;
     padding: 0;
     background: color-mix(in srgb, var(--dsw-alias-label-primary) 18%, transparent);
-    -webkit-backdrop-filter: blur(2px);
-    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
     display: block;
   }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-mask[hidden] { display: none; }
