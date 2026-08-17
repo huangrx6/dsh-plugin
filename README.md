@@ -20,34 +20,16 @@
 
 ## 安装
 
-### 一行安装（推荐）
-
-DSH 官方 CLI 自带 `dsh plugin` 命令（等价于在 profile 目录执行 pnpm）。四个插件任选：
-
-```bash
-dsh plugin --profile web add "github:huangrx6/dsh-plugin#main&path:/dsh-layout"
-dsh plugin --profile web add "github:huangrx6/dsh-plugin#main&path:/dsh-skill-manager"
-dsh plugin --profile web add "github:huangrx6/dsh-plugin#main&path:/dsh-mcp-manager"
-dsh plugin --profile web add "github:huangrx6/dsh-plugin#main&path:/dsh-remote-access"
-```
-
-pnpm（≥ 9）会克隆本仓库的对应子目录、安装依赖并执行 `prepare` 完成构建。`dsh plugin` 随后会自动对账 `dsh.profile.bundles`——包声明了 `dsh.bundle` 即自动加入加载层，**无需手改任何配置文件**。更新时重新执行上面的 add 命令（带完整 spec）。
-
-> ⚠️ 请勿使用 `dsh plugin update`：它会把 spec 里的 `#main&path:` 截断，导致装进整个仓库而非对应子包。
-
-```bash
-dsh plugin --profile web add "github:huangrx6/dsh-plugin#main&path:/dsh-layout"
-```
-
-没有本地 `dsh` 命令时用 `npx @deepseek-ai/dsh plugin --profile web add ...`。
-
-### 固定版本（Release 预构建包，免本机构建）
-
-仓库打 `v*` tag 后，GitHub Actions 自动构建并把 npm tarball 挂到 [Releases](https://github.com/huangrx6/dsh-plugin/releases)：
+所有插件通过 GitHub Release 预构建包安装（已含 `lib/` 产物，无需本机构建）：
 
 ```bash
 dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<tag>/dsh-layout-<version>.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<tag>/dsh-skill-manager-<version>.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<tag>/dsh-mcp-manager-<version>.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<tag>/dsh-remote-access-<version>.tgz
 ```
+
+把 `<tag>` 与 `<version>` 换为 [Releases 页](https://github.com/huangrx6/dsh-plugin/releases) 上最新的实际值即可，任选所需插件。装完重启 dsh（或 `/reload`）；更新时用新 tag 重跑同一条命令。没有本地 `dsh` 命令时用 `npx @deepseek-ai/dsh plugin --profile web add ...`。
 
 ### 本地开发（clone + link）
 
@@ -78,7 +60,8 @@ done
         "@deepseek-ai/dsh-web-app",
         "dsh-layout",
         "dsh-skill-manager",
-        "dsh-mcp-manager"
+        "dsh-mcp-manager",
+        "dsh-remote-access"
       ]
     }
   }

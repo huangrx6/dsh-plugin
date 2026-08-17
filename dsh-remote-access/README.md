@@ -46,19 +46,21 @@ Remote Access
 
 ## 安装
 
-前置（一次性，5 分钟）：
+通过 GitHub Release 预构建包安装（已含构建产物，无需本机构建）：
+
+```bash
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<tag>/dsh-remote-access-<version>.tgz
+```
+
+把 `<tag>` 与 `<version>` 换为 [Releases 页](https://github.com/huangrx6/dsh-plugin/releases) 上最新的实际值。装完重启 dsh（或 `/reload`）；升级时用新 tag 重跑同一条命令。
+
+### 一次性前置
 
 1. Mac 安装 [Tailscale](https://tailscale.com/download) 并登录
 2. 手机安装 Tailscale 并登录**同一 tailnet**
 3. （管理员一次性）Tailscale 管理后台 → DNS → MagicDNS → **HTTPS Certificates** 启用 —— `serve` 依赖它签发证书，这是唯一的外部依赖
 
-然后：
-
-```bash
-dsh plugin --profile web add "github:huangrx6/dsh-plugin#main&path:/dsh-remote-access"
-```
-
-重启 dsh（或 `/reload`）。远程目录选择器已自动切换完成（bundle patch 静态生效）。
+装好后远程目录选择器已自动切换完成（bundle patch 静态生效）。
 
 ## 使用
 

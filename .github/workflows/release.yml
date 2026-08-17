@@ -1,5 +1,6 @@
-# 打 tag（v*）时构建三个插件并把预构建的 npm tarball 挂到 GitHub Release。
-# 安装方随后可以一行安装固定版本、无需本机构建：
+# 打 tag（v*）时构建四个插件并把预构建的 npm tarball 挂到 GitHub Release。
+# 安装方随后可以一行安装固定版本、无需本机构建（tarball 安装不触发
+# pnpm allowBuilds 拦截，是 git 安装撞报错时的推荐替代）：
 #   dsh plugin --profile web add \
 #     https://github.com/huangrx6/dsh-plugin/releases/download/<tag>/dsh-layout-<version>.tgz
 name: release
@@ -30,7 +31,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          for pkg in dsh-layout dsh-skill-manager dsh-mcp-manager; do
+          for pkg in dsh-layout dsh-skill-manager dsh-mcp-manager dsh-remote-access; do
             echo "::group::build $pkg"
             (cd "$pkg" && pnpm install --no-frozen-lockfile && pnpm run build && pnpm pack --pack-destination ../dist)
             echo "::endgroup::"
