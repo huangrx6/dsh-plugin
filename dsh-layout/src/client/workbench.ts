@@ -1,17 +1,18 @@
 import type { DomSync } from "./dom-sync.ts";
 import type { LayoutStore } from "./store.ts";
+import type { LayoutSettings } from "./types.ts";
 
 const WORKBENCH_ATTR = "data-dsh-layout-workbench";
 const CARD_ATTR = "data-dsh-layout-composer-card";
 const CARD_ACTIONS_ATTR = "data-dsh-layout-composer-actions";
+const CARD_TOOLS_ATTR = "data-dsh-layout-composer-tools";
+const CARD_TRAILING_ATTR = "data-dsh-layout-composer-trailing";
 const ADD_BUTTON_ATTR = "data-dsh-layout-add-button";
 const CARD_TEXT_ATTR = "data-dsh-layout-composer-text";
 const CARD_BACKDROP_ATTR = "data-dsh-layout-composer-backdrop";
 const ROOT_ATTR = "data-dsh-layout-composer-root";
-const DOCK_ATTR = "data-dsh-layout-dock";
-const DOCK_ITEM_ATTR = "data-dsh-layout-dock-item";
 const SCROLL_ATTR = "data-dsh-layout-scroll-root";
-const MARK_SELECTOR = `[${WORKBENCH_ATTR}], [${ROOT_ATTR}], [${CARD_ATTR}], [${CARD_ACTIONS_ATTR}], [${ADD_BUTTON_ATTR}], [${CARD_TEXT_ATTR}], [${CARD_BACKDROP_ATTR}], [${DOCK_ATTR}], [${DOCK_ITEM_ATTR}], [${SCROLL_ATTR}]`;
+const MARK_SELECTOR = `[${WORKBENCH_ATTR}], [${ROOT_ATTR}], [${CARD_ATTR}], [${CARD_ACTIONS_ATTR}], [${CARD_TOOLS_ATTR}], [${CARD_TRAILING_ATTR}], [${ADD_BUTTON_ATTR}], [${CARD_TEXT_ATTR}], [${CARD_BACKDROP_ATTR}], [${SCROLL_ATTR}]`;
 
 /** Writes a data marker only when absent — silent in the steady state. */
 function toggleMark(element: HTMLElement, attribute: string): void {
@@ -26,19 +27,20 @@ function setVar(element: HTMLElement, name: string, value: string): void {
 }
 
 /**
- * Adds a visual shell around the existing composer without moving or replacing
+ * Adds a structural shell around the existing composer without moving or replacing
  * any DSH-owned nodes. Data attributes keep the integration reversible and
  * avoid coupling the stylesheet to generated CSS-module class names.
  *
- * Marking happens only while the footer is customized (frosted material and/or
- * full width); otherwise the composer keeps its fully native look. While the
- * store is peeking, marking is skipped the same way.
+ * Marking happens only while a composer-related setting is active (bounded
+ * scroll end, full width, or custom input rows); otherwise the composer keeps
+ * its fully native look. While the store is peeking, marking is skipped the
+ * same way.
  *
- * Width is not owned here: the composer card and the dock strips follow the
- * native `--dsh-composer-card-max-width` variable, which the stylesheet points
- * at `none` when the footer width is 'full'. This pass only marks structure —
- * card, actions row, text backdrop, dock zone, scroller — and keeps the shell
- * geometry (edge offsets) fresh.
+ * Width is not owned here: the composer card follows the native
+ * `--dsh-composer-card-max-width` variable, which the stylesheet points at
+ * `none` when the reading width is 'full'. This pass only marks structure —
+ * card, actions row, text backdrop, scroller — and keeps the shell geometry
+ * (seat height, scrollbar gutter) fresh.
  */
 export class ComposerWorkbench {
   private resizeObserver: ResizeObserver | undefined;
@@ -86,10 +88,9 @@ export class ComposerWorkbench {
         }
       },
       onStructural: (roots) => {
-        // Re-remark when the change touches the composer bar itself OR adds
-        // anything inside an already-marked workbench — session-scoped dock
-        // entries (todo/queue) render late inside the stack, and their marking
-        // must not depend on the bar being part of the same mutation batch.
+        // Re-remark when the change touches the composer bar itself — the
+        // streaming message list never does, so per-token cost stays at one
+        // querySelector.
         for (const root of roots) {
           if (
             root.matches(
@@ -97,14 +98,7 @@ export class ComposerWorkbench {
             ) ||
             root.querySelector(
               '[data-slot="conversation.composer.bar"], [data-slot="conversation.view"], [data-slot^="conversation.chat."]',
-            ) !== null ||
-            (this.doc.querySelector("[data-dsh-layout-workbench]") !== null &&
-              (root.matches(
-                '[data-dsh-layout-dock], [data-dsh-layout-dock-item], [data-queue-dock], [data-slot="conversation.input.dock"]',
-              ) ||
-                root.querySelector(
-                  '[data-dsh-layout-dock], [data-queue-dock], [data-slot="conversation.input.dock"]',
-                ) !== null))
+            ) !== null
           ) {
             this.remark();
             return;
@@ -141,11 +135,11 @@ export class ComposerWorkbench {
     this.clearMarkers();
   }
 
-  /** True while the footer is customized enough to need the shell: the
-      opaque floor (plate) and/or the full-width geometry. */
+  /** True while a composer-related setting needs the structural shell. These
+      concerns are independent: a bounded scroll end, full-width geometry, or
+      custom input rows may each activate the markers alone. */
   private footerActive(): boolean {
-    const { content, footer } = this.store.getSnapshot();
-    return !this.store.getPeek() && (footer.plate === "solid" || content.width === "full");
+    return workbenchActive(this.store.getSnapshot(), this.store.getPeek());
   }
 
   private remark(): void {
@@ -176,7 +170,7 @@ export class ComposerWorkbench {
       const phase = stack.closest("[data-phase]")?.getAttribute("data-phase");
       if (phase === "hero" || phase === "settling") continue;
       // The trace tab swaps the message column for its own canvas but keeps
-      // the composer mounted: the plate/width/rows configuration applies
+      // the composer mounted: the scroll-end/rows configuration applies
       // there exactly as in the conversation view.
       const scrollRoot = findScrollAncestor(stack, this.doc);
 
@@ -190,6 +184,11 @@ export class ComposerWorkbench {
       if (actions !== undefined) {
         toggleMark(actions, CARD_ACTIONS_ATTR);
         keep.add(actions);
+        const direct = Array.from(actions.children).filter((node): node is HTMLElement => node instanceof this.doc.defaultView!.HTMLElement);
+        const tools = direct[0];
+        const trailing = direct[1];
+        if (tools !== undefined) { toggleMark(tools, CARD_TOOLS_ATTR); keep.add(tools); }
+        if (trailing !== undefined) { toggleMark(trailing, CARD_TRAILING_ATTR); keep.add(trailing); }
       }
       const addButton = actions?.querySelector<HTMLButtonElement>("button");
       if (addButton !== undefined && addButton !== null) {
@@ -207,23 +206,6 @@ export class ComposerWorkbench {
         keep.add(backdrop);
       }
 
-      // The input dock hosts DSH-native strips (todo / queue / approvals). Mark
-      // the zone and each entry so the stylesheet can restyle every strip into
-      // the flat full-width bottom language instead of floating short cards.
-      const dock = stack.querySelector<HTMLElement>(
-        '[data-slot="conversation.input.dock"]',
-      );
-      if (dock !== null) {
-        toggleMark(dock, DOCK_ATTR);
-        keep.add(dock);
-        for (const child of Array.from(dock.children)) {
-          const item = elementNode(dock, child);
-          if (item !== undefined) {
-            toggleMark(item, DOCK_ITEM_ATTR);
-            keep.add(item);
-          }
-        }
-      }
       // The conversation scroller (no overscroll rubber-band) stays structural;
       // the composer width var lives on the chat root (see ShellRuntime).
       if (scrollRoot !== undefined) {
@@ -253,16 +235,12 @@ export class ComposerWorkbench {
       node.removeAttribute(ROOT_ATTR);
       node.removeAttribute(CARD_ATTR);
       node.removeAttribute(CARD_ACTIONS_ATTR);
+      node.removeAttribute(CARD_TOOLS_ATTR);
+      node.removeAttribute(CARD_TRAILING_ATTR);
       node.removeAttribute(ADD_BUTTON_ATTR);
       node.removeAttribute(CARD_TEXT_ATTR);
       node.removeAttribute(CARD_BACKDROP_ATTR);
-      node.removeAttribute(DOCK_ATTR);
-      node.removeAttribute(DOCK_ITEM_ATTR);
       node.removeAttribute(SCROLL_ATTR);
-      node.style.removeProperty("--dsh-layout-shell-left");
-      node.style.removeProperty("--dsh-layout-shell-right");
-      node.style.removeProperty("--dsh-layout-edge-left");
-      node.style.removeProperty("--dsh-layout-edge-right");
       node.style.removeProperty("--dsh-layout-scroll-gutter");
     }
   }
@@ -280,31 +258,8 @@ export class ComposerWorkbench {
       if (chatRoot !== null && seat !== null) {
         setVar(chatRoot, "--dsh-layout-seat-height", `${Math.round(seat.getBoundingClientRect().height)}px`);
       }
-      const stackRect = stack.getBoundingClientRect();
-      const cardRect = card.getBoundingClientRect();
-      setVar(
-        stack,
-        "--dsh-layout-shell-left",
-        `${Math.max(0, cardRect.left - stackRect.left)}px`,
-      );
-      setVar(
-        stack,
-        "--dsh-layout-shell-right",
-        `${Math.max(0, stackRect.right - cardRect.right)}px`,
-      );
       const scrollRoot = closestMarkedAncestor(stack, SCROLL_ATTR);
       if (scrollRoot !== undefined) {
-        const scrollRect = scrollRoot.getBoundingClientRect();
-        setVar(
-          stack,
-          "--dsh-layout-edge-left",
-          `${Math.max(0, stackRect.left - scrollRect.left)}px`,
-        );
-        setVar(
-          stack,
-          "--dsh-layout-edge-right",
-          `${Math.max(0, scrollRect.right - stackRect.right)}px`,
-        );
         // Classic scrollbars carve a gutter out of the scrollport; the sticky
         // composer seat fills only the client area, so a full-width composer
         // would stop short of the header's edge. Publish the live gutter width
@@ -317,24 +272,20 @@ export class ComposerWorkbench {
   }
 
   private clearMarkers(): void {
-    // Full teardown (dispose, footer back to native): removeProperty and
-    // removeAttribute are silent on absent targets, so this stays mutation-
-    // free once everything is gone.
+    // Full teardown (dispose, every setting back to native): removeProperty
+    // and removeAttribute are silent on absent targets, so this stays
+    // mutation-free once everything is gone.
     for (const node of this.doc.querySelectorAll<HTMLElement>(MARK_SELECTOR)) {
       node.removeAttribute(WORKBENCH_ATTR);
       node.removeAttribute(ROOT_ATTR);
       node.removeAttribute(CARD_ATTR);
       node.removeAttribute(CARD_ACTIONS_ATTR);
+      node.removeAttribute(CARD_TOOLS_ATTR);
+      node.removeAttribute(CARD_TRAILING_ATTR);
       node.removeAttribute(ADD_BUTTON_ATTR);
       node.removeAttribute(CARD_TEXT_ATTR);
       node.removeAttribute(CARD_BACKDROP_ATTR);
-      node.removeAttribute(DOCK_ATTR);
-      node.removeAttribute(DOCK_ITEM_ATTR);
       node.removeAttribute(SCROLL_ATTR);
-      node.style.removeProperty("--dsh-layout-shell-left");
-      node.style.removeProperty("--dsh-layout-shell-right");
-      node.style.removeProperty("--dsh-layout-edge-left");
-      node.style.removeProperty("--dsh-layout-edge-right");
       node.style.removeProperty("--dsh-layout-scroll-gutter");
     }
   }
@@ -361,6 +312,15 @@ export class ComposerWorkbench {
     }
     return undefined;
   }
+}
+
+/** Independent structural activation predicates for the composer workbench. */
+export function workbenchActive(settings: LayoutSettings, peeking = false): boolean {
+  return !peeking && (
+    settings.conversation.scrollEnd === "above" ||
+    settings.conversation.width === "full" ||
+    settings.conversation.inputRows !== null
+  );
 }
 
 export function composerCardMinimumWidth(viewportWidth: number): number {

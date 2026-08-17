@@ -1,20 +1,21 @@
 # DSH Layout
 
-`dsh-layout` is the single owner for layout, materials, background and composer choices in the DeepSeek Harness Web UI. Every setting defaults to the untouched native DSH interface; each one applies immediately and independently, and turning it off restores native exactly.
+`dsh-layout` owns the page material and a handful of conversation-level layout choices in the DeepSeek Harness Web UI. Every setting defaults to the untouched native DSH interface, and each setting changes only its own concern — turning it off restores native exactly.
 
 ## Design
 
-- **Four-layer material architecture (macOS-style).** A fixed L0 background canvas (color / image / looping video), L1 frosted surfaces (sidebar, header, content column, footer strip — the only layers allowed to `backdrop-filter`), L2 translucent fills (composer card, dock strips), and opaque L3 popovers (stats panel). Avoids glass-on-glass per Apple HIG and keeps blur cost to at most four full-height layers.
-- **Parameters, not presets.** Each frosted area exposes tier quick-picks (清透 / 标准 / 厚实) plus sliders for opacity (40–100%), blur (0–48px) and saturation (100–200%), with a theme-adaptive tint (`light-dark`) or a custom color. No built-in style presets that overwrite manual tuning.
-- **Settings push, stylesheet stays static.** The store renders every visual choice onto `<html>` as data switches plus CSS custom properties (`--dsh-glass-<area>`, radius, reading width, density, scale); removing a setting removes its variables, and the stylesheet degrades to native on its own.
-- **Escape hatches.** A fluid mode drops every blur for low-end GPUs and remote desktops; `prefers-reduced-transparency` and browsers without `backdrop-filter` fall back to the solid tint; a hold-to-compare button previews the native interface without persisting anything.
+- **One setting, one concern.** 全宽 and 收笔 are geometry-only (width / scroll extent — the composer keeps every native surface); 材质 is the only thing that paints; 气泡 / 轨迹 / 统计 each scope to their own surfaces. Nothing bundles unrelated styles.
+- **One material for the whole page.** A single frosted sheet family covers the sidebar and content columns, painted on `::before` layers (no host ever carries a `backdrop-filter`, which would break DSH's in-sidebar dialogs). Grade cards (宣纸 / 蝉翼 / 烟岚 / 琉璃) are named presets over the three numbers — opacity, blur, saturation — and the sliders remain the source of truth. `prefers-reduced-transparency` and browsers without `backdrop-filter` fall back to the solid tint.
+- **Settings push, stylesheet stays static.** The store renders every choice onto `<html>` as data switches plus CSS custom properties; removing a setting removes its variables, and the stylesheet degrades to native on its own.
+- **收笔 (对话止于输入区上方).** The composer seat pins to the conversation root and the scroller's bottom margin tracks its live height, so the log physically ends above the input. The scroll-to-bottom button keeps its native on-screen spot (its sticky slot re-anchors to the native 16px gap).
 - Uses the official `conversation.input.right` and `conversation.composer.dock` slots; keeps the native textarea, permissions, model selector, attachments and send behavior untouched; suppresses the native stats line only while a plugin stats mode is active.
 - Locates integration points through stable DSH landmarks (`data-slot` anchors, `data-conversation-scroll`, `data-composer-card`, …) plus reversible plugin-owned markers — never generated CSS-module class names.
-- Widths ride the native custom properties (`--dsh-chat-content-width`, `--dsh-composer-card-max-width`), so the reading width slider, the full-width footer and the dock strips always agree. Message density overrides the native column gap through the scroller-child ancestor of a turn slot.
+- Widths ride the native custom properties (`--dsh-chat-content-width`, `--dsh-composer-card-max-width`), so the reading width and the composer card always agree.
 - Statistics: native / in-composer icon / in-composer brief readout / full row below the composer, with per-metric visibility.
-- Profile persistence: the canonical live configuration is written by the host to `~/.dsh/dsh-layout.json` (v2 schema; the old preset-era shape is migrated once on load), so browser storage resets do not remove it. Named snapshots (方案) and JSON import/export live in the settings page.
+- Persistence: the canonical live configuration is written by the host to `~/.dsh/dsh-layout.json` (v3 schema; unknown older shapes collapse to defaults), so browser storage resets do not remove it.
+- One MutationObserver (DomSync) batches every DOM pass into a single rAF flush, with a watchdog timeout so passes never stall in hidden webviews (frozen rAF).
 
-Settings are available under **Settings → 页面布局**, organized as 全局（圆角 / 背景 / 流畅模式）→ 侧边栏 → 内容区头部 → 对话内容区（材质 / 阅读宽度 / 消息间距 / 内容缩放 / 滚动条）→ 底部输入区（材质 / 宽度 / 统计信息）→ 配置与方案.
+Settings are available under **Settings → 页面布局**, organized as 全局（滚动条）→ 材质（磨砂 / 档位 / 不透明度 / 模糊 / 饱和度）→ 对话（阅读宽度 / 输入框行数 / 收笔 / 气泡 / 轨迹页 / 统计信息）.
 
 ## Development
 

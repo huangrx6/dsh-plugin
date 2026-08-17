@@ -5,24 +5,23 @@ import { countOverrides, getPath, isOverridden, resetField, setPath } from '../s
 
 describe('per-field status and restore', () => {
   it('walks dot paths immutably', () => {
-    const settings = normalizeSettings({ content: { trace: { background: 'clear' } } })
-    expect(getPath(settings, 'content.trace.background')).toBe('clear')
-    const next = setPath(settings, 'content.trace.width', 'inset')
-    expect(getPath(next, 'content.trace.width')).toBe('inset')
-    expect(getPath(settings, 'content.trace.width')).toBe('full')
+    const settings = normalizeSettings({ conversation: { trace: { background: 'clear' } } })
+    expect(getPath(settings, 'conversation.trace.background')).toBe('clear')
+    const next = setPath(settings, 'conversation.trace.width', 'inset')
+    expect(getPath(next, 'conversation.trace.width')).toBe('inset')
+    expect(getPath(settings, 'conversation.trace.width')).toBe('full')
   })
 
   it('reports overrides only against native defaults', () => {
-    const settings = normalizeSettings({ global: { radius: 12 } })
-    expect(isOverridden(settings, 'global.radius')).toBe(true)
-    expect(isOverridden(settings, 'content.bubble')).toBe(false)
+    const settings = normalizeSettings({ material: { enabled: true } })
+    expect(isOverridden(settings, 'material.enabled')).toBe(true)
+    expect(isOverridden(settings, 'material.opacity')).toBe(false)
+    expect(isOverridden(settings, 'conversation.bubble')).toBe(false)
   })
 
-  it('counts leaf overrides and ignores profiles', () => {
-    const base = normalizeSettings({ global: { radius: 12 }, content: { width: 'full' } })
-    const withProfile = setPath(base, 'profiles', [{ id: 'p1', name: 'x', data: base }])
-    expect(countOverrides(base)).toBeGreaterThan(0)
-    expect(countOverrides(withProfile)).toBe(countOverrides(base))
+  it('counts leaf overrides', () => {
+    const base = normalizeSettings({ global: { scrollbar: 'hidden' }, conversation: { width: 'full' } })
+    expect(countOverrides(base)).toBe(2)
     expect(countOverrides(DEFAULT_SETTINGS)).toBe(0)
   })
 
@@ -32,9 +31,9 @@ describe('per-field status and restore', () => {
       getItem: key => values.get(key) ?? null,
       setItem: (key, value) => { values.set(key, value) },
     })
-    store.update({ global: { ...store.getSnapshot().global, radius: 12 } })
-    expect(isOverridden(store.getSnapshot(), 'global.radius')).toBe(true)
-    resetField(store, 'global.radius')
-    expect(isOverridden(store.getSnapshot(), 'global.radius')).toBe(false)
+    store.update({ conversation: { ...store.getSnapshot().conversation, scrollEnd: 'above' } })
+    expect(isOverridden(store.getSnapshot(), 'conversation.scrollEnd')).toBe(true)
+    resetField(store, 'conversation.scrollEnd')
+    expect(isOverridden(store.getSnapshot(), 'conversation.scrollEnd')).toBe(false)
   })
 })

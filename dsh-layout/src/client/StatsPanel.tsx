@@ -14,14 +14,14 @@ export interface StatsPanelInjected {
 /** In-composer entries (icon button / short readout) — both open the detail popover. */
 export function ToolbarStats(props: StatsPanelInjected): React.ReactElement | null {
   const settings = useSyncExternalStore(props.store.subscribe, props.store.getSnapshot, props.store.getSnapshot)
-  const mode = settings.footer.stats
+  const mode = settings.conversation.stats
   return mode === 'icon' || mode === 'brief' ? <StatsPanel {...props} mode={mode} /> : null
 }
 
 /** The full read-only row below the composer. */
 export function DockStats(props: StatsPanelInjected): React.ReactElement | null {
   const settings = useSyncExternalStore(props.store.subscribe, props.store.getSnapshot, props.store.getSnapshot)
-  return settings.footer.stats === 'below' ? <StatsPanel {...props} mode="below" /> : null
+  return settings.conversation.stats === 'below' ? <StatsPanel {...props} mode="below" /> : null
 }
 
 interface StatsPanelProps extends StatsPanelInjected {
@@ -33,7 +33,7 @@ function StatsPanel({ store, t, useProjection, mode }: StatsPanelProps): React.R
   const peeking = useSyncExternalStore(store.subscribe, store.getPeek, store.getPeek)
   const stats = useProjection('sessionStats')
   const usage = useProjection('tokenUsage')
-  const view = buildStatsView(stats, usage, t, settings.footer.statsMetrics)
+  const view = buildStatsView(stats, usage, t, settings.conversation.statsMetrics)
   const [pinned, setPinned] = useState(false)
   const panelId = useId()
   const rootRef = useRef<HTMLDivElement>(null)

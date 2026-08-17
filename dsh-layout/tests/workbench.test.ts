@@ -1,14 +1,24 @@
 import { describe, expect, it } from 'vitest'
-import { composerCardMinimumWidth } from '../src/client/workbench.ts'
+import { composerCardMinimumWidth, workbenchActive } from '../src/client/workbench.ts'
+import { DEFAULT_SETTINGS } from '../src/client/types.ts'
 
 describe('responsive composer workbench', () => {
   it('keeps the desktop composer detection conservative', () => {
     expect(composerCardMinimumWidth(1440)).toBe(300)
   })
 
-  it('allows the composer card to be detected on narrow screens', () => {
-    expect(composerCardMinimumWidth(390)).toBe(195)
-    expect(composerCardMinimumWidth(280)).toBe(160)
+  it('activates the bounded scroll end independently of reading width', () => {
+    expect(workbenchActive({
+      ...DEFAULT_SETTINGS,
+      conversation: { ...DEFAULT_SETTINGS.conversation, width: 'native', scrollEnd: 'above' },
+    })).toBe(true)
+  })
+
+  it('keeps every activation concern independent', () => {
+    expect(workbenchActive(DEFAULT_SETTINGS)).toBe(false)
+    expect(workbenchActive({ ...DEFAULT_SETTINGS, conversation: { ...DEFAULT_SETTINGS.conversation, width: 'full' } })).toBe(true)
+    expect(workbenchActive({ ...DEFAULT_SETTINGS, conversation: { ...DEFAULT_SETTINGS.conversation, inputRows: 3 } })).toBe(true)
+    expect(workbenchActive({ ...DEFAULT_SETTINGS, conversation: { ...DEFAULT_SETTINGS.conversation, scrollEnd: 'above' } }, true)).toBe(false)
   })
 })
 

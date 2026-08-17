@@ -20,9 +20,13 @@ export interface DomPass {
   onFull?: () => void
 }
 
+/** A frozen rAF must never stall a pass for longer than this. */
+const WATCHDOG_MS = 250
+
 export class DomSync {
   private observer: MutationObserver | undefined
   private frame = 0
+  private watchdog = 0
   private readonly passes = new Set<DomPass>()
   private readonly structuralQueue = new Set<Element>()
   private readonly attributeQueue = new Set<Element>()
@@ -64,11 +68,15 @@ export class DomSync {
   dispose(): void {
     this.observer?.disconnect()
     this.observer = undefined
+    const view = this.doc.defaultView
     if (this.frame !== 0) {
-      const view = this.doc.defaultView
       if (view?.cancelAnimationFrame !== undefined) view.cancelAnimationFrame(this.frame)
       else view?.clearTimeout(this.frame)
       this.frame = 0
+    }
+    if (this.watchdog !== 0) {
+      view?.clearTimeout(this.watchdog)
+      this.watchdog = 0
     }
     this.structuralQueue.clear()
     this.attributeQueue.clear()
@@ -95,10 +103,22 @@ export class DomSync {
     // unavailable (test environments), preserving batch semantics.
     const raf = view.requestAnimationFrame
       ?? ((callback: FrameRequestCallback): number => view.setTimeout(() => callback(view.performance.now()), 0) as unknown as number)
-    this.frame = raf.call(view, () => {
+    // Hidden webviews freeze rAF entirely (background tabs, occluded panes),
+    // which would stall every pass until visibility returns. The watchdog
+    // flushes instead; whichever callback runs first wins and disarms the
+    // other, so a visible page keeps pure rAF batching.
+    const run = (): void => {
+      if (this.frame === 0 && this.watchdog === 0) return
       this.frame = 0
+      view.clearTimeout(this.watchdog)
+      this.watchdog = 0
       this.flush()
-    })
+    }
+    this.frame = raf.call(view, () => run())
+    this.watchdog = view.setTimeout(() => {
+      this.frame = 0
+      run()
+    }, WATCHDOG_MS)
   }
 
   private flushing = false

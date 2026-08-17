@@ -1,44 +1,34 @@
 import type { DomSync } from "./dom-sync.ts";
 import type { LayoutStore } from "./store.ts";
-import type { GlassArea, GlassMaterial, ReadWidth } from "./types.ts";
+import type { MaterialSettings } from "./types.ts";
 
 const FRAME_ATTR = "data-dsh-layout-frame";
 const SIDEBAR_COL_ATTR = "data-dsh-layout-sidebar-col";
-const SIDEBAR_ROOT_ATTR = "data-dsh-layout-sidebar-root";
 const SIDEBAR_LIST_ATTR = "data-dsh-layout-sidebar-list";
 const CENTER_COL_ATTR = "data-dsh-layout-center-col";
-const DETAILS_COL_ATTR = "data-dsh-layout-details-col";
 const HEADER_ATTR = "data-dsh-layout-chrome-header";
 const CHAT_ROOT_ATTR = "data-dsh-layout-chat-root";
 const CHAT_COLUMN_ATTR = "data-dsh-layout-chat-column";
 const COMPOSER_WIDTH_ATTR = "data-dsh-layout-composer-width";
-const SHELL_MARK_SELECTOR = `[${FRAME_ATTR}], [${SIDEBAR_COL_ATTR}], [${SIDEBAR_ROOT_ATTR}], [${SIDEBAR_LIST_ATTR}], [${CENTER_COL_ATTR}], [${DETAILS_COL_ATTR}], [${HEADER_ATTR}], [${CHAT_ROOT_ATTR}], [${CHAT_COLUMN_ATTR}], [${COMPOSER_WIDTH_ATTR}]`;
-const DETAILS_TRACK_VAR = "--dsh-layout-details";
-const GLASS_AREAS: readonly GlassArea[] = ["sidebar", "header", "content", "footer"];
+const SHELL_MARK_SELECTOR = `[${FRAME_ATTR}], [${SIDEBAR_COL_ATTR}], [${SIDEBAR_LIST_ATTR}], [${CENTER_COL_ATTR}], [${HEADER_ATTR}], [${CHAT_ROOT_ATTR}], [${CHAT_COLUMN_ATTR}], [${COMPOSER_WIDTH_ATTR}]`;
 
 /** Writes a data marker only when absent — silent in the steady state. */
 function toggleMark(element: HTMLElement, attribute: string): void {
   if (!element.hasAttribute(attribute)) element.setAttribute(attribute, "");
 }
 
-/** Writes a custom property only when the value actually changed. */
-function setVar(element: HTMLElement, name: string, value: string): void {
-  if (element.style.getPropertyValue(name) !== value) {
-    element.style.setProperty(name, value);
-  }
-}
-
 /**
  * Marks the native three-column shell (ui-layout's AppFrame) and the
  * conversation chrome with plugin-owned data attributes, and pushes every
- * visual setting onto <html> as data switches + CSS variables.
+ * setting onto <html> as data switches + CSS variables.
  *
  * Locators are all stable DSH landmarks:
  * - the AppFrame is the only entry in the 'root' slot (its first element
- *   child), and exposes `data-sidebar-collapsed` / `data-details-collapsed`
- *   itself;
- * - the three columns are the frame's direct children in a fixed order;
- * - the conversation root and its header sit next to the native
+ *   child);
+ * - the sidebar column and the center column are the frame's direct
+ *   children in a fixed order; the session list is the tree inside the
+ *   sidebar column;
+ * - the conversation root sits next to the native
  *   `[data-conversation-scroll]` scroller;
  * - the message column is the scroller-child ancestor of a turn slot.
  *
@@ -62,20 +52,10 @@ export class ShellRuntime {
       onFull: () => {
         this.remark();
       },
-      // React rewrites the frame's inline gridTemplateColumns on resize,
-      // drag, and details open/close — keep the details-track var fresh.
-      onAttribute: (elements) => {
-        for (const node of elements) {
-          if (node.hasAttribute(FRAME_ATTR)) {
-            this.trackDetailsTrack(node as HTMLElement);
-            break;
-          }
-        }
-      },
-      // The conversation chrome (header slot, scroller, turns) mounts after
-      // boot and on conversation switches; re-remark only when the change
-      // touches it, never per streaming token (the chat column pass below
-      // covers late turn subtrees with one querySelector per flush).
+      // The conversation chrome (scroller, turns) mounts after boot and on
+      // conversation switches; re-remark only when the change touches it,
+      // never per streaming token (the chat column pass below covers late
+      // turn subtrees with one querySelector per flush).
       onStructural: (roots) => {
         for (const root of roots) {
           if (
@@ -108,7 +88,7 @@ export class ShellRuntime {
     this.clearMarkers();
   }
 
-  /** Push every visual setting onto <html>; the stylesheet keys off these. */
+  /** Push every setting onto <html>; the stylesheet keys off these. */
   private render(): void {
     const settings = this.store.getSnapshot();
     const root = this.doc.documentElement;
@@ -117,11 +97,11 @@ export class ShellRuntime {
       this.sync.requestFull();
       return;
     }
+
+    this.applyMaterial(root, settings.material);
+
     const { background } = settings.global;
     root.toggleAttribute("data-dsh-layout-bg", background.mode !== "native");
-    // Quality is the single public performance control. fluidGlass remains
-    // readable for old configs, but no longer creates a second UI concept.
-    root.toggleAttribute("data-dsh-layout-fluid", settings.global.quality === "performance" || settings.global.fluidGlass);
 
     const radius = settings.global.radius;
     root.toggleAttribute("data-dsh-layout-radius", radius !== null);
@@ -149,27 +129,6 @@ export class ShellRuntime {
       else root.style.removeProperty("--dsh-layout-dialog-height");
     }
 
-    this.applyGlass(root, "sidebar", settings.sidebar.glass);
-    this.applyGlass(root, "content", settings.content.glass);
-
-    this.applyReadWidth(root, settings.content.width);
-    const density = settings.content.density;
-    root.toggleAttribute("data-dsh-layout-density", density !== null);
-    if (density === null) root.style.removeProperty("--dsh-layout-density");
-    else root.style.setProperty("--dsh-layout-density", `${density}px`);
-
-    const scale = settings.content.scale;
-    root.toggleAttribute("data-dsh-layout-scale", scale !== 100);
-    if (scale === 100) {
-      root.style.removeProperty("--dsh-layout-scale");
-      root.style.removeProperty("--dsh-layout-scale-factor");
-    } else {
-      root.style.setProperty("--dsh-layout-scale", `${scale}%`);
-      // Unitless twin: px insets inside the zoomed scroller divide by it so
-      // their on-screen size matches the (unzoomed) header row.
-      root.style.setProperty("--dsh-layout-scale-factor", `${scale / 100}`);
-    }
-
     // Page padding tokens: only EXPLICIT custom values become inline
     // variables — unset sides keep the preset (or the native CSS entirely,
     // outside full-width mode), never a forced default.
@@ -186,79 +145,37 @@ export class ShellRuntime {
     }
     root.toggleAttribute("data-dsh-layout-narrow-wrap", narrow.headerWrap);
 
-    const sidebarWidth = settings.sidebar.width;
-    if (sidebarWidth === null) {
-      root.removeAttribute("data-dsh-layout-sidebar-width");
-      root.style.removeProperty("--dsh-layout-sidebar-width");
-    } else {
-      root.setAttribute("data-dsh-layout-sidebar-width", "");
-      root.style.setProperty("--dsh-layout-sidebar-width", `${sidebarWidth}px`);
-    }
-    for (const [name, value] of [
-      ["--dsh-layout-sidebar-pad-x", settings.sidebar.paddingX],
-      ["--dsh-layout-sidebar-pad-y", settings.sidebar.paddingY],
-      ["--dsh-layout-sidebar-row-height", settings.sidebar.rowHeight],
-      ["--dsh-layout-sidebar-row-gap", settings.sidebar.rowGap],
-    ] as const) {
-      if (value === null) root.style.removeProperty(name);
-      else root.style.setProperty(name, `${value}px`);
-    }
-    root.dataset.dshLayoutSidebarScrollbar = settings.sidebar.scrollbar;
-    root.dataset.dshLayoutAlign = settings.content.align;
-    root.dataset.dshLayoutQuality = settings.global.quality;
+    root.dataset.dshLayoutScrollbar = settings.global.scrollbar;
+    root.dataset.dshLayoutScrollEnd = settings.conversation.scrollEnd;
+    root.dataset.dshLayoutBubble = settings.conversation.bubble;
+    root.dataset.dshLayoutTraceBg = settings.conversation.trace.background;
+    root.dataset.dshLayoutTraceWidth = settings.conversation.trace.width;
+    root.dataset.dshLayoutTraceTail = settings.conversation.trace.tableTail;
+    if (settings.conversation.width === "full") root.dataset.dshLayoutReadWidth = "full";
+    else delete root.dataset.dshLayoutReadWidth;
 
-    root.dataset.dshLayoutScrollRange = settings.footer.scrollRange;
-    root.dataset.dshLayoutFooterPlate = settings.footer.plate;
-    root.style.setProperty("--dsh-layout-input-rows", String(settings.footer.rows));
+    const rows = settings.conversation.inputRows;
+    root.toggleAttribute("data-dsh-layout-input-rows", rows !== null);
+    if (rows === null) root.style.removeProperty("--dsh-layout-input-rows");
+    else root.style.setProperty("--dsh-layout-input-rows", String(rows));
 
-    root.dataset.dshLayoutScrollbar = settings.content.scrollbar;
-    root.dataset.dshLayoutBubble = settings.content.bubble;
-    root.dataset.dshLayoutTraceBg = settings.content.trace.background;
-    root.dataset.dshLayoutTraceWidth = settings.content.trace.width;
-    root.dataset.dshLayoutTraceTail = settings.content.trace.tableTail;
-    root.dataset.dshLayoutSidebarDivider = settings.sidebar.divider;
     this.sync.requestFull();
   }
 
-  private applyReadWidth(root: HTMLElement, width: ReadWidth): void {
-    if (width === "native") {
-      delete root.dataset.dshLayoutReadWidth;
-      root.style.removeProperty("--dsh-layout-read-width");
-      return;
-    }
-    root.dataset.dshLayoutReadWidth = width === "full" ? "full" : "custom";
-    if (width === "full") root.style.removeProperty("--dsh-layout-read-width");
-    else root.style.setProperty("--dsh-layout-read-width", `${width}px`);
-  }
-
-  /** Blur cap per rendering quality: balanced halves the frost cost,
-      performance drops every backdrop blur (flat fills stay). */
-  private blurCap(): number {
-    const quality = this.store.getSnapshot().global.quality;
-    if (quality === "balanced") return 16;
-    if (quality === "performance") return 0;
-    return 48;
-  }
-
-  private applyGlass(root: HTMLElement, area: GlassArea, material: GlassMaterial): void {
-    const attr = `dshLayout${area[0]!.toUpperCase()}${area.slice(1)}`;
-    root.dataset[attr] = material.enabled ? "glass" : "native";
-    const color = `--dsh-glass-${area}`;
-    const solid = `--dsh-glass-${area}-solid`;
-    const card = `--dsh-glass-${area}-card`;
-    const blur = `--dsh-glass-${area}-blur`;
-    const sat = `--dsh-glass-${area}-sat`;
+  /** The one page material: tint / solid / blur / saturation as variables the
+      two ::before sheets read. Native state removes every var. */
+  private applyMaterial(root: HTMLElement, material: MaterialSettings): void {
+    root.dataset.dshLayoutMaterial = material.enabled ? "on" : "off";
     if (!material.enabled) {
-      for (const key of [color, solid, card, blur, sat]) root.style.removeProperty(key);
+      for (const key of ["--dsh-layout-mat", "--dsh-layout-mat-solid", "--dsh-layout-mat-blur", "--dsh-layout-mat-sat"]) {
+        root.style.removeProperty(key);
+      }
       return;
     }
-    // The tint mixes in CSS (not JS) so '' keeps following the theme token.
-    const base = material.tint === "" ? "var(--dsh-layout-glass-base)" : material.tint;
-    root.style.setProperty(color, `color-mix(in srgb, ${base} ${material.opacity}%, transparent)`);
-    root.style.setProperty(solid, base);
-    root.style.setProperty(card, `color-mix(in srgb, ${base} ${Math.min(material.opacity + 15, 100)}%, transparent)`);
-    root.style.setProperty(blur, `${Math.min(material.blur, this.blurCap())}px`);
-    root.style.setProperty(sat, `${material.saturation}%`);
+    root.style.setProperty("--dsh-layout-mat", `color-mix(in srgb, var(--dsh-layout-glass-base) ${material.opacity}%, transparent)`);
+    root.style.setProperty("--dsh-layout-mat-solid", "var(--dsh-layout-glass-base)");
+    root.style.setProperty("--dsh-layout-mat-blur", `${material.blur}px`);
+    root.style.setProperty("--dsh-layout-mat-sat", `${material.saturation}%`);
   }
 
   private remark(): void {
@@ -273,28 +190,18 @@ export class ShellRuntime {
       const cols = frame.children;
       const sidebar = cols[0];
       const center = cols[1];
-      const details = cols[2];
       if (isElement(sidebar, this.doc)) {
         toggleMark(sidebar, SIDEBAR_COL_ATTR);
         keep.add(sidebar);
-        const sidebarRoot = sidebar.querySelector<HTMLElement>('[class*="_root"]');
-        if (sidebarRoot !== null) {
-          toggleMark(sidebarRoot, SIDEBAR_ROOT_ATTR);
-          keep.add(sidebarRoot);
-          const list = sidebarRoot.querySelector<HTMLElement>('[role="tree"]');
-          if (list !== null) {
-            toggleMark(list, SIDEBAR_LIST_ATTR);
-            keep.add(list);
-          }
+        const list = sidebar.querySelector<HTMLElement>('[role="tree"]');
+        if (list !== null) {
+          toggleMark(list, SIDEBAR_LIST_ATTR);
+          keep.add(list);
         }
       }
       if (isElement(center, this.doc)) {
         toggleMark(center, CENTER_COL_ATTR);
         keep.add(center);
-      }
-      if (isElement(details, this.doc)) {
-        toggleMark(details, DETAILS_COL_ATTR);
-        keep.add(details);
       }
 
       const scroll = this.doc.querySelector<HTMLElement>(
@@ -304,11 +211,10 @@ export class ShellRuntime {
       if (scroll !== null && isElement(chatRoot, this.doc)) {
         toggleMark(chatRoot, CHAT_ROOT_ATTR);
         keep.add(chatRoot);
-        // Full-bleed composer follows the content reading measure, not a
-        // separate footer switch. The value matters: the stylesheet keys
-        // off ='full'.
+        // Full-bleed composer follows the reading measure, not a separate
+        // switch. The value matters: the stylesheet keys off ='full'.
         const settings = this.store.getSnapshot();
-        const full = !this.store.getPeek() && settings.content.width === "full";
+        const full = !this.store.getPeek() && settings.conversation.width === "full";
         if (full) {
           if (chatRoot.getAttribute(COMPOSER_WIDTH_ATTR) !== "full") {
             chatRoot.setAttribute(COMPOSER_WIDTH_ATTR, "full");
@@ -329,29 +235,25 @@ export class ShellRuntime {
         }
         this.markChatColumn(keep);
       }
-      this.trackDetailsTrack(frame);
     }
     for (const node of this.doc.querySelectorAll<HTMLElement>(SHELL_MARK_SELECTOR)) {
       if (keep.has(node)) continue;
       node.removeAttribute(FRAME_ATTR);
       node.removeAttribute(SIDEBAR_COL_ATTR);
-      node.removeAttribute(SIDEBAR_ROOT_ATTR);
       node.removeAttribute(SIDEBAR_LIST_ATTR);
       node.removeAttribute(CENTER_COL_ATTR);
-      node.removeAttribute(DETAILS_COL_ATTR);
       node.removeAttribute(HEADER_ATTR);
       node.removeAttribute(CHAT_ROOT_ATTR);
       node.removeAttribute(CHAT_COLUMN_ATTR);
       node.removeAttribute(COMPOSER_WIDTH_ATTR);
-      node.style.removeProperty(DETAILS_TRACK_VAR);
     }
   }
 
   /**
    * The message column (native flex column with the 16px rhythm and the
    * --dsh-chat-content-width measure) is reached through any rendered turn;
-   * ancestors between the turn and the scroller get marked, so density
-   * overrides land on whichever ancestor actually owns the gap.
+   * ancestors between the turn and the scroller get marked, so bubble and
+   * full-width overrides land on whichever ancestor actually owns them.
    */
   private markChatColumn(keep: Set<Element>): void {
     const scroll = this.doc.querySelector<HTMLElement>("[data-conversation-scroll]");
@@ -381,83 +283,54 @@ export class ShellRuntime {
       : undefined;
   }
 
-  private trackDetailsTrack(frame: HTMLElement): void {
-    const track = this.doc.defaultView
-      ?.getComputedStyle(frame)
-      .gridTemplateColumns.trim()
-      .split(/\s+/u)
-      .at(-1);
-    if (track === undefined || !/^-?[\d.]+px$/u.test(track)) return;
-    setVar(frame, DETAILS_TRACK_VAR, track);
-  }
-
   private clearHtmlState(): void {
     const root = this.doc.documentElement;
     for (const attr of [
       "data-dsh-layout-bg",
-      "data-dsh-layout-fluid",
       "data-dsh-layout-radius",
-      "data-dsh-layout-density",
-      "data-dsh-layout-scale",
       "data-dsh-layout-dialog",
       "data-dsh-layout-narrow-wrap",
-      "data-dsh-layout-sidebar-width",
+      "data-dsh-layout-padding-custom",
     ]) {
       root.removeAttribute(attr);
     }
-    delete root.dataset.dshLayoutSidebar;
-    delete root.dataset.dshLayoutHeader;
-    delete root.dataset.dshLayoutContent;
-    delete root.dataset.dshLayoutFooter;
-    delete root.dataset.dshLayoutScrollRange;
-    delete root.dataset.dshLayoutFooterPlate;
-    delete root.dataset.dshLayoutReadWidth;
+    delete root.dataset.dshLayoutMaterial;
     delete root.dataset.dshLayoutScrollbar;
+    delete root.dataset.dshLayoutScrollEnd;
     delete root.dataset.dshLayoutBubble;
     delete root.dataset.dshLayoutTraceBg;
     delete root.dataset.dshLayoutTraceWidth;
     delete root.dataset.dshLayoutTraceTail;
-    delete root.dataset.dshLayoutSidebarDivider;
-    delete root.dataset.dshLayoutSidebarScrollbar;
-    delete root.dataset.dshLayoutAlign;
-    delete root.dataset.dshLayoutQuality;
+    delete root.dataset.dshLayoutReadWidth;
+    root.removeAttribute("data-dsh-layout-input-rows");
     for (const key of [
       "--dsh-layout-radius-user",
       "--dsh-layout-radius-user-lg",
       "--dsh-layout-ring-mask",
-      "--dsh-layout-read-width",
-      "--dsh-layout-density",
-      "--dsh-layout-scale",
-      "--dsh-layout-scale-factor",
-      "--dsh-layout-input-rows",
       "--dsh-layout-dialog-width",
       "--dsh-layout-dialog-height",
-      "--dsh-layout-sidebar-width",
-      "--dsh-layout-sidebar-pad-x",
-      "--dsh-layout-sidebar-pad-y",
-      "--dsh-layout-sidebar-row-height",
-      "--dsh-layout-sidebar-row-gap",
+      "--dsh-layout-mat",
+      "--dsh-layout-mat-solid",
+      "--dsh-layout-mat-blur",
+      "--dsh-layout-mat-sat",
+      "--dsh-layout-input-rows",
+      "--dsh-layout-pad-header-start",
+      "--dsh-layout-pad-header-end",
+      "--dsh-layout-pad-content-start",
+      "--dsh-layout-pad-content-end",
+      "--dsh-layout-pad-composer-start",
+      "--dsh-layout-pad-composer-end",
     ]) {
       root.style.removeProperty(key);
-    }
-    for (const area of GLASS_AREAS) {
-      for (const suffix of ["", "-solid", "-card", "-blur", "-sat"]) {
-        root.style.removeProperty(`--dsh-glass-${area}${suffix}`);
-      }
     }
   }
 
   private clearMarkers(): void {
-    for (const node of this.doc.querySelectorAll<HTMLElement>(
-      `[${FRAME_ATTR}], [${SIDEBAR_COL_ATTR}], [${CENTER_COL_ATTR}], [${DETAILS_COL_ATTR}], [${HEADER_ATTR}], [${CHAT_ROOT_ATTR}], [${CHAT_COLUMN_ATTR}], [${COMPOSER_WIDTH_ATTR}]`,
-    )) {
-      node.style.removeProperty(DETAILS_TRACK_VAR);
+    for (const node of this.doc.querySelectorAll<HTMLElement>(SHELL_MARK_SELECTOR)) {
       node.removeAttribute(FRAME_ATTR);
       node.removeAttribute(SIDEBAR_COL_ATTR);
-      node.removeAttribute(SIDEBAR_ROOT_ATTR);
       node.removeAttribute(SIDEBAR_LIST_ATTR);
       node.removeAttribute(CENTER_COL_ATTR);
-      node.removeAttribute(DETAILS_COL_ATTR);
       node.removeAttribute(HEADER_ATTR);
       node.removeAttribute(CHAT_ROOT_ATTR);
       node.removeAttribute(CHAT_COLUMN_ATTR);

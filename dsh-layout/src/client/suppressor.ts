@@ -62,7 +62,7 @@ export class OriginalStatsSuppressor {
   }
 
   private apply(): void {
-    const active = !this.store.getPeek() && this.store.getSnapshot().footer.stats !== 'native' && this.built
+    const active = !this.store.getPeek() && this.store.getSnapshot().conversation.stats !== 'native' && this.built
     this.doc.documentElement.toggleAttribute(ACTIVE_ATTR, active)
   }
 }
