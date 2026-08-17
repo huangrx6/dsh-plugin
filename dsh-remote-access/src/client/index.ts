@@ -34,7 +34,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   }
 }
 
-export const inject = ['slots', 'locale', 'connection', 'theme']
+export const inject = ['slots', 'locale', 'connection', 'theme', 'remote']
 
 export function apply(ctx: ClientContext): void {
   const connection = (ctx as unknown as { connection: ConnectionHandle }).connection
