@@ -400,7 +400,7 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
   .dsh-layout-trigger { max-width: 88px; }
   .dsh-layout-trigger--icon { flex: none; max-width: none; }
 }
-.dsh-layout-panel { z-index: 120; width: 304px; box-sizing: border-box; position: fixed; padding: 14px 16px 12px; border: 1px solid var(--dsh-layout-line); border-radius: var(--dsh-layout-radius-lg); background: var(--dsh-layout-solid); color: var(--dsw-alias-label-secondary); box-shadow: 0 18px 48px light-dark(rgb(23 32 44 / .14), rgb(0 0 0 / .48)), 0 2px 8px rgb(0 0 0 / .06); font-size: 12px; line-height: 20px; animation: dsh-layout-in .12s ease-out; }
+.dsh-layout-panel { z-index: 120; width: 304px; box-sizing: border-box; position: fixed; left: var(--dsh-layout-popover-x, 0px); padding: 14px 16px 12px; border: 1px solid var(--dsh-layout-line); border-radius: var(--dsh-layout-radius-lg); background: var(--dsh-layout-solid); color: var(--dsw-alias-label-secondary); box-shadow: 0 18px 48px light-dark(rgb(23 32 44 / .14), rgb(0 0 0 / .48)), 0 2px 8px rgb(0 0 0 / .06); font-size: 12px; line-height: 20px; animation: dsh-layout-in .12s ease-out; }
 .dsh-layout-panel::after { content: none; }
 .dsh-layout-root--dock .dsh-layout-panel { animation-name: dsh-layout-dock-in; }
 .dsh-layout-panel__header { display: flex; align-items: center; gap: 10px; color: var(--dsw-alias-label-primary); padding: 1px 1px 12px; }
@@ -632,7 +632,10 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     gap: 6px;
   }
   [data-dsh-layout-composer-trailing] > * { min-width: 0 !important; }
-  [data-dsh-layout-composer-trailing] [class*='_root'] { min-width: 0 !important; overflow: hidden; }
+  /* 视觉裁切放在 trigger（按钮）层：菜单（_menu）是 absolute 挂在芯片 root 下的，
+     root 一旦 overflow:hidden 会连同菜单一起裁掉（推理强度/模型菜单点不开）。
+     按钮自身 overflow:hidden 即可实现窄屏省略号，root 保持 visible。 */
+  [data-dsh-layout-composer-trailing] [class*='_root'] { min-width: 0 !important; }
   [data-dsh-layout-composer-trailing] [class*='_triggerLabel'] { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   [data-dsh-layout-composer-trailing] [class*='_trigger'] { max-width: 100%; min-width: 0 !important; overflow: hidden; }
   [data-dsh-layout-composer-trailing] [class*='_primary'] { width: 36px !important; min-width: 36px !important; }
