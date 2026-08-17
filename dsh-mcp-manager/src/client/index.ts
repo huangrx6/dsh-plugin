@@ -15,6 +15,17 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   }
 }
 
+
+declare module '@deepseek-ai/dsh-client-ui-slots' {
+  interface SlotMap {
+    'settings.thirdparty.tab': {
+      kind: 'list'
+      scope: 'root'
+      owner: Record<string, never>
+    }
+  }
+}
+
 export const inject = ['slots', 'locale', 'connection']
 
 export function apply(ctx: ClientContext): void {
@@ -26,8 +37,8 @@ export function apply(ctx: ClientContext): void {
 
   ctx.effect(() => installStyles(document), 'dsh-mcp-manager: styles')
 
-  ctx.slots.inject('settings.plugins.tab', () => ctx.slots.register({
-    name: 'settings.plugins.tab',
+  ctx.slots.inject('settings.thirdparty.tab', () => ctx.slots.register({
+    name: 'settings.thirdparty.tab',
     id: 'mcp',
     order: 30,
     label: () => t('tab'),
