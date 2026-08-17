@@ -103,9 +103,11 @@ describe("one setting, one concern — stylesheet regression locks", () => {
 
 
   it("phones: the context-usage panel keeps its anchored size; the hero keeps native geometry", () => {
-    // The context meter panel is role=dialog + _panel (no nav) — the settings
-    // fullscreen collapse must be scoped to dialogs that own a nav rail.
-    expect(css).toContain("[role='dialog'][class*='_panel']:has(> nav) {");
+    // The context meter panel is role=dialog + _panel (no nav, and no runtime
+    // topbar) — the settings fullscreen collapse stays scoped to the settings
+    // dialog. The phone topbar runtime moves the nav out of direct childhood,
+    // so both markers must be accepted.
+    expect(css).toContain("[role='dialog'][class*='_panel']:has(> nav, > .dsh-layout-settings-topbar) {");
     expect(css).not.toMatch(/\[role='dialog'\]\[class\*='_panel'\]\s*\{[^}]*100vw/);
     // A marked hero (phone grid re-layout) must not receive 收笔/全宽 geometry:
     // pinning its seat drags the welcome card to the bottom.

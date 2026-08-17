@@ -55,12 +55,14 @@ export class SettingsTopbarRuntime {
     const view = this.doc.defaultView;
     if (view === null || view.matchMedia("(max-width: 767px)").matches !== true)
       return;
-    const panel = this.doc.querySelector<HTMLElement>(PANEL_SELECTOR);
-    if (
-      panel === null ||
-      panel.querySelector(`:scope > .${TOPBAR_CLASS}`) !== null
-    )
-      return;
+    // The context-usage popover also matches PANEL_SELECTOR but owns no nav;
+    // if it is open it precedes the settings panel in the tree and would
+    // shadow it in a plain querySelector. The find also keeps this
+    // idempotent: a restructured panel no longer has a direct nav child.
+    const panel = Array.from(
+      this.doc.querySelectorAll<HTMLElement>(PANEL_SELECTOR),
+    ).find(candidate => candidate.querySelector(":scope > nav") !== null);
+    if (panel === undefined) return;
     const nav = panel.querySelector<HTMLElement>(":scope > nav");
     const content = panel.querySelector<HTMLElement>(
       ':scope > [class*="_content"]',

@@ -372,8 +372,11 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
    the whole dialog content. overflow:clip is not a scroll container at all,
    so focus scrolling routes to the real scroller. Visually clip === hidden.
    Scoped to the settings panel (_panel): centered z-1000 modals portal to
-   document.body and must stay untouched. */
-[role='dialog'][class*='_panel']:has(> nav) { overflow: clip !important; }
+   document.body and must stay untouched. On phones the settings-topbar
+   runtime re-homes the nav into its topbar wrapper, so the wrapper must
+   count as the marker too — a direct-child nav selector alone misses the
+   restructured panel. */
+[role='dialog'][class*='_panel']:has(> nav, > .dsh-layout-settings-topbar) { overflow: clip !important; }
 
 /* 统计入口 */
 .dsh-layout-root { position: relative; display: inline-flex; flex: none; color: var(--dsw-alias-label-secondary); }
@@ -520,10 +523,12 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   /* DSH's outer settings panel is desktop row-based by default (188px nav
      + a tiny content column at phone widths). SettingsTopbarRuntime wraps the
      nav + close into a 52px topbar; the content scrolls below. */
-  /* Scoped via :has(> nav): only the settings dialog owns a nav rail. DSH's
-     context-usage panel is also role=dialog + _panel — the broad selector
+  /* Scoped to the settings dialog: it owns a nav rail — and on phones the
+     settings-topbar runtime moves that nav into its topbar wrapper, so the
+     runtime-injected topbar must count as the marker too. DSH's context-usage
+     panel is also role=dialog + _panel but owns neither — the broad selector
      blew it up to a fullscreen sheet (太大/太高溢出). */
-  [role='dialog'][class*='_panel']:has(> nav) {
+  [role='dialog'][class*='_panel']:has(> nav, > .dsh-layout-settings-topbar) {
     width: 100vw !important;
     max-width: none !important;
     height: 100dvh !important;
