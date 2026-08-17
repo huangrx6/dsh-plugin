@@ -730,6 +730,12 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-sidebar-col] button[class*='newSession'] {
     min-height: 44px;
   }
+  /* 工作区区块头的操作按钮（新增工作区 + / 搜索 / 更多）：DSH 宽态下把
+     headerActions 限到 60px 并溢出裁剪，而触摸屏没有 hover 展开，导致最左
+     的「新增工作区」+ 被裁掉。移动抽屉里放开，三个按钮都可见。 */
+  html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-sidebar-col] [class*='headerActions'] {
+    max-width: none !important;
+  }
 
   /* Edge handle: a slim bar at mid-height that OPENS the drawer; hidden once
      open (closing moves to the top-right X button). */
