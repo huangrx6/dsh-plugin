@@ -48,7 +48,8 @@ jobs:
           for f in *-*.tgz; do
             cp "$f" "$(basename "$f" | sed 's/-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*.*\.tgz$/.tgz/')"
           done
-          ls -lh dist/
+          ls -lh ./
+          cd ..
 
       - uses: softprops/action-gh-release@v2
         with:
