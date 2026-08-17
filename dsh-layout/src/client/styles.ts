@@ -266,6 +266,41 @@ html[data-dsh-layout-read-width='full'] [data-dsh-layout-chat-column][class*='_s
   padding-right: var(--dsh-layout-pad-content-end, 28px) !important;
 }
 
+/* ── 页面边距（自定义，desktop/mobile 独立）────────────────────────────────
+   'custom' 模式下 ShellRuntime 写入 desktop/mobile 两套内联变量（显式值或
+   预设）；这些规则直接钉到内容列 / 头部 / 输入区，与阅读宽度等其它特性无关。
+   'auto' 模式移除属性与变量，页面回到 DSH 原生边距。 */
+html[data-dsh-layout-padding-custom] [data-dsh-layout-chat-column],
+html[data-dsh-layout-padding-custom] [data-dsh-layout-chat-column][class*='_scroll'] {
+  padding-left: var(--dsh-layout-pad-content-start) !important;
+  padding-right: var(--dsh-layout-pad-content-end) !important;
+}
+html[data-dsh-layout-padding-custom] [data-dsh-layout-chrome-header],
+html[data-dsh-layout-padding-custom] [data-dsh-layout-chrome-header] [class$='header'] {
+  padding-inline-start: var(--dsh-layout-pad-header-start) !important;
+  padding-inline-end: var(--dsh-layout-pad-header-end) !important;
+}
+html[data-dsh-layout-padding-custom] [data-dsh-layout-composer-root] {
+  padding-left: var(--dsh-layout-pad-composer-start) !important;
+  padding-right: var(--dsh-layout-pad-composer-end) !important;
+}
+@media (max-width: 767px) {
+  html[data-dsh-layout-padding-custom] [data-dsh-layout-chat-column],
+  html[data-dsh-layout-padding-custom] [data-dsh-layout-chat-column][class*='_scroll'] {
+    padding-left: var(--dsh-layout-pad-mobile-content-start) !important;
+    padding-right: var(--dsh-layout-pad-mobile-content-end) !important;
+  }
+  html[data-dsh-layout-padding-custom] [data-dsh-layout-chrome-header],
+  html[data-dsh-layout-padding-custom] [data-dsh-layout-chrome-header] [class$='header'] {
+    padding-inline-start: var(--dsh-layout-pad-mobile-header-start) !important;
+    padding-inline-end: var(--dsh-layout-pad-mobile-header-end) !important;
+  }
+  html[data-dsh-layout-padding-custom] [data-dsh-layout-composer-root] {
+    padding-left: var(--dsh-layout-pad-mobile-composer-start) !important;
+    padding-right: var(--dsh-layout-pad-mobile-composer-end) !important;
+  }
+}
+
 /* ── 收笔（止于输入区上方，纯几何）─────────────────────────────────────────
    The composer is pulled out of the scroll flow: the seat pins to the
    conversation root (absolute, escaping the static scroller) and the
@@ -664,6 +699,17 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     display: grid;
     place-items: center;
     cursor: pointer;
+  }
+  /* Enlarged invisible tap target: the visual stays a slim 6px handle while
+     the hit area reaches a phone-friendly size (smaller once open, so it
+     doesn't overlap the drawer's list rows). */
+  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger::before {
+    content: '';
+    position: absolute;
+    inset: -12px -32px -12px 0;
+  }
+  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger[aria-expanded='true']::before {
+    inset: -12px -16px -12px 0;
   }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger > span {
     width: 6px;

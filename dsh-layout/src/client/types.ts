@@ -64,9 +64,9 @@ export interface BackgroundSettings {
   readonly videoUrl: string
 }
 
-/** Page paddings as layout tokens: full-width presets (desktop 20/28 header,
-    28 content/composer) overridden by a mobile preset (0/8, 8/8, 8/8) and
-    finally by explicit user values. Native width mode is untouched. */
+/** Page paddings: desktop and mobile each control the header / content /
+    composer left-right edges. null falls back to that side's preset while
+    the mode is 'custom'; 'auto' keeps DSH's native paddings. */
 export type PaddingMode = 'auto' | 'custom'
 
 export interface PaddingSides {
@@ -74,12 +74,31 @@ export interface PaddingSides {
   readonly right: number | null
 }
 
-export interface PaddingSettings {
-  readonly mode: PaddingMode
+export interface PaddingArea {
   readonly header: PaddingSides
   readonly content: PaddingSides
   readonly composer: PaddingSides
 }
+
+export interface PaddingSettings {
+  readonly mode: PaddingMode
+  readonly desktop: PaddingArea
+  readonly mobile: PaddingArea
+}
+
+/** Preset edges used when a side is left empty in 'custom' mode. */
+export const PAD_PRESETS = Object.freeze({
+  desktop: Object.freeze({
+    header: Object.freeze({ left: 20, right: 28 }),
+    content: Object.freeze({ left: 28, right: 28 }),
+    composer: Object.freeze({ left: 28, right: 28 }),
+  }),
+  mobile: Object.freeze({
+    header: Object.freeze({ left: 0, right: 8 }),
+    content: Object.freeze({ left: 8, right: 8 }),
+    composer: Object.freeze({ left: 8, right: 8 }),
+  }),
+})
 
 /** Narrow-viewport (< 768px) adaptation: header wrapping against crowding,
     and the sidebar presentation — native keeps DSH's squeezed rail, fullscreen
@@ -162,9 +181,16 @@ export const DEFAULT_SETTINGS: LayoutSettings = Object.freeze({
     dialog: Object.freeze({ width: null, height: null }),
     padding: Object.freeze({
       mode: 'auto' as const,
-      header: Object.freeze({ left: null, right: null }),
-      content: Object.freeze({ left: null, right: null }),
-      composer: Object.freeze({ left: null, right: null }),
+      desktop: Object.freeze({
+        header: Object.freeze({ left: null, right: null }),
+        content: Object.freeze({ left: null, right: null }),
+        composer: Object.freeze({ left: null, right: null }),
+      }),
+      mobile: Object.freeze({
+        header: Object.freeze({ left: null, right: null }),
+        content: Object.freeze({ left: null, right: null }),
+        composer: Object.freeze({ left: null, right: null }),
+      }),
     }),
     narrow: Object.freeze({ headerWrap: true, sidebar: 'native' as const }),
   }),

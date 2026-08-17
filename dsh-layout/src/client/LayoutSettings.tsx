@@ -24,6 +24,7 @@ import {
   MATERIAL_GRADES,
   MATERIAL_LIMITS,
   PAD_LIMITS,
+  PAD_PRESETS,
   RADIUS_LIMITS,
   STATS_METRICS,
   materialGrade,
@@ -186,16 +187,23 @@ function GlobalCard({ store, settings }: { store: LayoutStore; settings: LayoutS
         <SegmentedButton pressed={global.padding.mode === 'auto'} onClick={() => setGlobal({ padding: { ...global.padding, mode: 'auto' } })}>自动</SegmentedButton>
         <SegmentedButton pressed={global.padding.mode === 'custom'} onClick={() => setGlobal({ padding: { ...global.padding, mode: 'custom' } })}>自定义</SegmentedButton>
       </div>
-      {global.padding.mode === 'custom' && <div className="dsh-layout-pads">
-        {([['header', '头部', 20, 28], ['content', '内容区', 28, 28], ['composer', '输入区', 28, 28]] as const).map(([area, label, presetL, presetR]) => (
-          <div key={area} className="dsh-layout-pads__row">
-            <span>{label}</span>
-            <label>左 <input type="number" min={PAD_LIMITS[0]} max={PAD_LIMITS[1]} placeholder={String(presetL)} value={global.padding[area].left ?? ''} onChange={event => setGlobal({ padding: { ...global.padding, [area]: { ...global.padding[area], left: event.target.value === '' ? null : Number(event.target.value) } } })} /></label>
-            <label>右 <input type="number" min={PAD_LIMITS[0]} max={PAD_LIMITS[1]} placeholder={String(presetR)} value={global.padding[area].right ?? ''} onChange={event => setGlobal({ padding: { ...global.padding, [area]: { ...global.padding[area], right: event.target.value === '' ? null : Number(event.target.value) } } })} /></label>
-          </div>
-        ))}
-        <p className="dsh-layout-pads__hint">留空使用预设（桌面全宽 20/28、28/28；手机 0/8、8/8）；仅全宽模式生效。</p>
-      </div>}
+      {global.padding.mode === 'custom' && (['desktop', 'mobile'] as const).map(viewport => (
+        <div key={viewport} className="dsh-layout-pads">
+          <p className="dsh-layout-pads__hint">{viewport === 'desktop' ? '桌面端 >767px' : '手机端 ≤767px'} · 留空使用预设</p>
+          {([['header', '头部'], ['content', '内容区'], ['composer', '输入区']] as const).map(([area, label]) => {
+            const preset = PAD_PRESETS[viewport][area]
+            const sides = global.padding[viewport][area]
+            const setSide = (side: 'left' | 'right', raw: string): void => setGlobal({ padding: { ...global.padding, [viewport]: { ...global.padding[viewport], [area]: { ...sides, [side]: raw === '' ? null : Number(raw) } } } })
+            return (
+              <div key={area} className="dsh-layout-pads__row">
+                <span>{label}</span>
+                <label>左 <input type="number" min={PAD_LIMITS[0]} max={PAD_LIMITS[1]} placeholder={String(preset.left)} value={sides.left ?? ''} onChange={event => setSide('left', event.target.value)} /></label>
+                <label>右 <input type="number" min={PAD_LIMITS[0]} max={PAD_LIMITS[1]} placeholder={String(preset.right)} value={sides.right ?? ''} onChange={event => setSide('right', event.target.value)} /></label>
+              </div>
+            )
+          })}
+        </div>
+      ))}
     </Field>
     <Field icon={<MobileIcon />} label="窄屏头部换行" path="global.narrow.headerWrap">
       <Toggle checked={global.narrow.headerWrap} onChange={value => setGlobal({ narrow: { ...global.narrow, headerWrap: value } })} label={global.narrow.headerWrap ? '开启（防重叠）' : '关闭（原生）'} />

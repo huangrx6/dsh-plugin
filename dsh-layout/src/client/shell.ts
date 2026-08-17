@@ -1,5 +1,6 @@
 import type { DomSync } from "./dom-sync.ts";
 import type { LayoutStore } from "./store.ts";
+import { PAD_PRESETS } from "./types.ts";
 import type { MaterialSettings } from "./types.ts";
 
 const FRAME_ATTR = "data-dsh-layout-frame";
@@ -143,24 +144,26 @@ export class ShellRuntime {
       root.style.removeProperty("--dsh-layout-dialog-height");
     } else {
       root.setAttribute("data-dsh-layout-dialog", "");
-      if (dialog.width !== null) root.style.setProperty("--dsh-layout-dialog-width", `${dialog.width}px`);
-      else root.style.removeProperty("--dsh-layout-dialog-width");
-      if (dialog.height !== null) root.style.setProperty("--dsh-layout-dialog-height", `${dialog.height}px`);
-      else root.style.removeProperty("--dsh-layout-dialog-height");
+      if (dialog.width === null) root.style.removeProperty("--dsh-layout-dialog-width"); else root.style.setProperty("--dsh-layout-dialog-width", `${dialog.width}px`);
+      if (dialog.height === null) root.style.removeProperty("--dsh-layout-dialog-height"); else root.style.setProperty("--dsh-layout-dialog-height", `${dialog.height}px`);
     }
 
-    // Page padding tokens: only EXPLICIT custom values become inline
-    // variables — unset sides keep the preset (or the native CSS entirely,
-    // outside full-width mode), never a forced default.
+    // Page padding tokens: desktop keeps the old var names, mobile adds a
+    // -mobile- prefix. In 'custom' mode every side resolves (explicit value
+    // or its preset); 'auto' removes all of them so DSH-native paddings win.
     const { padding, narrow } = settings.global;
     root.toggleAttribute("data-dsh-layout-padding-custom", padding.mode === "custom");
-    for (const area of ["header", "content", "composer"] as const) {
-      const sides = padding[area];
-      for (const [side, token] of [["left", "start"], ["right", "end"]] as const) {
-        const name = `--dsh-layout-pad-${area}-${token}`;
-        const value = padding.mode === "custom" ? sides[side] : null;
-        if (value !== null) root.style.setProperty(name, `${value}px`);
-        else root.style.removeProperty(name);
+    for (const viewport of ["desktop", "mobile"] as const) {
+      for (const area of ["header", "content", "composer"] as const) {
+        const sides = padding[viewport][area];
+        for (const [side, token] of [["left", "start"], ["right", "end"]] as const) {
+          const name = viewport === "desktop"
+            ? `--dsh-layout-pad-${area}-${token}`
+            : `--dsh-layout-pad-mobile-${area}-${token}`;
+          const explicit = sides[side];
+          const value = padding.mode === "custom" ? (explicit ?? PAD_PRESETS[viewport][area][side]) : null;
+          if (value === null) root.style.removeProperty(name); else root.style.setProperty(name, `${value}px`);
+        }
       }
     }
     root.toggleAttribute("data-dsh-layout-narrow-wrap", narrow.headerWrap);
@@ -347,6 +350,12 @@ export class ShellRuntime {
       "--dsh-layout-pad-content-end",
       "--dsh-layout-pad-composer-start",
       "--dsh-layout-pad-composer-end",
+      "--dsh-layout-pad-mobile-header-start",
+      "--dsh-layout-pad-mobile-header-end",
+      "--dsh-layout-pad-mobile-content-start",
+      "--dsh-layout-pad-mobile-content-end",
+      "--dsh-layout-pad-mobile-composer-start",
+      "--dsh-layout-pad-mobile-composer-end",
     ]) {
       root.style.removeProperty(key);
     }

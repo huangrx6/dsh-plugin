@@ -79,7 +79,7 @@ describe("ShellRuntime", () => {
         radius: 12,
         background: { mode: "color", color: "#f4f6f9", imageUrl: "", videoUrl: "" },
         dialog: { width: 1000, height: 880 },
-        padding: { mode: "custom", header: { left: 16, right: 24 }, content: { left: null, right: null }, composer: { left: null, right: null } },
+        padding: { mode: "custom", desktop: { header: { left: 16, right: 24 }, content: { left: null, right: null }, composer: { left: null, right: null } }, mobile: { header: { left: null, right: null }, content: { left: null, right: null }, composer: { left: null, right: null } } },
       },
     });
     expect(doc.documentElement.hasAttribute("data-dsh-layout-bg")).toBe(true);

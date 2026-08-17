@@ -37,7 +37,7 @@ describe('LayoutStore', () => {
     expect(settings.global.background.color).toBe('#f4f6f9')
     expect(settings.global.dialog.width).toBe(1280)
     expect(settings.global.padding.mode).toBe('custom')
-    expect(settings.global.padding.header).toEqual({ left: 0, right: 48 })
+    expect(settings.global.padding.desktop.header).toEqual({ left: 0, right: 48 })
     expect(settings.global.narrow.headerWrap).toBe(false)
     expect(normalizeSettings({}).global).toEqual(DEFAULT_SETTINGS.global)
   })

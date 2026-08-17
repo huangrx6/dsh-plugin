@@ -13,6 +13,7 @@ import {
   type LayoutSettings,
   type MaterialSettings,
   type MobileSidebarMode,
+  type PaddingArea,
   type PaddingMode,
   type PaddingSides,
   type ReadWidth,
@@ -228,19 +229,21 @@ function isMobileSidebarMode(value: unknown): value is MobileSidebarMode {
 
 function normalizePadding(value: unknown): LayoutSettings['global']['padding'] {
   const input = isRecord(value) ? value : {}
-  const sides = (area: 'header' | 'content' | 'composer'): PaddingSides => {
-    const raw = isRecord(input[area]) ? input[area] as Record<string, unknown> : {}
-    return Object.freeze({
-      left: optionalNumber(raw.left, PAD_LIMITS),
-      right: optionalNumber(raw.right, PAD_LIMITS),
-    })
+  const sides = (raw: unknown): PaddingSides => {
+    const r = isRecord(raw) ? raw as Record<string, unknown> : {}
+    return Object.freeze({ left: optionalNumber(r.left, PAD_LIMITS), right: optionalNumber(r.right, PAD_LIMITS) })
   }
-  return Object.freeze({
-    mode: input.mode === 'custom' ? 'custom' satisfies PaddingMode as PaddingMode : 'auto',
-    header: sides('header'),
-    content: sides('content'),
-    composer: sides('composer'),
-  })
+  const area = (raw: unknown): PaddingArea => {
+    const r = isRecord(raw) ? raw as Record<string, unknown> : {}
+    return Object.freeze({ header: sides(r.header), content: sides(r.content), composer: sides(r.composer) })
+  }
+  const mode = input.mode === 'custom' ? 'custom' satisfies PaddingMode as PaddingMode : 'auto'
+  // 旧版形状 { mode, header, content, composer } → 迁到 desktop，mobile 全空。
+  const legacy = isRecord(input.header) || isRecord(input.content) || isRecord(input.composer)
+  if (legacy && !isRecord(input.desktop)) {
+    return Object.freeze({ mode, desktop: area(input), mobile: area({}) })
+  }
+  return Object.freeze({ mode, desktop: area(input.desktop), mobile: area(input.mobile) })
 }
 
 function hex(value: unknown, fallback: string): string {

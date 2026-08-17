@@ -136,14 +136,11 @@ export class ComposerWorkbench {
   }
 
   /** True while the composer shell (workbench markers) should be applied.
-      These concerns are independent: a bounded scroll end, full-width
-      geometry, or custom input rows may each activate the markers alone.
-      On phones the actions row ALWAYS needs its own two-row layout, so the
-      markers stay on at ≤767px regardless of the composer settings. */
+      The markers stay on (outside hero posture) so the padding and mobile
+      actions-row rules have stable targets; the composer settings only change
+      which geometry rules apply via their own attributes. */
   private footerActive(): boolean {
-    const view = this.doc.defaultView;
-    if (view !== null && view.innerWidth <= 767) return true;
-    return workbenchActive(this.store.getSnapshot(), this.store.getPeek());
+    return true;
   }
 
   private remark(): void {
