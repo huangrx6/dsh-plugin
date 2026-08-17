@@ -776,10 +776,10 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-close {
     position: fixed;
     z-index: 46;
-    inset-block-start: calc(env(safe-area-inset-top, 0px) + 10px);
+    inset-block-start: calc(env(safe-area-inset-top, 0px) + 16px);
     inset-inline-end: 12px;
-    width: 36px;
-    height: 36px;
+    width: 28px;
+    height: 28px;
     padding: 0;
     border: 0;
     border-radius: 50%;
@@ -792,16 +792,16 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-close > span {
     position: relative;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
   }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-close > span::before,
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-close > span::after {
     content: '';
     position: absolute;
     inset-inline-start: 1px;
-    inset-block-start: 7px;
-    width: 14px;
+    inset-block-start: 6px;
+    width: 12px;
     height: 2px;
     background: currentColor;
     border-radius: 1px;
