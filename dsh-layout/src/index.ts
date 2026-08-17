@@ -45,7 +45,7 @@ export async function apply(ctx: Context): Promise<void> {
       return fail(error instanceof Error ? error.message : String(error))
     }
   }
-  ctx.effect(() => ctx.connection.rpc.handle(DSH_LAYOUT_CHANNEL, handle, { authority: 'loopback' }), 'dsh-layout: file persistence')
+  ctx.effect(() => ctx.connection.rpc.handle(DSH_LAYOUT_CHANNEL, handle, { authority: 'trusted-host' }), 'dsh-layout: file persistence')
 }
 
 function ok(value: unknown): RpcResult<unknown> { return { ok: true, value } }
