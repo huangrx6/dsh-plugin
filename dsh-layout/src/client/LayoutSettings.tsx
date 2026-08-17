@@ -91,10 +91,12 @@ function Field({ label, path, children }: { label: string; path?: string; childr
   return <div className="dsh-layout-settings__field">
     <div className="dsh-layout-settings__label">
       <strong>{label}</strong>
-      {overridden && <>
-        <span className="dsh-layout-field-status">已自定义</span>
-        {store !== null && <button type="button" className="dsh-layout-field-reset" aria-label={`恢复${label}为原生`} title="恢复原生" onClick={() => resetField(store, path as string)}>↶</button>}
-      </>}
+      {overridden && (
+        <div className="dsh-layout-field-meta">
+          <span className="dsh-layout-field-status">已自定义</span>
+          {store !== null && <button type="button" className="dsh-layout-field-reset" aria-label={`恢复${label}为原生`} title="恢复原生" onClick={() => resetField(store, path as string)}>↶</button>}
+        </div>
+      )}
     </div>
     <div className="dsh-layout-settings__control">{children}</div>
   </div>

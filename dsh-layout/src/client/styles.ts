@@ -460,6 +460,9 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
 .dsh-layout-settings__field:first-of-type { padding-top: 13px; }
 .dsh-layout-settings__label { display: flex; align-items: center; gap: 9px; min-width: 0; }
 .dsh-layout-settings__label strong { overflow: hidden; color: var(--dsw-alias-label-secondary); font-size: 12px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+/* 字段标签改为上下堆叠：标签在上，已自定义/恢复按钮在下（不再挤在标签右侧）。 */
+.dsh-layout-settings__field .dsh-layout-settings__label { flex-direction: column; align-items: flex-start; gap: 3px; }
+.dsh-layout-field-meta { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
 .dsh-layout-settings__icon { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 7px; background: color-mix(in srgb, var(--dsh-layout-subtle) 78%, transparent); color: var(--dsw-alias-label-tertiary); }
 .dsh-layout-settings__field .dsh-layout-settings__icon { color: var(--dsw-alias-label-secondary); }
 .dsh-layout-settings__control { display: grid; gap: 8px; min-width: 0; }
@@ -520,8 +523,8 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
 @media (max-width: 767px) {
   .dsh-layout-settings__field { grid-template-columns: 1fr; gap: 6px; }
   .dsh-layout-settings__label { align-items: center; }
-  .dsh-layout-tabs { display: flex; overflow-x: auto; max-width: 100%; }
-  .dsh-layout-tabs button { padding: 4px 12px; }
+  .dsh-layout-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
+  .dsh-layout-tabs button { padding: 7px 8px; text-align: center; }
   .dsh-layout-tiers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
   /* DSH's outer settings panel is desktop row-based by default (188px nav
