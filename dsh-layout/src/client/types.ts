@@ -15,9 +15,14 @@ export type TraceBackground = 'native' | 'clear'
 /** Trace tab: full keeps DSH's edge-to-edge canvas; inset aligns to the header row. */
 export type TraceWidth = 'full' | 'inset'
 
+/** Trace ledger tail space: DSH reserves a scroll tail under the floating
+    input; the above-plate already reserves its own, making it redundant. */
+export type TraceTail = 'native' | 'none'
+
 export interface TraceSettings {
   readonly background: TraceBackground
   readonly width: TraceWidth
+  readonly tableTail: TraceTail
 }
 /** null keeps the native reading measure; 'full' lets the column fill the window. */
 export type ReadWidth = 'native' | 'full' | number
@@ -162,7 +167,7 @@ export const DEFAULT_SETTINGS: LayoutSettings = Object.freeze({
     scale: 100,
     scrollbar: 'native' as const,
     bubble: 'native' as const,
-    trace: Object.freeze({ background: 'native' as const, width: 'full' as const }),
+    trace: Object.freeze({ background: 'native' as const, width: 'full' as const, tableTail: 'native' as const }),
   }),
   footer: Object.freeze({
     plate: 'native' as const,

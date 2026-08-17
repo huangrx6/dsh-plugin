@@ -157,6 +157,7 @@ const CSS = `
 .dstmcp-toolParamsHint, .dshmcp-toolParamsHint { flex: none; font-size: 10.5px; color: var(--dsw-alias-label-tertiary); background: var(--dsw-alias-bg-module-platform); border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; padding: 2px 7px; white-space: nowrap; }
 .dstmcp-toolChevron, .dstmcp-toolChevron, .dshmcp-toolChevron { flex: none; display: inline-flex; color: var(--dsw-alias-label-tertiary); }
 .dstmcp-toolHead:hover .dshmcp-toolChevron, .dshmcp-toolHead:hover .dshmcp-toolChevron { color: var(--dsw-alias-state-business-primary); }
+[role="dialog"].dshmcp-toolModal { width: min(820px, 92vw); }
 .dstmcp-toolModalBody, .dshmcp-toolModalBody { display: flex; flex-direction: column; gap: 14px; }
 .dstmcp-toolModalBody h6, .dshmcp-toolModalBody h6 { margin: 0 0 6px; font-size: 11px; font-weight: 600; color: var(--dsw-alias-label-tertiary); text-transform: uppercase; letter-spacing: .05em; }
 .dstmcp-toolModalDesc, .dshmcp-toolModalDesc { margin: 0; font-size: 12.5px; line-height: 19px; color: var(--dsw-alias-label-secondary); white-space: normal; overflow-wrap: anywhere; }

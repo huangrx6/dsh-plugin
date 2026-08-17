@@ -14,6 +14,7 @@ import {
   type BackgroundMode,
   type BubbleMode,
   type TraceBackground,
+  type TraceTail,
   type TraceWidth,
   type FooterPlate,
   type GlassMaterial,
@@ -154,6 +155,7 @@ export function normalizeSettings(value: unknown): LayoutSettings {
       trace: Object.freeze({
         background: isTraceBackground(isRecord(contentInput.trace) ? contentInput.trace.background : undefined) ? (contentInput.trace as { background: TraceBackground }).background : 'native',
         width: isTraceWidth(isRecord(contentInput.trace) ? contentInput.trace.width : undefined) ? (contentInput.trace as { width: TraceWidth }).width : 'full',
+        tableTail: isTraceTail(isRecord(contentInput.trace) ? contentInput.trace.tableTail : undefined) ? (contentInput.trace as { tableTail: TraceTail }).tableTail : 'native',
       }),
     }),
     footer: Object.freeze({
@@ -320,6 +322,10 @@ function isTraceBackground(value: unknown): value is TraceBackground {
 
 function isTraceWidth(value: unknown): value is TraceWidth {
   return value === 'full' || value === 'inset'
+}
+
+function isTraceTail(value: unknown): value is TraceTail {
+  return value === 'native' || value === 'none'
 }
 
 function isStatsMode(value: unknown): value is StatsMode {

@@ -90,7 +90,7 @@ function ToolDetails({ t, tool, onClose }: {
 }) {
   const params = paramRows(tool.schema)
   return (
-    <Modal open onClose={onClose} title={tool.name} closeLabel={t('drawerClose')} contentClassName="dshmcp-toolModalBody">
+    <Modal open onClose={onClose} title={tool.name} closeLabel={t('drawerClose')} className="dshmcp-toolModal" contentClassName="dshmcp-toolModalBody">
       {tool.description.trim() !== ''
         ? (
           <section>

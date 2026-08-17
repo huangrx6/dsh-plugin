@@ -173,6 +173,7 @@ export class ShellRuntime {
     root.dataset.dshLayoutBubble = settings.content.bubble;
     root.dataset.dshLayoutTraceBg = settings.content.trace.background;
     root.dataset.dshLayoutTraceWidth = settings.content.trace.width;
+    root.dataset.dshLayoutTraceTail = settings.content.trace.tableTail;
     root.dataset.dshLayoutSidebarDivider = settings.sidebar.divider;
     this.sync.requestFull();
   }
@@ -349,6 +350,7 @@ export class ShellRuntime {
     delete root.dataset.dshLayoutBubble;
     delete root.dataset.dshLayoutTraceBg;
     delete root.dataset.dshLayoutTraceWidth;
+    delete root.dataset.dshLayoutTraceTail;
     delete root.dataset.dshLayoutSidebarDivider;
     for (const key of [
       "--dsh-layout-radius-user",

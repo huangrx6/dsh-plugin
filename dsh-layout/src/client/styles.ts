@@ -66,6 +66,14 @@ html[data-dsh-layout-trace-bg='clear'] [data-conversation-scroll]:has([data-conv
 html[data-dsh-layout-trace-bg='clear'] [data-conversation-scroll]:has([data-conversation-composer-overlay]) [class$='_split'] {
   background: transparent !important;
 }
+html[data-dsh-layout-trace-bg='clear'] [data-conversation-scroll]:has([data-conversation-composer-overlay]) [class$='_table'] {
+  background: transparent !important;
+}
+/* The ledger pane's 202px tail keeps the last rows clear of the floating
+   input; with the above-plate reserving its own tail it is dead space. */
+html[data-dsh-layout-trace-tail='none'] [data-conversation-scroll]:has([data-conversation-composer-overlay]) [class$='_tablePane'] {
+  padding-bottom: 0 !important;
+}
 html[data-dsh-layout-trace-width='inset'] [data-conversation-scroll]:has([data-conversation-composer-overlay]) [data-slot='conversation.view'] > [class$='_root'] {
   padding-left: calc(28px / var(--dsh-layout-scale-factor, 1)) !important;
   padding-right: calc(28px / var(--dsh-layout-scale-factor, 1)) !important;

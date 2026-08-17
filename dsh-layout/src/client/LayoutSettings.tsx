@@ -284,6 +284,12 @@ function ContentCard({ store, settings }: { store: LayoutStore; settings: Layout
         <SegmentedButton pressed={content.trace.width === 'inset'} onClick={() => setContent({ trace: { ...content.trace, width: 'inset' } })}>对齐头部</SegmentedButton>
       </div>
     </Field>
+    <Field icon={<TraceIcon />} label="轨迹表留白">
+      <div className="dsh-layout-segmented">
+        <SegmentedButton pressed={content.trace.tableTail === 'native'} onClick={() => setContent({ trace: { ...content.trace, tableTail: 'native' } })}>原生</SegmentedButton>
+        <SegmentedButton pressed={content.trace.tableTail === 'none'} onClick={() => setContent({ trace: { ...content.trace, tableTail: 'none' } })}>移除</SegmentedButton>
+      </div>
+    </Field>
     <Field icon={<ScrollbarIcon />} label="滚动条">
       <div className="dsh-layout-segmented">
         {(['native', 'hidden'] as const).map((mode: ScrollbarMode) => (
