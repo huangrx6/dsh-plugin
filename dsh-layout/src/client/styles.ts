@@ -270,7 +270,6 @@ html[data-dsh-layout-read-width='full'] [data-dsh-layout-chat-column][class*='_s
    'custom' 模式下 ShellRuntime 写入 desktop/mobile 两套内联变量（显式值或
    预设）；这些规则直接钉到内容列 / 头部 / 输入区，与阅读宽度等其它特性无关。
    'auto' 模式移除属性与变量，页面回到 DSH 原生边距。 */
-html[data-dsh-layout-padding-custom] [data-dsh-layout-chat-column],
 html[data-dsh-layout-padding-custom] [data-dsh-layout-chat-column][class*='_scroll'] {
   padding-left: var(--dsh-layout-pad-content-start) !important;
   padding-right: var(--dsh-layout-pad-content-end) !important;
@@ -285,7 +284,6 @@ html[data-dsh-layout-padding-custom] [data-dsh-layout-composer-root] {
   padding-right: var(--dsh-layout-pad-composer-end) !important;
 }
 @media (max-width: 767px) {
-  html[data-dsh-layout-padding-custom] [data-dsh-layout-chat-column],
   html[data-dsh-layout-padding-custom] [data-dsh-layout-chat-column][class*='_scroll'] {
     padding-left: var(--dsh-layout-pad-mobile-content-start) !important;
     padding-right: var(--dsh-layout-pad-mobile-content-end) !important;
@@ -621,6 +619,12 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
 @media (max-width: 767px) {
   html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-frame] {
     grid-template-columns: minmax(0, 1fr) var(--dsh-layout-details, 0px) !important;
+  }
+  /* 手机上把 AppFrame 锁到动态视口高度：DSH 用 height:100%（解析到布局视口），
+     iOS 地址栏收起/展开时页面会超出可视区、可上下滚动。 */
+  [data-dsh-layout-frame] {
+    height: 100vh;
+    height: 100dvh;
   }
   html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-center-col] { grid-column: 1; min-width: 0; }
   html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-details-col] { grid-column: 2; }
