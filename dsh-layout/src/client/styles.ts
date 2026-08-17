@@ -325,8 +325,10 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
    DSH renders the settings dialog panel with overflow:hidden, which still
    makes it a programmatically scrollable box; focus scrolling can displace
    the whole dialog content. overflow:clip is not a scroll container at all,
-   so focus scrolling routes to the real scroller. Visually clip === hidden. */
-[role='dialog'] { overflow: clip !important; }
+   so focus scrolling routes to the real scroller. Visually clip === hidden.
+   Scoped to the settings panel (_panel): centered z-1000 modals portal to
+   document.body and must stay untouched. */
+[role='dialog'][class*='_panel'] { overflow: clip !important; }
 
 /* ── 统计入口 ─────────────────────────────────────────────────────────────── */
 .dsh-layout-root { position: relative; display: inline-flex; flex: none; color: var(--dsw-alias-label-secondary); }
@@ -573,25 +575,26 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   }
   html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-center-col] { grid-column: 1; min-width: 0; }
   html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-details-col] { grid-column: 2; }
+  /* Off-canvas via inset-inline-start, NOT transform: a transformed ancestor
+     becomes the containing block for fixed-position descendants, and DSH
+     mounts its settings dialog inside the sidebar column — with a transform
+     the dialog gets dragged off-screen / mispositioned with the drawer
+     (设置 / 添加模型等弹框弹不出来). inset keeps fixed overlays viewport-anchored. */
   html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-sidebar-col] {
     position: fixed !important;
     z-index: 42;
     inset-block: 0;
-    inset-inline-start: 0;
-    width: min(85vw, 340px) !important;
-    max-width: 340px;
-    height: 100vh;
-    height: 100dvh;
+    inset-inline-start: -100%;
+    width: 100% !important;
     box-sizing: border-box;
     padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px);
     border: 0 !important;
-    border-inline-end: 1px solid var(--dsh-layout-line) !important;
     background: var(--dsh-layout-solid, var(--dsw-alias-bg-layer-2));
     overflow: hidden;
-    transform: translateX(-100%);
-    transition: transform 220ms ease;
+    transition: inset-inline-start 220ms ease;
+    box-shadow: var(--dsw-shadow-lv2);
   }
-  html[data-dsh-layout-mobile-sidebar][data-dsh-layout-mobile-sidebar-open] [data-dsh-layout-sidebar-col] { transform: translateX(0); }
+  html[data-dsh-layout-mobile-sidebar][data-dsh-layout-mobile-sidebar-open] [data-dsh-layout-sidebar-col] { inset-inline-start: 0; }
   /* The app panel inside keeps its own fixed width and chrome; stretch it
      edge to edge so the drawer reads as one flat surface. The intermediate
      wrapper is display:contents, so the panel lays out against the column. */
@@ -665,78 +668,6 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     display: block;
   }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-mask[hidden] { display: none; }
-}
-
-
-/* ── 手机侧边栏（可配置：原生 / 全屏覆盖）──────────────────────────────────
-   While the setting is 'fullscreen' and the viewport is narrow, the sidebar
-   column leaves the grid: the conversation owns the whole screen and the
-   sidebar becomes an off-canvas FULLSCREEN overlay (trigger + mask + Esc).
-   'native' (default) removes the attribute entirely — DSH's own layout. */
-.dsh-layout-mobile-sidebar-trigger,
-.dsh-layout-mobile-sidebar-mask { display: none; }
-@media (max-width: 767px) {
-  html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-frame] {
-    grid-template-columns: minmax(0, 1fr) var(--dsh-layout-details, 0px) !important;
-  }
-  html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-center-col] { grid-column: 1; min-width: 0; }
-  html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-details-col] { grid-column: 2; }
-  html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-sidebar-col] {
-    position: fixed !important;
-    z-index: 42;
-    inset-block: 0;
-    inset-inline-start: 0;
-    width: 100% !important;
-    transform: translateX(-100%);
-    transition: transform 200ms var(--ds-ease-in-out, ease);
-    box-shadow: var(--dsw-shadow-lv2);
-  }
-  html[data-dsh-layout-mobile-sidebar-open] [data-dsh-layout-sidebar-col] { transform: translateX(0); }
-  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger {
-    position: fixed;
-    z-index: 44;
-    inset-block-start: calc(10px + env(safe-area-inset-top, 0px));
-    inset-inline-start: calc(10px + env(safe-area-inset-left, 0px));
-    width: 38px;
-    height: 38px;
-    padding: 0;
-    border: 1px solid var(--dsw-alias-border-l2);
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--dsw-alias-bg-layer-3) 88%, transparent);
-    color: var(--dsw-alias-label-primary);
-    box-shadow: var(--dsw-shadow-lv1);
-    -webkit-backdrop-filter: blur(14px) saturate(125%);
-    backdrop-filter: blur(14px) saturate(125%);
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    cursor: pointer;
-  }
-  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger > span {
-    width: 16px;
-    height: 1.5px;
-    border-radius: 2px;
-    background: currentColor;
-    transition: transform 160ms var(--ds-ease-in-out, ease), opacity 160ms var(--ds-ease-in-out, ease);
-  }
-  html[data-dsh-layout-mobile-sidebar-open] .dsh-layout-mobile-sidebar-trigger > span:first-child { transform: translateY(5.5px) rotate(45deg); }
-  html[data-dsh-layout-mobile-sidebar-open] .dsh-layout-mobile-sidebar-trigger > span:nth-child(2) { opacity: 0; }
-  html[data-dsh-layout-mobile-sidebar-open] .dsh-layout-mobile-sidebar-trigger > span:last-child { transform: translateY(-5.5px) rotate(-45deg); }
-  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-mask {
-    position: fixed;
-    z-index: 41;
-    inset: 0;
-    border: 0;
-    padding: 0;
-    background: color-mix(in srgb, var(--dsw-alias-label-primary) 18%, transparent);
-    -webkit-backdrop-filter: blur(2px);
-    backdrop-filter: blur(2px);
-    display: block;
-  }
-  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-mask[hidden] { display: none; }
-  html[data-dsh-layout-mobile-sidebar-open] .dsh-layout-mobile-sidebar-trigger { background: var(--dsw-alias-bg-layer-3); }
 }
 
 /* ── 触屏提示气泡 ─────────────────────────────────────────────────────────────

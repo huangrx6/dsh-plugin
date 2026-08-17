@@ -30,9 +30,10 @@ export class MobileSidebarRuntime {
     if (view === null || !(target instanceof view.Node)) return
     const sidebar = this.doc.querySelector<HTMLElement>(SIDEBAR_SELECTOR)
     const targetElement = target instanceof view.Element ? target : target.parentElement
-    // Selecting a native sidebar action/session closes the overlay after the
-    // click has reached React; clicking inside empty/sidebar chrome does not.
-    if (sidebar?.contains(target) === true && targetElement?.closest('button, a, [role="treeitem"]') !== null) {
+    // Only NAVIGATION closes the overlay (session/workspace selection, links).
+    // Plain buttons (settings, add-workspace…) open anchored UI that must keep
+    // the drawer visible; the mask / trigger / Esc close explicitly.
+    if (sidebar?.contains(target) === true && targetElement?.closest('a, [role="treeitem"]') !== null) {
       this.setOpen(false)
     }
   }

@@ -93,7 +93,16 @@ describe('MobileSidebarRuntime', () => {
     setFullscreen(store)
     await flush()
     toggleClicks()
+    // Plain buttons (settings, add-workspace…) keep the drawer open — their
+    // anchored UI lives inside the sidebar column.
     doc.getElementById('session')?.click()
+    expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar-open')).toBe(true)
+    // Navigation (treeitem / link) closes it.
+    const item = doc.createElement('div')
+    item.setAttribute('role', 'treeitem')
+    item.textContent = 'session'
+    doc.getElementById('session')?.parentElement?.append(item)
+    item.click()
     expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar-open')).toBe(false)
 
     toggleClicks()
