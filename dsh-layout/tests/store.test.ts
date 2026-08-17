@@ -18,6 +18,16 @@ describe('LayoutStore', () => {
     expect(settings.sidebar.glass.opacity).toBe(0)
   })
 
+  it('normalizes sidebar layout overrides without changing native defaults', () => {
+    const settings = normalizeSettings({ sidebar: { width: 340, paddingX: 12, paddingY: 6, rowHeight: 36, rowGap: 4, scrollbar: 'hidden' } })
+    expect(settings.sidebar).toMatchObject({ width: 340, paddingX: 12, paddingY: 6, rowHeight: 36, rowGap: 4, scrollbar: 'hidden' })
+    expect(normalizeSettings({}).sidebar).toMatchObject({ width: null, paddingX: null, paddingY: null, rowHeight: null, rowGap: null, scrollbar: 'native' })
+  })
+
+  it('clamps sidebar layout values', () => {
+    expect(normalizeSettings({ sidebar: { width: 999, paddingX: -5, paddingY: 99, rowHeight: 1, rowGap: 99 } }).sidebar).toMatchObject({ width: 420, paddingX: 0, paddingY: 32, rowHeight: 28, rowGap: 16 })
+  })
+
   it('accepts the flat v2.0 sidebar glass shape', () => {
     const settings = normalizeSettings({ sidebar: { enabled: true, tint: '', opacity: 80, blur: 20, saturation: 140 } })
     expect(settings.sidebar).toMatchObject({ glass: { enabled: true, opacity: 80 }, divider: 'native' })
@@ -117,7 +127,8 @@ describe('v1 migration', () => {
     expect(migrated.version).toBe(2)
     expect(migrated.sidebar.glass.enabled).toBe(true)
     expect(migrated.content.glass.enabled).toBe(false)
-    expect(migrated.footer.plate).toBe('above')
+    expect(migrated.footer.scrollRange).toBe('above')
+    expect(migrated.footer.plate).toBe('transparent')
     expect(migrated.footer.rows).toBe(3)
     expect(migrated.content.width).toBe('full')
     expect(migrated.footer.stats).toBe('icon')
@@ -126,9 +137,10 @@ describe('v1 migration', () => {
   })
 
   it('carries the opaque floor forward for pre-plate full-width configs', () => {
-    expect(normalizeSettings({ content: { width: 'full' } }).footer.plate).toBe('above')
-    expect(normalizeSettings({ footer: { plate: 'native' }, content: { width: 'full' } }).footer.plate).toBe('native')
-    expect(normalizeSettings({}).footer.plate).toBe('native')
+    expect(normalizeSettings({ content: { width: 'full' } }).footer.scrollRange).toBe('above')
+    expect(normalizeSettings({ footer: { plate: 'transparent' }, content: { width: 'full' } }).footer.scrollRange).toBe('native')
+    expect(normalizeSettings({ footer: { plate: 'solid' } }).footer).toMatchObject({ scrollRange: 'native', plate: 'solid' })
+    expect(normalizeSettings({}).footer).toMatchObject({ scrollRange: 'native', plate: 'transparent' })
     expect(normalizeSettings({ footer: { rows: 99 } }).footer.rows).toBe(6)
   })
 

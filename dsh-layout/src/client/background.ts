@@ -147,11 +147,12 @@ export class BackgroundRuntime {
     video.hidden = true;
   }
 
-  /** Pause off-screen playback; resume only while actually visible. */
+  /** Pause off-screen playback; resume only while actually visible. The
+      performance tier keeps the video parked on its first frame. */
   private syncVideo(): void {
     const video = this.video;
     if (video === undefined || video.hidden) return;
-    const reduced = this.prefersReducedMotion();
+    const reduced = this.prefersReducedMotion() || this.store.getSnapshot().global.quality === "performance";
     const shouldPlay = this.doc.visibilityState === "visible" && !reduced;
     if (shouldPlay && video.paused) video.play().catch(() => {});
     else if (!shouldPlay && !video.paused) video.pause();

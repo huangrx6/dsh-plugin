@@ -1,4 +1,5 @@
 import React from 'react'
+import { createRoot } from 'react-dom/client'
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client'
 import '@deepseek-ai/dsh-client-connection/client'
@@ -7,7 +8,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import '@deepseek-ai/dsh-client-ui-settings/client'
 import type { LayoutLocaleKey } from './locales.ts'
 import { enUS, LAYOUT_NS, zhCN } from './locales.ts'
-import { LayoutSettingsSection } from './LayoutSettings.tsx'
+import { LayoutFullPageOverlay, LayoutSettingsSection } from './LayoutSettings.tsx'
 import { DockStats, ToolbarStats } from './StatsPanel.tsx'
 import { LayoutStore } from './store.ts'
 import { DomSync } from './dom-sync.ts'
@@ -40,6 +41,12 @@ export function apply(ctx: ClientContext): void {
 
   ctx.effect(() => ctx.locale.register(LAYOUT_NS, { zh: zhCN, en: enUS }), 'layout: dictionaries')
   const t = ctx.locale.bind(LAYOUT_NS)
+  const overlayHost = document.createElement('div')
+  overlayHost.id = 'dsh-layout-overlay-host'
+  document.body.append(overlayHost)
+  const overlayRoot = createRoot(overlayHost)
+  overlayRoot.render(React.createElement(LayoutFullPageOverlay, { store, t }))
+  ctx.effect(() => () => { overlayRoot.unmount(); overlayHost.remove() }, 'dsh-layout: settings overlay')
 
   ctx.effect(() => installStyles(document), 'dsh-layout: styles')
   ctx.effect(() => background.install(), 'dsh-layout: background')

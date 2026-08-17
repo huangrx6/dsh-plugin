@@ -35,15 +35,30 @@ describe("dock overlay regression locks", () => {
     );
   });
 
-  it("full-width composer content pads 28px from both edges", () => {
-    // Messages and the composer card sit 28px from the left and right edges
-    // (the header keeps its own native 20/28 row). Insets divide by the
-    // content scale because the scroller is zoomed while the header is not.
-    const rule =
+  it("consumes the padding tokens on every full-width inset surface", () => {
+    // One token pipeline feeds header, message column, trace canvas, and the
+    // composer: desktop full presets (20/28, 28/28, 28/28), a mobile preset
+    // (0/8, 8/8, 8/8), and explicit user values as inline vars. Native width
+    // mode defines no tokens at all — zero intrusion.
+    const workbench =
       css.match(
         /\[data-dsh-layout-composer-width='full'\] \[data-dsh-layout-workbench\] \{[^}]*\}/,
       )?.[0] ?? "";
-    expect(rule).toContain("calc(28px / var(--dsh-layout-scale-factor, 1))");
+    expect(workbench).toContain("var(--dsh-layout-pad-composer-start, 28px)");
+    expect(workbench).toContain("var(--dsh-layout-pad-composer-end, 28px)");
+    const scroll =
+      css.match(
+        /html\[data-dsh-layout-read-width='full'\] \[data-dsh-layout-chat-column\]\[class\*='_scroll'\] \{[^}]*\}/,
+      )?.[0] ?? "";
+    expect(scroll).toContain("var(--dsh-layout-pad-content-start, 28px)");
+    const header =
+      css.match(
+        /html\[data-dsh-layout-read-width='full'\] \[data-dsh-layout-chrome-header\] \{[^}]*\}/,
+      )?.[0] ?? "";
+    expect(header).toContain("padding-inline-start: calc(var(--dsh-layout-pad-header-start, 20px)");
+    expect(css).toContain("--dsh-layout-pad-header-start: 0px;");
+    expect(css).toContain("--dsh-layout-pad-content-start: 8px;");
+    expect(css).toContain("--dsh-layout-pad-composer-start: 8px;");
   });
 
   it("keeps the hero card on the native measure", () => {
@@ -53,14 +68,6 @@ describe("dock overlay regression locks", () => {
     expect(css).toContain(
       "html[data-dsh-layout-read-width='full'] [data-dsh-layout-chat-root]:has([data-dsh-layout-workbench]) { --dsh-chat-content-width: none; }",
     );
-  });
-
-  it("rides the same 28px insets on the full-width message measure", () => {
-    const rule =
-      css.match(
-        /html\[data-dsh-layout-read-width='full'\] \[data-dsh-layout-chat-column\]\[class\*='_scroll'\] \{[^}]*\}/,
-      )?.[0] ?? "";
-    expect(rule).toContain("calc(28px / var(--dsh-layout-scale-factor, 1))");
   });
 
   it("the input card is one opaque panel in every mode — no frost, no bands", () => {
@@ -216,25 +223,25 @@ describe("dock overlay regression locks", () => {
     // height — the log physically ends above the input, plate stays clear.
     const seat =
       css.match(
-        /html\[data-dsh-layout-footer-plate='above'\] \[data-dsh-layout-chat-root\]:has\(\[data-dsh-layout-workbench\]\):not\(:has\(\[data-conversation-composer-overlay\]\)\) \[data-composer-seat\] \{[^}]*\}/,
+        /html\[data-dsh-layout-scroll-range='above'\] \[data-dsh-layout-chat-root\]:has\(\[data-dsh-layout-workbench\]\):not\(:has\(\[data-conversation-composer-overlay\]\)\) \[data-composer-seat\] \{[^}]*\}/,
       )?.[0] ?? "";
     expect(seat).toContain("position: absolute !important");
     expect(seat).toContain("bottom: 0 !important");
     const scroller =
       css.match(
-        /html\[data-dsh-layout-footer-plate='above'\] \[data-dsh-layout-chat-root\]:has\(\[data-dsh-layout-workbench\]\):not\(:has\(\[data-conversation-composer-overlay\]\)\) \[data-conversation-scroll\] \{[^}]*\}/,
+        /html\[data-dsh-layout-scroll-range='above'\] \[data-dsh-layout-chat-root\]:has\(\[data-dsh-layout-workbench\]\):not\(:has\(\[data-conversation-composer-overlay\]\)\) \[data-conversation-scroll\] \{[^}]*\}/,
       )?.[0] ?? "";
     expect(scroller).toContain("margin-bottom: var(--dsh-layout-seat-height, 0px)");
     // Trace view keeps DSH's own seat positioning and reserves the canvas
     // tail with padding instead (a margin would float the seat mid-air).
     const trace =
       css.match(
-        /html\[data-dsh-layout-footer-plate='above'\] \[data-dsh-layout-chat-root\]:has\(\[data-dsh-layout-workbench\]\):has\(\[data-conversation-composer-overlay\]\) \[data-conversation-scroll\] \{[^}]*\}/,
+        /html\[data-dsh-layout-scroll-range='above'\] \[data-dsh-layout-chat-root\]:has\(\[data-dsh-layout-workbench\]\):has\(\[data-conversation-composer-overlay\]\) \[data-conversation-scroll\] \{[^}]*\}/,
       )?.[0] ?? "";
     expect(trace).toContain("padding-bottom: var(--dsh-layout-seat-height, 0px)");
     // The sticky-mode width stretch must not apply to the absolute seat.
     expect(css).toMatch(
-      /html:not\(\[data-dsh-layout-footer-plate='above'\]\).*\[data-composer-seat\]/,
+      /html:not\(\[data-dsh-layout-scroll-range='above'\]\).*\[data-composer-seat\]/,
     );
     // Hero posture keeps the native in-flow composer — the yank is scoped
     // to the marked (non-hero) workbench via :has().
@@ -272,6 +279,22 @@ describe("dock overlay regression locks", () => {
     expect(css).toContain(
       "blur(var(--dsh-glass-content-blur, 16px)) saturate(var(--dsh-glass-content-sat, 120%))",
     );
+  });
+
+  it("sidebar layout tokens target stable adapters, not hashed classes", () => {
+    expect(css).toContain("[data-dsh-layout-sidebar-root]");
+    expect(css).toContain("[data-dsh-layout-sidebar-list]");
+    expect(css).toContain("[data-dsh-layout-sidebar-pad-x]");
+    expect(css).toContain("[data-dsh-layout-sidebar-row-height]");
+    expect(css).toContain("[data-dsh-layout-sidebar-list] [role='treeitem']");
+    expect(css).toContain("data-dsh-layout-sidebar-scrollbar='hidden'");
+  });
+
+  it("keeps native sidebar geometry when no overrides are present", () => {
+    // No sidebar token is emitted in the native state; DSH owns its 280px
+    // track, 12px root padding, and native row rhythm.
+    expect(css).toContain("[data-dsh-layout-sidebar-width]");
+    expect(css).toContain("[data-dsh-layout-sidebar-pad-x]");
   });
 
   it("hides the conversation scrollbar only behind the explicit setting", () => {

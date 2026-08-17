@@ -99,10 +99,14 @@ function ToolDetails({ t, tool, onClose }: {
           )
           : <p className="dshmcp-status">{t('toolNoParams')}</p>}
       </section>
-      <section>
+      <section className="dshmcp-schemaSection">
         <h6>{t('drawerSchema')}</h6>
         {tool.schema !== undefined && Object.keys(tool.schema).length > 0
-          ? <JsonTree data={tool.schema as Record<string, unknown>} label={tool.name} copyable expandTopLevel />
+          ? (
+            <div className="dshmcp-schemaViewport" tabIndex={0} aria-label={`${tool.name} ${t('drawerSchema')}`}>
+              <JsonTree data={tool.schema as Record<string, unknown>} label={tool.name} copyable expandTopLevel />
+            </div>
+          )
           : <p className="dshmcp-status">{t('toolNoParams')}</p>}
       </section>
     </Modal>

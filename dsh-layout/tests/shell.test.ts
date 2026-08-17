@@ -82,18 +82,26 @@ describe("ShellRuntime", () => {
     expect(frame?.style.getPropertyValue("--dsh-layout-details")).toBe("360px");
   });
 
+  it("uses rendering quality as the single blur policy", async () => {
+    const { doc, sync, shell, store } = setup();
+    sync.install(); shell.install(); await flush();
+    store.update({ global: { ...store.getSnapshot().global, quality: 'performance' } });
+    expect(doc.documentElement.dataset.dshLayoutQuality).toBe('performance');
+    expect(doc.documentElement.hasAttribute('data-dsh-layout-fluid')).toBe(true);
+  });
+
   it("pushes glass materials as data switches and CSS variables", async () => {
     const { doc, sync, shell, store } = setup();
     sync.install();
     shell.install();
     await flush();
-    store.update({ sidebar: { glass: { enabled: true, tint: "#112233", opacity: 60, blur: 20, saturation: 170 }, divider: "native" } });
+    store.update({ sidebar: { glass: { enabled: true, tint: "#112233", opacity: 60, blur: 20, saturation: 170 }, divider: "native", width: null, paddingX: null, paddingY: null, rowHeight: null, rowGap: null, scrollbar: "native" } });
     expect(doc.documentElement.dataset.dshLayoutSidebar).toBe("glass");
     expect(doc.documentElement.style.getPropertyValue("--dsh-glass-sidebar")).toContain("#112233");
     expect(doc.documentElement.style.getPropertyValue("--dsh-glass-sidebar-blur")).toBe("20px");
     expect(doc.documentElement.dataset.dshLayoutHeader).toBe(undefined);
     expect(doc.documentElement.style.getPropertyValue("--dsh-glass-header")).toBe("");
-    store.update({ sidebar: { glass: { enabled: false, tint: "", opacity: 72, blur: 16, saturation: 120 }, divider: "hidden" } });
+    store.update({ sidebar: { glass: { enabled: false, tint: "", opacity: 72, blur: 16, saturation: 120 }, divider: "hidden", width: null, paddingX: null, paddingY: null, rowHeight: null, rowGap: null, scrollbar: "native" } });
     expect(doc.documentElement.dataset.dshLayoutSidebarDivider).toBe("hidden");
     expect(doc.documentElement.dataset.dshLayoutSidebar).toBe("native");
     expect(doc.documentElement.style.getPropertyValue("--dsh-glass-sidebar")).toBe("");

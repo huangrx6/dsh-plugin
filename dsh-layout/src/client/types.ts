@@ -2,18 +2,22 @@ export type GlassArea = 'sidebar' | 'header' | 'content' | 'footer'
 export type StatsMode = 'native' | 'icon' | 'brief' | 'below'
 export type BackgroundMode = 'native' | 'color' | 'image' | 'video'
 export type SidebarDivider = 'native' | 'hidden'
-/** The input-area floor: native leaves it to DSH (translucent, the log
-    scrolls under the whole window); above pulls the composer out of the
-    scroll flow so the log ENDS above it while the plate stays transparent;
-    solid paints an opaque strip instead. */
-export type FooterPlate = 'native' | 'above' | 'solid'
+/** Conversation scroll extent: native lets the log scroll under the whole
+    window; above pulls the composer out of the scroll flow so the log ENDS
+    above the input while the plate stays clear. */
+export type ScrollRange = 'native' | 'above'
+/** The input-area floor under the composer when the log scrolls beneath it:
+    clear shows the page through, solid paints the conversation color. */
+export type FooterPlate = 'transparent' | 'solid'
 export type ScrollbarMode = 'native' | 'hidden'
-/** Message bubbles: native keeps DSH's blue-tinted fill; glass frosts them. */
-export type BubbleMode = 'native' | 'glass'
+/** Message bubbles: native keeps DSH's blue-tinted fill; glass frosts them;
+    solid is an opaque panel; transparent keeps only the hairline. */
+export type BubbleMode = 'native' | 'glass' | 'solid' | 'transparent'
 /** Trace tab: native keeps DSH's white canvas; clear shows the content glass. */
 export type TraceBackground = 'native' | 'clear'
-/** Trace tab: full keeps DSH's edge-to-edge canvas; inset aligns to the header row. */
-export type TraceWidth = 'full' | 'inset'
+/** Trace tab: full keeps DSH's edge-to-edge canvas; inset aligns to the
+    header row; message aligns to the reading measure. */
+export type TraceWidth = 'full' | 'inset' | 'message'
 
 /** Trace ledger tail space: DSH reserves a scroll tail under the floating
     input; the above-plate already reserves its own, making it redundant. */
@@ -24,6 +28,11 @@ export interface TraceSettings {
   readonly width: TraceWidth
   readonly tableTail: TraceTail
 }
+
+export type ContentAlign = 'center' | 'start'
+
+/** Rendering quality: full effects, capped blurs, or flat fills only. */
+export type Quality = 'quality' | 'balanced' | 'performance'
 /** null keeps the native reading measure; 'full' lets the column fill the window. */
 export type ReadWidth = 'native' | 'full' | number
 export type StatsMetric = 'turns' | 'steps' | 'llm' | 'tools' | 'ttft' | 'speed' | 'cache' | 'tokens'
@@ -58,12 +67,42 @@ export interface GlobalSettings {
   readonly fluidGlass: boolean
   /** Settings dialog panel size; null keeps DSH's native 800×min(800, vh−48). */
   readonly dialog: DialogSize
+  readonly padding: PaddingSettings
+  readonly narrow: NarrowSettings
+  readonly settingsView: SettingsView
+  readonly quality: Quality
 }
 
 export interface DialogSize {
   readonly width: number | null
   readonly height: number | null
 }
+
+/** Page paddings as layout tokens: full-width presets (desktop 20/28 header,
+    28 content/composer) overridden by a mobile preset (0/8, 8/8, 8/8) and
+    finally by explicit user values. Native width mode is untouched. */
+export type PaddingMode = 'auto' | 'custom'
+
+export interface PaddingSides {
+  readonly left: number | null
+  readonly right: number | null
+}
+
+export interface PaddingSettings {
+  readonly mode: PaddingMode
+  readonly header: PaddingSides
+  readonly content: PaddingSides
+  readonly composer: PaddingSides
+}
+
+/** Narrow-viewport (< 768px) adaptation: header wrapping against crowding. */
+export interface NarrowSettings {
+  readonly headerWrap: boolean
+}
+
+/** Where the layout editor lives: embedded in DSH's settings dialog, or as
+    the plugin's own full-page overlay (portal, mobile-friendly). */
+export type SettingsView = 'embedded' | 'page'
 
 export interface ContentSettings {
   readonly glass: GlassMaterial
@@ -79,11 +118,14 @@ export interface ContentSettings {
   /** Message bubbles: frosted glass instead of DSH's blue-tinted fill. */
   readonly bubble: BubbleMode
   readonly trace: TraceSettings
+  /** Message column alignment inside the content region (full width). */
+  readonly align: ContentAlign
 }
 
 export interface FooterSettings {
-  /** Opaque floor under the whole input region — the conversation log stops
-      at its top edge instead of scrolling beneath the composer. */
+  /** Where the conversation log stops relative to the input area. */
+  readonly scrollRange: ScrollRange
+  /** Floor appearance; meaningless (and hidden) once the log ends above. */
   readonly plate: FooterPlate
   /** Input textarea line count while the composer is full width. */
   readonly rows: number
@@ -91,7 +133,17 @@ export interface FooterSettings {
   readonly statsMetrics: Readonly<Record<StatsMetric, boolean>>
 }
 
+export type SidebarScrollbar = 'native' | 'hidden'
+
 export interface SidebarSettings {
+  /** Sidebar column layout. Null values keep DSH native CSS. */
+  readonly width: number | null
+  readonly paddingX: number | null
+  readonly paddingY: number | null
+  /** Session list rhythm. Null values keep DSH native row geometry. */
+  readonly rowHeight: number | null
+  readonly rowGap: number | null
+  readonly scrollbar: SidebarScrollbar
   readonly glass: GlassMaterial
   readonly divider: SidebarDivider
 }
@@ -129,6 +181,11 @@ export const READ_WIDTH_LIMITS = Object.freeze([640, 1440] as const)
 export const ROWS_LIMITS = Object.freeze([1, 6] as const)
 export const DIALOG_WIDTH_LIMITS = Object.freeze([600, 1280] as const)
 export const DIALOG_HEIGHT_LIMITS = Object.freeze([480, 1080] as const)
+export const PAD_LIMITS = Object.freeze([0, 48] as const)
+export const SIDEBAR_WIDTH_LIMITS = Object.freeze([220, 420] as const)
+export const SIDEBAR_PADDING_LIMITS = Object.freeze([0, 32] as const)
+export const SIDEBAR_ROW_HEIGHT_LIMITS = Object.freeze([28, 52] as const)
+export const SIDEBAR_ROW_GAP_LIMITS = Object.freeze([0, 16] as const)
 
 /** Named parameter sets on top of the sliders — state stays in the numbers. */
 export const GLASS_TIERS: Readonly<Record<string, Omit<GlassMaterial, 'enabled' | 'tint'>>> = Object.freeze({
@@ -158,8 +215,26 @@ export const DEFAULT_SETTINGS: LayoutSettings = Object.freeze({
     background: Object.freeze({ mode: 'native' as const, color: '#f4f6f9', imageUrl: '', videoUrl: '' }),
     fluidGlass: false,
     dialog: Object.freeze({ width: null, height: null }),
+    padding: Object.freeze({
+      mode: 'auto' as const,
+      header: Object.freeze({ left: null, right: null }),
+      content: Object.freeze({ left: null, right: null }),
+      composer: Object.freeze({ left: null, right: null }),
+    }),
+    narrow: Object.freeze({ headerWrap: true }),
+    settingsView: 'embedded' as const,
+    quality: 'quality' as const,
   }),
-  sidebar: Object.freeze({ glass: defaultGlass(72), divider: 'native' as const }),
+  sidebar: Object.freeze({
+    width: null,
+    paddingX: null,
+    paddingY: null,
+    rowHeight: null,
+    rowGap: null,
+    scrollbar: 'native' as const,
+    glass: defaultGlass(72),
+    divider: 'native' as const,
+  }),
   content: Object.freeze({
     glass: defaultGlass(72),
     width: 'native' as const,
@@ -168,9 +243,11 @@ export const DEFAULT_SETTINGS: LayoutSettings = Object.freeze({
     scrollbar: 'native' as const,
     bubble: 'native' as const,
     trace: Object.freeze({ background: 'native' as const, width: 'full' as const, tableTail: 'native' as const }),
+    align: 'center' as const,
   }),
   footer: Object.freeze({
-    plate: 'native' as const,
+    scrollRange: 'native' as const,
+    plate: 'transparent' as const,
     rows: 3,
     stats: 'native' as const,
     statsMetrics: DEFAULT_METRICS,

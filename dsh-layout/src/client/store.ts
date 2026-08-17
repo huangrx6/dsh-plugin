@@ -3,6 +3,13 @@ import {
   DEFAULT_SETTINGS,
   DENSITY_LIMITS,
   DIALOG_HEIGHT_LIMITS,
+  PAD_LIMITS,
+  SIDEBAR_WIDTH_LIMITS,
+  SIDEBAR_PADDING_LIMITS,
+  SIDEBAR_ROW_HEIGHT_LIMITS,
+  SIDEBAR_ROW_GAP_LIMITS,
+  type PaddingMode,
+  type PaddingSides,
   DIALOG_WIDTH_LIMITS,
   RADIUS_LIMITS,
   READ_WIDTH_LIMITS,
@@ -13,16 +20,21 @@ import {
   coreSettings,
   type BackgroundMode,
   type BubbleMode,
+  type ContentAlign,
+  type Quality,
+  type SettingsView,
   type TraceBackground,
   type TraceTail,
   type TraceWidth,
   type FooterPlate,
+  type ScrollRange,
   type GlassMaterial,
   type LayoutProfile,
   type LayoutSettings,
   type ReadWidth,
   type ScrollbarMode,
   type SidebarDivider,
+  type SidebarScrollbar,
   type StatsMetric,
   type StatsMode,
 } from './types.ts'
@@ -136,12 +148,28 @@ export function normalizeSettings(value: unknown): LayoutSettings {
         width: optionalNumber(isRecord(globalInput.dialog) ? globalInput.dialog.width : undefined, DIALOG_WIDTH_LIMITS),
         height: optionalNumber(isRecord(globalInput.dialog) ? globalInput.dialog.height : undefined, DIALOG_HEIGHT_LIMITS),
       }),
+      padding: normalizePadding(globalInput.padding),
+      narrow: Object.freeze({
+        headerWrap: !isRecord(globalInput.narrow) || globalInput.narrow.headerWrap !== false,
+      }),
+      settingsView: isSettingsView(globalInput.settingsView) ? globalInput.settingsView : 'embedded',
+      // Legacy fluidGlass meant "remove blur"; migrate its behavior into
+      // the single quality control while keeping the old field readable.
+      quality: isQuality(globalInput.quality)
+        ? globalInput.quality
+        : globalInput.fluidGlass === true ? 'performance' : 'quality',
     }),
     // v2.0 persisted the sidebar glass flat; v2.1 wraps it with the divider.
     // v2.2 folds the header material into the content area and drops the
     // footer width (the composer now follows the content reading measure);
     // both old fields are simply ignored on load.
     sidebar: Object.freeze({
+      width: optionalNumber(sidebarInput.width, SIDEBAR_WIDTH_LIMITS),
+      paddingX: optionalNumber(sidebarInput.paddingX, SIDEBAR_PADDING_LIMITS),
+      paddingY: optionalNumber(sidebarInput.paddingY, SIDEBAR_PADDING_LIMITS),
+      rowHeight: optionalNumber(sidebarInput.rowHeight, SIDEBAR_ROW_HEIGHT_LIMITS),
+      rowGap: optionalNumber(sidebarInput.rowGap, SIDEBAR_ROW_GAP_LIMITS),
+      scrollbar: isSidebarScrollbar(sidebarInput.scrollbar) ? sidebarInput.scrollbar : 'native',
       glass: glass(sidebarInput.glass ?? sidebarInput, DEFAULT_SETTINGS.sidebar.glass),
       divider: isSidebarDivider(sidebarInput.divider) ? sidebarInput.divider : 'native',
     }),
@@ -152,6 +180,7 @@ export function normalizeSettings(value: unknown): LayoutSettings {
       scale: number(contentInput.scale, 100, SCALE_LIMITS),
       scrollbar: isScrollbarMode(contentInput.scrollbar) ? contentInput.scrollbar : 'native',
       bubble: isBubbleMode(contentInput.bubble) ? contentInput.bubble : 'native',
+      align: contentInput.align === 'start' ? 'start' satisfies ContentAlign as ContentAlign : 'center',
       trace: Object.freeze({
         background: isTraceBackground(isRecord(contentInput.trace) ? contentInput.trace.background : undefined) ? (contentInput.trace as { background: TraceBackground }).background : 'native',
         width: isTraceWidth(isRecord(contentInput.trace) ? contentInput.trace.width : undefined) ? (contentInput.trace as { width: TraceWidth }).width : 'full',
@@ -159,11 +188,14 @@ export function normalizeSettings(value: unknown): LayoutSettings {
       }),
     }),
     footer: Object.freeze({
-      // Full-width configs predating the plate kept the log above the input —
-      // carry that forward as the transparent 'above' mode.
-      plate: isFooterPlate(footerInput.plate)
-        ? footerInput.plate
-        : readWidth(contentInput.width) === 'full' ? 'above' : 'native',
+      // The old plate enum mixed scroll extent with floor paint; split it.
+      // Pre-plate full-width configs kept the log above the input.
+      scrollRange: isScrollRange(footerInput.scrollRange)
+        ? footerInput.scrollRange
+        : footerInput.plate === 'above' || (footerInput.plate === undefined && readWidth(contentInput.width) === 'full')
+          ? 'above' satisfies ScrollRange as ScrollRange
+          : 'native',
+      plate: isFooterPlate(footerInput.plate) ? footerInput.plate : 'transparent',
       rows: number(footerInput.rows, 3, ROWS_LIMITS),
       stats: isStatsMode(footerInput.stats) ? footerInput.stats : 'native',
       statsMetrics: metrics(footerInput.statsMetrics),
@@ -208,7 +240,7 @@ export function normalizeSettingsV1(value: unknown): LayoutSettings {
       imageUrl: mode === 'image' ? url(background.wallpaperUrl) : '',
       videoUrl: '',
     } },
-    sidebar: { glass: sectionGlass('sidebar', base.sidebar.glass), divider: 'native' as const },
+    sidebar: { ...base.sidebar, glass: sectionGlass('sidebar', base.sidebar.glass) },
     content: {
       ...base.content,
       glass: sectionGlass('content', base.content.glass),
@@ -216,7 +248,7 @@ export function normalizeSettingsV1(value: unknown): LayoutSettings {
     },
     footer: {
       ...base.footer,
-      plate: enabled && input.composerWidth === 'full' ? 'above' as const : base.footer.plate,
+      scrollRange: enabled && input.composerWidth === 'full' ? 'above' as const : base.footer.scrollRange,
       stats,
     },
   }
@@ -304,8 +336,16 @@ function isSidebarDivider(value: unknown): value is SidebarDivider {
   return value === 'native' || value === 'hidden'
 }
 
+function isSidebarScrollbar(value: unknown): value is SidebarScrollbar {
+  return value === 'native' || value === 'hidden'
+}
+
 function isFooterPlate(value: unknown): value is FooterPlate {
-  return value === 'native' || value === 'above' || value === 'solid'
+  return value === 'transparent' || value === 'solid'
+}
+
+function isScrollRange(value: unknown): value is ScrollRange {
+  return value === 'native' || value === 'above'
 }
 
 function isScrollbarMode(value: unknown): value is ScrollbarMode {
@@ -313,7 +353,32 @@ function isScrollbarMode(value: unknown): value is ScrollbarMode {
 }
 
 function isBubbleMode(value: unknown): value is BubbleMode {
-  return value === 'native' || value === 'glass'
+  return value === 'native' || value === 'glass' || value === 'solid' || value === 'transparent'
+}
+
+function normalizePadding(value: unknown): LayoutSettings['global']['padding'] {
+  const input = isRecord(value) ? value : {}
+  const sides = (area: 'header' | 'content' | 'composer'): PaddingSides => {
+    const raw = isRecord(input[area]) ? input[area] as Record<string, unknown> : {}
+    return Object.freeze({
+      left: optionalNumber(raw.left, PAD_LIMITS),
+      right: optionalNumber(raw.right, PAD_LIMITS),
+    })
+  }
+  return Object.freeze({
+    mode: input.mode === 'custom' ? 'custom' satisfies PaddingMode as PaddingMode : 'auto',
+    header: sides('header'),
+    content: sides('content'),
+    composer: sides('composer'),
+  })
+}
+
+function isQuality(value: unknown): value is Quality {
+  return value === 'quality' || value === 'balanced' || value === 'performance'
+}
+
+function isSettingsView(value: unknown): value is SettingsView {
+  return value === 'embedded' || value === 'page'
 }
 
 function isTraceBackground(value: unknown): value is TraceBackground {
@@ -321,7 +386,7 @@ function isTraceBackground(value: unknown): value is TraceBackground {
 }
 
 function isTraceWidth(value: unknown): value is TraceWidth {
-  return value === 'full' || value === 'inset'
+  return value === 'full' || value === 'inset' || value === 'message'
 }
 
 function isTraceTail(value: unknown): value is TraceTail {

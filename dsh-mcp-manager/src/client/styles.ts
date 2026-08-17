@@ -159,10 +159,15 @@ const CSS = `
 .dstmcp-toolParamsHint, .dshmcp-toolParamsHint { flex: none; font-size: 10.5px; color: var(--dsw-alias-label-tertiary); background: var(--dsw-alias-bg-module-platform); border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; padding: 2px 7px; white-space: nowrap; }
 .dstmcp-toolChevron, .dstmcp-toolChevron, .dshmcp-toolChevron { flex: none; display: inline-flex; color: var(--dsw-alias-label-tertiary); }
 .dstmcp-toolHead:hover .dshmcp-toolChevron, .dshmcp-toolHead:hover .dshmcp-toolChevron { color: var(--dsw-alias-state-business-primary); }
-[role="dialog"].dshmcp-toolModal { width: min(820px, 92vw); }
-.dstmcp-toolModalBody, .dshmcp-toolModalBody { display: flex; flex-direction: column; gap: 14px; }
+[role="dialog"].dshmcp-toolModal { width: min(820px, 92vw); height: min(760px, 88dvh); max-height: 88dvh; box-sizing: border-box; overflow: hidden; }
+.dstmcp-toolModalBody, .dshmcp-toolModalBody { width: 100%; height: 100%; min-height: 0; max-height: 100%; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 14px; }
+/* Modal's platform header is the first child: keep title / close visible if the outer body scrolls. */
+.dstmcp-toolModalBody > :first-child, .dshmcp-toolModalBody > :first-child { position: sticky; top: 0; z-index: 2; background: var(--dsw-alias-bg-layer-3); }
 .dstmcp-toolModalBody h6, .dshmcp-toolModalBody h6 { margin: 0 0 6px; font-size: 11px; font-weight: 600; color: var(--dsw-alias-label-tertiary); text-transform: uppercase; letter-spacing: .05em; }
 .dstmcp-toolModalDesc, .dshmcp-toolModalDesc { margin: 0; font-size: 12.5px; line-height: 19px; color: var(--dsw-alias-label-secondary); white-space: normal; overflow-wrap: anywhere; }
+.dstmcp-schemaSection, .dshmcp-schemaSection { min-height: 0; }
+.dstmcp-schemaViewport, .dshmcp-schemaViewport { min-height: 140px; height: clamp(180px, 42dvh, 420px); max-height: 42dvh; box-sizing: border-box; overflow: auto; overscroll-behavior: contain; border: 1px solid var(--dsw-alias-border-l1); border-radius: 8px; background: var(--dsw-alias-bg-layer-1); padding: 6px 8px; scrollbar-gutter: stable; }
+.dstmcp-schemaViewport:focus-visible, .dshmcp-schemaViewport:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary); outline-offset: -2px; }
 .dstmcp-paramTable, .dshmcp-paramTable { width: 100%; border-collapse: collapse; font-size: 12px; }
 .dstmcp-paramTable td, .dshmcp-paramTable td { padding: 5px 8px; border-bottom: 1px solid var(--dsw-alias-border-l1); vertical-align: top; }
 .dstmcp-paramTable tr:last-child td, .dshmcp-paramTable tr:last-child td { border-bottom: 0; }

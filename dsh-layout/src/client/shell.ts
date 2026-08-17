@@ -4,13 +4,15 @@ import type { GlassArea, GlassMaterial, ReadWidth } from "./types.ts";
 
 const FRAME_ATTR = "data-dsh-layout-frame";
 const SIDEBAR_COL_ATTR = "data-dsh-layout-sidebar-col";
+const SIDEBAR_ROOT_ATTR = "data-dsh-layout-sidebar-root";
+const SIDEBAR_LIST_ATTR = "data-dsh-layout-sidebar-list";
 const CENTER_COL_ATTR = "data-dsh-layout-center-col";
 const DETAILS_COL_ATTR = "data-dsh-layout-details-col";
 const HEADER_ATTR = "data-dsh-layout-chrome-header";
 const CHAT_ROOT_ATTR = "data-dsh-layout-chat-root";
 const CHAT_COLUMN_ATTR = "data-dsh-layout-chat-column";
 const COMPOSER_WIDTH_ATTR = "data-dsh-layout-composer-width";
-const SHELL_MARK_SELECTOR = `[${FRAME_ATTR}], [${SIDEBAR_COL_ATTR}], [${CENTER_COL_ATTR}], [${DETAILS_COL_ATTR}], [${HEADER_ATTR}], [${CHAT_ROOT_ATTR}], [${CHAT_COLUMN_ATTR}], [${COMPOSER_WIDTH_ATTR}]`;
+const SHELL_MARK_SELECTOR = `[${FRAME_ATTR}], [${SIDEBAR_COL_ATTR}], [${SIDEBAR_ROOT_ATTR}], [${SIDEBAR_LIST_ATTR}], [${CENTER_COL_ATTR}], [${DETAILS_COL_ATTR}], [${HEADER_ATTR}], [${CHAT_ROOT_ATTR}], [${CHAT_COLUMN_ATTR}], [${COMPOSER_WIDTH_ATTR}]`;
 const DETAILS_TRACK_VAR = "--dsh-layout-details";
 const GLASS_AREAS: readonly GlassArea[] = ["sidebar", "header", "content", "footer"];
 
@@ -117,7 +119,9 @@ export class ShellRuntime {
     }
     const { background } = settings.global;
     root.toggleAttribute("data-dsh-layout-bg", background.mode !== "native");
-    root.toggleAttribute("data-dsh-layout-fluid", settings.global.fluidGlass);
+    // Quality is the single public performance control. fluidGlass remains
+    // readable for old configs, but no longer creates a second UI concept.
+    root.toggleAttribute("data-dsh-layout-fluid", settings.global.quality === "performance" || settings.global.fluidGlass);
 
     const radius = settings.global.radius;
     root.toggleAttribute("data-dsh-layout-radius", radius !== null);
@@ -166,6 +170,44 @@ export class ShellRuntime {
       root.style.setProperty("--dsh-layout-scale-factor", `${scale / 100}`);
     }
 
+    // Page padding tokens: only EXPLICIT custom values become inline
+    // variables — unset sides keep the preset (or the native CSS entirely,
+    // outside full-width mode), never a forced default.
+    const { padding, narrow } = settings.global;
+    root.toggleAttribute("data-dsh-layout-padding-custom", padding.mode === "custom");
+    for (const area of ["header", "content", "composer"] as const) {
+      const sides = padding[area];
+      for (const [side, token] of [["left", "start"], ["right", "end"]] as const) {
+        const name = `--dsh-layout-pad-${area}-${token}`;
+        const value = padding.mode === "custom" ? sides[side] : null;
+        if (value !== null) root.style.setProperty(name, `${value}px`);
+        else root.style.removeProperty(name);
+      }
+    }
+    root.toggleAttribute("data-dsh-layout-narrow-wrap", narrow.headerWrap);
+
+    const sidebarWidth = settings.sidebar.width;
+    if (sidebarWidth === null) {
+      root.removeAttribute("data-dsh-layout-sidebar-width");
+      root.style.removeProperty("--dsh-layout-sidebar-width");
+    } else {
+      root.setAttribute("data-dsh-layout-sidebar-width", "");
+      root.style.setProperty("--dsh-layout-sidebar-width", `${sidebarWidth}px`);
+    }
+    for (const [name, value] of [
+      ["--dsh-layout-sidebar-pad-x", settings.sidebar.paddingX],
+      ["--dsh-layout-sidebar-pad-y", settings.sidebar.paddingY],
+      ["--dsh-layout-sidebar-row-height", settings.sidebar.rowHeight],
+      ["--dsh-layout-sidebar-row-gap", settings.sidebar.rowGap],
+    ] as const) {
+      if (value === null) root.style.removeProperty(name);
+      else root.style.setProperty(name, `${value}px`);
+    }
+    root.dataset.dshLayoutSidebarScrollbar = settings.sidebar.scrollbar;
+    root.dataset.dshLayoutAlign = settings.content.align;
+    root.dataset.dshLayoutQuality = settings.global.quality;
+
+    root.dataset.dshLayoutScrollRange = settings.footer.scrollRange;
     root.dataset.dshLayoutFooterPlate = settings.footer.plate;
     root.style.setProperty("--dsh-layout-input-rows", String(settings.footer.rows));
 
@@ -189,6 +231,15 @@ export class ShellRuntime {
     else root.style.setProperty("--dsh-layout-read-width", `${width}px`);
   }
 
+  /** Blur cap per rendering quality: balanced halves the frost cost,
+      performance drops every backdrop blur (flat fills stay). */
+  private blurCap(): number {
+    const quality = this.store.getSnapshot().global.quality;
+    if (quality === "balanced") return 16;
+    if (quality === "performance") return 0;
+    return 48;
+  }
+
   private applyGlass(root: HTMLElement, area: GlassArea, material: GlassMaterial): void {
     const attr = `dshLayout${area[0]!.toUpperCase()}${area.slice(1)}`;
     root.dataset[attr] = material.enabled ? "glass" : "native";
@@ -206,7 +257,7 @@ export class ShellRuntime {
     root.style.setProperty(color, `color-mix(in srgb, ${base} ${material.opacity}%, transparent)`);
     root.style.setProperty(solid, base);
     root.style.setProperty(card, `color-mix(in srgb, ${base} ${Math.min(material.opacity + 15, 100)}%, transparent)`);
-    root.style.setProperty(blur, `${material.blur}px`);
+    root.style.setProperty(blur, `${Math.min(material.blur, this.blurCap())}px`);
     root.style.setProperty(sat, `${material.saturation}%`);
   }
 
@@ -226,6 +277,16 @@ export class ShellRuntime {
       if (isElement(sidebar, this.doc)) {
         toggleMark(sidebar, SIDEBAR_COL_ATTR);
         keep.add(sidebar);
+        const sidebarRoot = sidebar.querySelector<HTMLElement>('[class*="_root"]');
+        if (sidebarRoot !== null) {
+          toggleMark(sidebarRoot, SIDEBAR_ROOT_ATTR);
+          keep.add(sidebarRoot);
+          const list = sidebarRoot.querySelector<HTMLElement>('[role="tree"]');
+          if (list !== null) {
+            toggleMark(list, SIDEBAR_LIST_ATTR);
+            keep.add(list);
+          }
+        }
       }
       if (isElement(center, this.doc)) {
         toggleMark(center, CENTER_COL_ATTR);
@@ -274,6 +335,8 @@ export class ShellRuntime {
       if (keep.has(node)) continue;
       node.removeAttribute(FRAME_ATTR);
       node.removeAttribute(SIDEBAR_COL_ATTR);
+      node.removeAttribute(SIDEBAR_ROOT_ATTR);
+      node.removeAttribute(SIDEBAR_LIST_ATTR);
       node.removeAttribute(CENTER_COL_ATTR);
       node.removeAttribute(DETAILS_COL_ATTR);
       node.removeAttribute(HEADER_ATTR);
@@ -337,6 +400,8 @@ export class ShellRuntime {
       "data-dsh-layout-density",
       "data-dsh-layout-scale",
       "data-dsh-layout-dialog",
+      "data-dsh-layout-narrow-wrap",
+      "data-dsh-layout-sidebar-width",
     ]) {
       root.removeAttribute(attr);
     }
@@ -344,6 +409,7 @@ export class ShellRuntime {
     delete root.dataset.dshLayoutHeader;
     delete root.dataset.dshLayoutContent;
     delete root.dataset.dshLayoutFooter;
+    delete root.dataset.dshLayoutScrollRange;
     delete root.dataset.dshLayoutFooterPlate;
     delete root.dataset.dshLayoutReadWidth;
     delete root.dataset.dshLayoutScrollbar;
@@ -352,6 +418,9 @@ export class ShellRuntime {
     delete root.dataset.dshLayoutTraceWidth;
     delete root.dataset.dshLayoutTraceTail;
     delete root.dataset.dshLayoutSidebarDivider;
+    delete root.dataset.dshLayoutSidebarScrollbar;
+    delete root.dataset.dshLayoutAlign;
+    delete root.dataset.dshLayoutQuality;
     for (const key of [
       "--dsh-layout-radius-user",
       "--dsh-layout-radius-user-lg",
@@ -363,6 +432,11 @@ export class ShellRuntime {
       "--dsh-layout-input-rows",
       "--dsh-layout-dialog-width",
       "--dsh-layout-dialog-height",
+      "--dsh-layout-sidebar-width",
+      "--dsh-layout-sidebar-pad-x",
+      "--dsh-layout-sidebar-pad-y",
+      "--dsh-layout-sidebar-row-height",
+      "--dsh-layout-sidebar-row-gap",
     ]) {
       root.style.removeProperty(key);
     }
@@ -380,6 +454,8 @@ export class ShellRuntime {
       node.style.removeProperty(DETAILS_TRACK_VAR);
       node.removeAttribute(FRAME_ATTR);
       node.removeAttribute(SIDEBAR_COL_ATTR);
+      node.removeAttribute(SIDEBAR_ROOT_ATTR);
+      node.removeAttribute(SIDEBAR_LIST_ATTR);
       node.removeAttribute(CENTER_COL_ATTR);
       node.removeAttribute(DETAILS_COL_ATTR);
       node.removeAttribute(HEADER_ATTR);
