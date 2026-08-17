@@ -40,9 +40,9 @@ jobs:
           done
           # 去掉版本号后缀，让 /releases/latest/download/ 固定链接永远可用。
           # 例：dsh-remote-access-0.1.0.tgz → dsh-remote-access.tgz
-          cd dist
-          for f in *.tgz; do
-            mv "$f" "${f%-*}.tgz"
+          # （不 cd：包名本身不含连字符规则可靠，用路径内联操作避免改变 cwd）
+          for f in dist/*-*.tgz; do
+            mv "$f" "dist/$(basename "$f" | sed 's/-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*.*\.tgz$/.tgz/')"
           done
           ls -lh dist/
 
