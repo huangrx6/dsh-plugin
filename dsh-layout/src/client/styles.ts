@@ -756,6 +756,13 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-sidebar-col] button[class*='newSession'] {
     min-height: 44px;
   }
+  /* 工作区/会话树（官方 qDHVXG_list，role=tree）：官方 padding-right 是
+     calc(--dsh-session-list-edge-inset - 10px)，随 --dsh-sidebar-inline-padding
+     动态变化，抽屉内计算值不稳定（真机上过长，激活行背景贴边）。固定 8px。 */
+  html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-sidebar-col] [role='tree'] {
+    padding-right: 8px !important;
+  }
+
   /* 工作区区块头的操作按钮（新增工作区 + / 搜索 / 更多）：DSH 宽态下把
      headerActions 限到 60px 并溢出裁剪，而触摸屏没有 hover 展开，导致最左
      的「新增工作区」+ 被裁掉。off-canvas 抽屉（fullscreen 与 float）里
