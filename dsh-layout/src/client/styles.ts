@@ -502,6 +502,7 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
      + a tiny content column at phone widths). Collapse it into a full-width
      vertical sheet: horizontal section navigation on top, content below. */
   [role='dialog'][class*='_panel'] {
+    position: relative;
     width: 100vw !important;
     max-width: none !important;
     height: 100dvh !important;
@@ -513,12 +514,16 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     flex: none !important;
     width: 100% !important;
     height: auto !important;
-    min-height: 68px;
-    max-height: 112px;
+    min-height: 44px;
+    max-height: 52px;
     overflow-x: auto !important;
     overflow-y: hidden !important;
+    padding-right: 44px;
     border-bottom: 1px solid color-mix(in srgb, var(--dsh-layout-line) 55%, transparent);
+    scrollbar-width: thin;
   }
+  [role='dialog'][class*='_panel'] > nav::-webkit-scrollbar { height: 3px; }
+  [role='dialog'][class*='_panel'] > nav::-webkit-scrollbar-thumb { border-radius: 999px; background: color-mix(in srgb, var(--dsw-alias-label-tertiary) 35%, transparent); }
   [role='dialog'][class*='_panel'] > nav > * { white-space: nowrap; }
   [role='dialog'][class*='_panel'] > nav [class*='_navTitle'] { display: none !important; }
   [role='dialog'][class*='_panel'] > nav [class*='_navList'] {
@@ -529,17 +534,31 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     min-width: 100%;
     height: 100%;
     gap: 4px;
-    padding: 10px 0 !important;
+    padding: 8px 0 !important;
   }
   [role='dialog'][class*='_panel'] > nav [class*='_navCell'] {
     flex: none !important;
     width: auto !important;
     min-width: max-content;
-    min-height: 38px;
-    padding-inline: 14px !important;
+    min-height: 34px;
+    padding-inline: 12px !important;
     white-space: nowrap;
   }
   [role='dialog'][class*='_panel'] > nav [class*='_navLabel'] { width: auto !important; white-space: nowrap; }
+  /* 头部只留 X 关闭按钮：绝对定位到面板右上角，与 nav 同一行 */
+  [role='dialog'][class*='_panel'] [class*='_header'] {
+    height: 0;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+  }
+  [role='dialog'][class*='_panel'] [class*='_header'] > [class*='actions'] { display: none !important; }
+  [role='dialog'][class*='_panel'] [class*='_close'] {
+    position: absolute;
+    inset-block-start: 6px;
+    inset-inline-end: 10px;
+    z-index: 3;
+  }
   [role='dialog'][class*='_panel'] > [class*='_content'] {
     flex: 1 1 auto !important;
     width: 100% !important;
@@ -787,6 +806,8 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-close > span::before { transform: rotate(45deg); }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-close > span::after { transform: rotate(-45deg); }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-close[hidden] { display: none; }
+  /* 设置弹窗等对话框打开时，抽屉的 X 与对话框的 X 重叠——隐藏抽屉的 */
+  html:has([role='dialog']) .dsh-layout-mobile-sidebar-close { display: none !important; }
   /* Mask: a quiet dim BELOW #root's stacking context. #root lifts to z:1
      when a background or material is on, which would trap the drawer (z:42)
      under a z:41 mask — drop the mask to z:0 so it never fogs or covers the
