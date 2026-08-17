@@ -9,6 +9,7 @@
 | [`dsh-layout`](./dsh-layout) | 页面布局与材质：一张磨砂材质覆盖整页，全局（圆角/背景/弹窗/边距）+ 对话排版（阅读宽度/收笔/气泡/轨迹/统计） | **[→ dsh-layout/README.md](./dsh-layout/README.md)** |
 | [`dsh-skill-manager`](./dsh-skill-manager) | Skill 导入（URL / GitHub / zip）与详情查看：来源层级、frontmatter 元数据、文件树、多格式实时预览 | **[→ dsh-skill-manager/README.md](./dsh-skill-manager/README.md)** |
 | [`dsh-mcp-manager`](./dsh-mcp-manager) | MCP 服务器全生命周期管理：增删改、启停、测试连接、工具明细 | **[→ dsh-mcp-manager/README.md](./dsh-mcp-manager/README.md)** |
+| [`dsh-remote-access`](./dsh-remote-access) | 远程访问：Tailscale Serve 把本机 dsh 暴露为 HTTPS 地址 + 切换官方 browse 目录选择器，手机扫码即用 | **[→ dsh-remote-access/README.md](./dsh-remote-access/README.md)** |
 
 深入阅读：
 
@@ -21,12 +22,13 @@
 
 ### 一行安装（推荐）
 
-DSH 官方 CLI 自带 `dsh plugin` 命令（等价于在 profile 目录执行 pnpm）。三个插件任选：
+DSH 官方 CLI 自带 `dsh plugin` 命令（等价于在 profile 目录执行 pnpm）。四个插件任选：
 
 ```bash
 dsh plugin --profile web add "github:huangrx6/dsh-plugin#main&path:/dsh-layout"
 dsh plugin --profile web add "github:huangrx6/dsh-plugin#main&path:/dsh-skill-manager"
 dsh plugin --profile web add "github:huangrx6/dsh-plugin#main&path:/dsh-mcp-manager"
+dsh plugin --profile web add "github:huangrx6/dsh-plugin#main&path:/dsh-remote-access"
 ```
 
 pnpm（≥ 9）会克隆本仓库的对应子目录、安装依赖并执行 `prepare` 完成构建。`dsh plugin` 随后会自动对账 `dsh.profile.bundles`——包声明了 `dsh.bundle` 即自动加入加载层，**无需手改任何配置文件**。更新时重新执行上面的 add 命令（带完整 spec）。
@@ -52,7 +54,7 @@ dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/dow
 ```bash
 git clone git@github.com:huangrx6/dsh-plugin.git
 cd dsh-plugin
-for pkg in dsh-layout dsh-skill-manager dsh-mcp-manager; do
+for pkg in dsh-layout dsh-skill-manager dsh-mcp-manager dsh-remote-access; do
   (cd "$pkg" && pnpm install && pnpm run build)
 done
 ```
@@ -66,7 +68,8 @@ done
   "dependencies": {
     "dsh-layout": "link:/绝对路径/dsh-plugin/dsh-layout",
     "dsh-skill-manager": "link:/绝对路径/dsh-plugin/dsh-skill-manager",
-    "dsh-mcp-manager": "link:/绝对路径/dsh-plugin/dsh-mcp-manager"
+    "dsh-mcp-manager": "link:/绝对路径/dsh-plugin/dsh-mcp-manager",
+    "dsh-remote-access": "link:/绝对路径/dsh-plugin/dsh-remote-access"
   },
   "dsh": {
     "profile": {
@@ -99,6 +102,7 @@ dsh-plugin/
 ├── dsh-layout/          # 布局 / 材质 / 背景设置（详见其 README）
 ├── dsh-skill-manager/   # Skill 导入 / 详情 / 文件预览（详见其 README）
 ├── dsh-mcp-manager/     # MCP 服务器管理（详见其 README）
+├── dsh-remote-access/   # 远程访问：Tailscale Serve + browse picker（详见其 README）
 └── docs/                # 架构与源码解读
 ```
 

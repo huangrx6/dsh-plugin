@@ -1,0 +1,27 @@
+# Remote Access bundle patch.
+#
+# Three static effects, applied above dsh-base's rows at install time:
+#
+# 1. Disable the adaptive directory-picker chooser. It samples boot-time
+#    signals (loopback bind, no SSH, display present) and would resolve to
+#    the native macOS/Windows/Linux chooser — which opens a Finder window on
+#    the host nobody looks at when the browser arrives through Tailscale
+#    Serve. Patch layers cannot rename an entry (the `name` field is a
+#    guard, not an assignment), so the swap is disable + insert.
+#
+# 2. Insert the in-app browse backend. Dual-face: the host half registers
+#    ctx.directoryPicker with the `browse` capability, the browser half
+#    fills ui-workspace's Select-Workspace-Directory holes with a Miller
+#    two-column browser driving host.listDirectory / host.createDirectory.
+#    The dependency is declared in package.json so pnpm materializes it in
+#    the profile's node_modules for bare-name resolution.
+#
+# 3. Insert this plugin itself.
+- id: directory-picker
+  disabled: true
+- insert:
+    - id: directory-picker-browse
+      name: '@deepseek-ai/dsh-host-directory-picker-browse'
+- insert:
+    - id: dsh-remote-access
+      name: dsh-remote-access
