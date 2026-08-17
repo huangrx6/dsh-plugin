@@ -375,7 +375,7 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
    document.body and must stay untouched. */
 [role='dialog'][class*='_panel'] { overflow: clip !important; }
 
-/* ── 统计入口 ─────────────────────────────────────────────────────────────── */
+/* 统计入口 */
 .dsh-layout-root { position: relative; display: inline-flex; flex: none; color: var(--dsw-alias-label-secondary); }
 .dsh-layout-root--dock { width: auto; max-width: none; min-width: 0; padding-top: 0; overflow: visible; margin-top: 12px !important; }
 .dsh-layout-root--dock.dsh-layout-root--inline { align-self: stretch; justify-content: flex-start; width: 100%; max-width: var(--dsh-composer-card-max-width); margin: 0 auto; overflow: hidden; }
@@ -389,6 +389,21 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
 .dsh-layout-inline-summary { min-width: 0; display: flex; align-items: center; height: 24px; box-sizing: border-box; padding-inline: 0; overflow: hidden; color: var(--dsw-alias-label-tertiary); font: var(--dsh-font-xs-13); font-size: 11px; line-height: 18px; font-variant-numeric: tabular-nums; text-overflow: ellipsis; white-space: nowrap; }
 .dsh-layout-inline-summary__group { flex: none; }
 .dsh-layout-inline-summary__divider { flex: none; margin: 0 8px; color: var(--dsw-alias-label-tertiary); opacity: .48; }
+
+/* 手机窄屏：官方 composer 的 trailing 行 flex:0 0 auto 永不收缩，任何注入
+   （icon 26px / brief 标签 126px+）都会把它顶出视口（360px 实测行内容
+   333px > 行宽 270px，模型选择器被截断）。窄屏下：
+   1) 我们的根允许收缩、brief 标签设上限（省略号已有），icon 保持定宽；
+   2) 允许包含我们芯片的那一个 trailing 行收缩，模型标签溢出时省略号——
+      官方视觉语言不变，只是获得响应式弹性。:has() 限定只影响含统计
+   芯片的行，不碰其他 *_trailing 元素。 */
+@media (max-width: 767px) {
+  .dsh-layout-root--toolbar { flex: 0 1 auto; min-width: 0; }
+  .dsh-layout-trigger { max-width: 88px; }
+  .dsh-layout-trigger--icon { flex: none; max-width: none; }
+  [class*='_trailing']:has(.dsh-layout-root--toolbar) { flex: 0 1 auto !important; min-width: 0 !important; }
+  [class*='_trailing']:has(.dsh-layout-root--toolbar) [class*='triggerLabel'] { min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+}
 .dsh-layout-panel { z-index: 120; width: 304px; box-sizing: border-box; position: fixed; padding: 14px 16px 12px; border: 1px solid var(--dsh-layout-line); border-radius: var(--dsh-layout-radius-lg); background: var(--dsh-layout-solid); color: var(--dsw-alias-label-secondary); box-shadow: 0 18px 48px light-dark(rgb(23 32 44 / .14), rgb(0 0 0 / .48)), 0 2px 8px rgb(0 0 0 / .06); font-size: 12px; line-height: 20px; animation: dsh-layout-in .12s ease-out; }
 .dsh-layout-panel::after { content: none; }
 .dsh-layout-root--dock .dsh-layout-panel { animation-name: dsh-layout-dock-in; }
