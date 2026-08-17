@@ -6,15 +6,24 @@ const FRAME_ATTR = "data-dsh-layout-frame";
 const SIDEBAR_COL_ATTR = "data-dsh-layout-sidebar-col";
 const SIDEBAR_LIST_ATTR = "data-dsh-layout-sidebar-list";
 const CENTER_COL_ATTR = "data-dsh-layout-center-col";
+const DETAILS_COL_ATTR = "data-dsh-layout-details-col";
 const HEADER_ATTR = "data-dsh-layout-chrome-header";
 const CHAT_ROOT_ATTR = "data-dsh-layout-chat-root";
 const CHAT_COLUMN_ATTR = "data-dsh-layout-chat-column";
 const COMPOSER_WIDTH_ATTR = "data-dsh-layout-composer-width";
-const SHELL_MARK_SELECTOR = `[${FRAME_ATTR}], [${SIDEBAR_COL_ATTR}], [${SIDEBAR_LIST_ATTR}], [${CENTER_COL_ATTR}], [${HEADER_ATTR}], [${CHAT_ROOT_ATTR}], [${CHAT_COLUMN_ATTR}], [${COMPOSER_WIDTH_ATTR}]`;
+const SHELL_MARK_SELECTOR = `[${FRAME_ATTR}], [${SIDEBAR_COL_ATTR}], [${SIDEBAR_LIST_ATTR}], [${CENTER_COL_ATTR}], [${DETAILS_COL_ATTR}], [${HEADER_ATTR}], [${CHAT_ROOT_ATTR}], [${CHAT_COLUMN_ATTR}], [${COMPOSER_WIDTH_ATTR}]`;
+const DETAILS_TRACK_VAR = "--dsh-layout-details";
 
 /** Writes a data marker only when absent — silent in the steady state. */
 function toggleMark(element: HTMLElement, attribute: string): void {
   if (!element.hasAttribute(attribute)) element.setAttribute(attribute, "");
+}
+
+/** Writes a custom property only when the value actually changed. */
+function setVar(element: HTMLElement, name: string, value: string): void {
+  if (element.style.getPropertyValue(name) !== value) {
+    element.style.setProperty(name, value);
+  }
 }
 
 /**
@@ -51,6 +60,17 @@ export class ShellRuntime {
     this.unregister = this.sync.register({
       onFull: () => {
         this.remark();
+      },
+      // React rewrites the frame's inline gridTemplateColumns on resize,
+      // drag, and details open/close — keep the details-track var fresh
+      // (the fullscreen mobile sidebar grid reads it).
+      onAttribute: (elements) => {
+        for (const node of elements) {
+          if (node.hasAttribute(FRAME_ATTR)) {
+            this.trackDetailsTrack(node as HTMLElement);
+            break;
+          }
+        }
       },
       // The conversation chrome (scroller, turns) mounts after boot and on
       // conversation switches; re-remark only when the change touches it,
@@ -203,6 +223,11 @@ export class ShellRuntime {
         toggleMark(center, CENTER_COL_ATTR);
         keep.add(center);
       }
+      const details = cols[2];
+      if (isElement(details, this.doc)) {
+        toggleMark(details, DETAILS_COL_ATTR);
+        keep.add(details);
+      }
 
       const scroll = this.doc.querySelector<HTMLElement>(
         "[data-conversation-scroll]",
@@ -235,6 +260,7 @@ export class ShellRuntime {
         }
         this.markChatColumn(keep);
       }
+      this.trackDetailsTrack(frame);
     }
     for (const node of this.doc.querySelectorAll<HTMLElement>(SHELL_MARK_SELECTOR)) {
       if (keep.has(node)) continue;
@@ -242,6 +268,7 @@ export class ShellRuntime {
       node.removeAttribute(SIDEBAR_COL_ATTR);
       node.removeAttribute(SIDEBAR_LIST_ATTR);
       node.removeAttribute(CENTER_COL_ATTR);
+      node.removeAttribute(DETAILS_COL_ATTR);
       node.removeAttribute(HEADER_ATTR);
       node.removeAttribute(CHAT_ROOT_ATTR);
       node.removeAttribute(CHAT_COLUMN_ATTR);
@@ -331,11 +358,25 @@ export class ShellRuntime {
       node.removeAttribute(SIDEBAR_COL_ATTR);
       node.removeAttribute(SIDEBAR_LIST_ATTR);
       node.removeAttribute(CENTER_COL_ATTR);
+      node.removeAttribute(DETAILS_COL_ATTR);
       node.removeAttribute(HEADER_ATTR);
       node.removeAttribute(CHAT_ROOT_ATTR);
       node.removeAttribute(CHAT_COLUMN_ATTR);
       node.removeAttribute(COMPOSER_WIDTH_ATTR);
+      node.style.removeProperty(DETAILS_TRACK_VAR);
     }
+  }
+
+  /** Publishes the frame's live last grid track (the details column) so the
+      fullscreen mobile sidebar can keep the details pane working. */
+  private trackDetailsTrack(frame: HTMLElement): void {
+    const track = this.doc.defaultView
+      ?.getComputedStyle(frame)
+      .gridTemplateColumns.trim()
+      .split(/\s+/u)
+      .at(-1);
+    if (track === undefined || !/^-?[\d.]+px$/u.test(track)) return;
+    setVar(frame, DETAILS_TRACK_VAR, track);
   }
 }
 

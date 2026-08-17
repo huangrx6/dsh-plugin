@@ -200,6 +200,13 @@ function GlobalCard({ store, settings }: { store: LayoutStore; settings: LayoutS
     <Field icon={<MobileIcon />} label="窄屏头部换行" path="global.narrow.headerWrap">
       <Toggle checked={global.narrow.headerWrap} onChange={value => setGlobal({ narrow: { ...global.narrow, headerWrap: value } })} label={global.narrow.headerWrap ? '开启（防重叠）' : '关闭（原生）'} />
     </Field>
+    <Field icon={<MobileIcon />} label="手机侧边栏" path="global.narrow.sidebar">
+      <div className="dsh-layout-segmented">
+        <SegmentedButton pressed={global.narrow.sidebar === 'native'} onClick={() => setGlobal({ narrow: { ...global.narrow, sidebar: 'native' } })}>原生</SegmentedButton>
+        <SegmentedButton pressed={global.narrow.sidebar === 'fullscreen'} onClick={() => setGlobal({ narrow: { ...global.narrow, sidebar: 'fullscreen' } })}>全屏覆盖</SegmentedButton>
+      </div>
+      <p>全屏覆盖：窄屏下内容区独占整屏，侧边栏收起为左上角悬浮按钮，点开铺满全屏（点遮罩、选中会话或 Esc 关闭）。</p>
+    </Field>
   </section>
 }
 

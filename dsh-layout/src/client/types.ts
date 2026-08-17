@@ -81,9 +81,14 @@ export interface PaddingSettings {
   readonly composer: PaddingSides
 }
 
-/** Narrow-viewport (< 768px) adaptation: header wrapping against crowding. */
+/** Narrow-viewport (< 768px) adaptation: header wrapping against crowding,
+    and the sidebar presentation — native keeps DSH's squeezed rail, fullscreen
+    turns it into an off-canvas overlay owning the whole viewport. */
+export type MobileSidebarMode = 'native' | 'fullscreen'
+
 export interface NarrowSettings {
   readonly headerWrap: boolean
+  readonly sidebar: MobileSidebarMode
 }
 
 export interface DialogSize {
@@ -161,7 +166,7 @@ export const DEFAULT_SETTINGS: LayoutSettings = Object.freeze({
       content: Object.freeze({ left: null, right: null }),
       composer: Object.freeze({ left: null, right: null }),
     }),
-    narrow: Object.freeze({ headerWrap: true }),
+    narrow: Object.freeze({ headerWrap: true, sidebar: 'native' as const }),
   }),
   material: Object.freeze({ enabled: false, opacity: 86, blur: 16, saturation: 112 }),
   conversation: Object.freeze({

@@ -14,6 +14,7 @@ import { OriginalStatsSuppressor } from './suppressor.ts'
 import { installStyles } from './styles.ts'
 import { ComposerWorkbench } from './workbench.ts'
 import { BackgroundRuntime } from './background.ts'
+import { MobileSidebarRuntime } from './mobile-sidebar.ts'
 import { ShellRuntime } from './shell.ts'
 import { DshLayoutClient } from './persistence.ts'
 
@@ -36,6 +37,7 @@ export function apply(ctx: ClientContext): void {
   const workbench = new ComposerWorkbench(store, document, sync)
   const background = new BackgroundRuntime(store, document)
   const shell = new ShellRuntime(store, document, sync)
+  const mobileSidebar = new MobileSidebarRuntime(store, document, sync)
 
   ctx.effect(() => ctx.locale.register(LAYOUT_NS, { zh: zhCN, en: enUS }), 'layout: dictionaries')
   const t = ctx.locale.bind(LAYOUT_NS)
@@ -48,6 +50,7 @@ export function apply(ctx: ClientContext): void {
   // the shell marks the frame first, then the workbench marks the composer.
   ctx.effect(() => sync.install(), 'dsh-layout: dom sync')
   ctx.effect(() => workbench.install(), 'dsh-layout: composer workbench')
+  ctx.effect(() => mobileSidebar.install(), 'dsh-layout: mobile sidebar')
   ctx.effect(() => suppressor.install(), 'dsh-layout: original stats suppression')
 
   ctx.slots.inject('conversation.input.right', () => ctx.slots.register({

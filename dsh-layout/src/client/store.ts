@@ -12,6 +12,7 @@ import {
   type BubbleMode,
   type LayoutSettings,
   type MaterialSettings,
+  type MobileSidebarMode,
   type PaddingMode,
   type PaddingSides,
   type ReadWidth,
@@ -115,6 +116,9 @@ export function normalizeSettings(value: unknown): LayoutSettings {
       padding: normalizePadding(globalInput.padding),
       narrow: Object.freeze({
         headerWrap: !isRecord(globalInput.narrow) || globalInput.narrow.headerWrap !== false,
+        sidebar: isMobileSidebarMode(isRecord(globalInput.narrow) ? globalInput.narrow.sidebar : undefined)
+          ? (globalInput.narrow as { sidebar: 'native' | 'fullscreen' }).sidebar
+          : 'native',
       }),
     }),
     material: material(materialInput),
@@ -216,6 +220,10 @@ function normalizeBackground(value: unknown): LayoutSettings['global']['backgrou
 
 function isBackgroundMode(value: unknown): value is BackgroundMode {
   return value === 'native' || value === 'color' || value === 'image' || value === 'video'
+}
+
+function isMobileSidebarMode(value: unknown): value is MobileSidebarMode {
+  return value === 'native' || value === 'fullscreen'
 }
 
 function normalizePadding(value: unknown): LayoutSettings['global']['padding'] {
