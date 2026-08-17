@@ -19,6 +19,45 @@
 - `src/test-connection.ts`：`@modelcontextprotocol/sdk` 一次性探针。
 - Web 侧（`src/client/`）：向 `settings.plugins.tab` 注册 `mcp` 页，zh/en 双语；写入后轮询数次让状态落定。
 
+## 安装
+
+### 方式一：一行安装（推荐，从 GitHub 构建）
+
+DSH 官方 CLI 的 `dsh plugin` 命令会转发给 profile 目录下的 pnpm：
+
+```bash
+dsh plugin --profile web add "github:huangrx6/dsh-plugin#main&path:/dsh-mcp-manager"
+```
+
+pnpm（≥ 9）会克隆仓库的对应子目录、安装依赖并执行 `prepare` 完成构建。`dsh plugin` 随后会自动对账 `dsh.profile.bundles`——包声明了 `dsh.bundle` 即自动加入加载层，**无需手改任何配置文件**。更新时执行 `dsh plugin --profile web update dsh-mcp-manager`。
+
+### 方式二：固定版本（GitHub Release 预构建包，免本机构建）
+
+仓库打了 `v*` tag 后，GitHub Actions 会自动构建并把 npm tarball 挂到 [Releases](https://github.com/huangrx6/dsh-plugin/releases)。从 Release 页复制对应包的 `.tgz` 地址：
+
+```bash
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<tag>/dsh-mcp-manager-<version>.tgz
+```
+
+
+### 方式三：本地开发（link 热迭代）
+
+```bash
+git clone git@github.com:huangrx6/dsh-plugin.git
+cd dsh-plugin/dsh-mcp-manager && pnpm install && pnpm run build
+```
+
+profile（`~/.dsh/profiles/web/package.json`）：
+
+```json
+{
+  "dependencies": { "dsh-mcp-manager": "link:/绝对路径/dsh-plugin/dsh-mcp-manager" },
+  "dsh": { "profile": { "bundles": ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app", "dsh-mcp-manager"] } }
+}
+```
+
+然后 `cd ~/.dsh/profiles/web && pnpm install` 并重启 DSH。
+
 ## 开发
 
 ```bash
@@ -26,13 +65,3 @@ pnpm install
 pnpm run check   # typecheck + vitest + build
 ```
 
-链接进 DSH profile（profile 的 `package.json`）：
-
-```json
-{
-  "dependencies": { "dsh-mcp-manager": "link:/path/to/dsh-mcp-manager" },
-  "dsh": { "profile": { "bundles": ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app", "dsh-mcp-manager"] } }
-}
-```
-
-然后 `pnpm install` 并重启 DSH。

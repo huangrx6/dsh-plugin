@@ -28,6 +28,45 @@
 - `src/import-source.ts`：URL 归一化（GitHub → codeload zip / raw md）、zip 解包选根（fflate）、大小与超时限制。
 - Web 侧（`src/client/`）：向 `settings.plugins.tab` 注册 `skills` 页，zh/en 双语，样式使用 `--dsw-alias-*` 设计令牌。
 
+## 安装
+
+### 方式一：一行安装（推荐，从 GitHub 构建）
+
+DSH 官方 CLI 的 `dsh plugin` 命令会转发给 profile 目录下的 pnpm：
+
+```bash
+dsh plugin --profile web add "github:huangrx6/dsh-plugin#main&path:/dsh-skill-manager"
+```
+
+pnpm（≥ 9）会克隆仓库的对应子目录、安装依赖并执行 `prepare` 完成构建。`dsh plugin` 随后会自动对账 `dsh.profile.bundles`——包声明了 `dsh.bundle` 即自动加入加载层，**无需手改任何配置文件**。更新时执行 `dsh plugin --profile web update dsh-skill-manager`。
+
+### 方式二：固定版本（GitHub Release 预构建包，免本机构建）
+
+仓库打了 `v*` tag 后，GitHub Actions 会自动构建并把 npm tarball 挂到 [Releases](https://github.com/huangrx6/dsh-plugin/releases)。从 Release 页复制对应包的 `.tgz` 地址：
+
+```bash
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<tag>/dsh-skill-manager-<version>.tgz
+```
+
+
+### 方式三：本地开发（link 热迭代）
+
+```bash
+git clone git@github.com:huangrx6/dsh-plugin.git
+cd dsh-plugin/dsh-skill-manager && pnpm install && pnpm run build
+```
+
+profile（`~/.dsh/profiles/web/package.json`）：
+
+```json
+{
+  "dependencies": { "dsh-skill-manager": "link:/绝对路径/dsh-plugin/dsh-skill-manager" },
+  "dsh": { "profile": { "bundles": ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app", "dsh-skill-manager"] } }
+}
+```
+
+然后 `cd ~/.dsh/profiles/web && pnpm install` 并重启 DSH。
+
 ## 开发
 
 ```bash
@@ -35,13 +74,3 @@ pnpm install
 pnpm run check   # typecheck + vitest + build
 ```
 
-链接进 DSH profile（profile 的 `package.json`）：
-
-```json
-{
-  "dependencies": { "dsh-skill-manager": "link:/path/to/dsh-skill-manager" },
-  "dsh": { "profile": { "bundles": ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app", "dsh-skill-manager"] } }
-}
-```
-
-然后 `pnpm install` 并重启 DSH。

@@ -1,0 +1,43 @@
+# 打 tag（v*）时构建三个插件并把预构建的 npm tarball 挂到 GitHub Release。
+# 安装方随后可以一行安装固定版本、无需本机构建：
+#   dsh plugin --profile web add \
+#     https://github.com/huangrx6/dsh-plugin/releases/download/<tag>/dsh-layout-<version>.tgz
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Build & pack every plugin
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          for pkg in dsh-layout dsh-skill-manager dsh-mcp-manager; do
+            echo "::group::build $pkg"
+            (cd "$pkg" && pnpm install --no-frozen-lockfile && pnpm run build && pnpm pack --pack-destination ../dist)
+            echo "::endgroup::"
+          done
+          ls -lh dist/
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.tgz
+          generate_release_notes: true
