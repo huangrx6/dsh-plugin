@@ -4,18 +4,23 @@ import { DomSync } from '../src/client/dom-sync.ts'
 import { MobileSidebarRuntime } from '../src/client/mobile-sidebar.ts'
 import { LayoutStore } from '../src/client/store.ts'
 
-function setup(mobile: boolean): {
+interface World {
   doc: Document
   sync: DomSync
   runtime: MobileSidebarRuntime
   store: LayoutStore
+  toggle: HTMLButtonElement
   toggleClicks: () => number
-} {
+  open: () => void
+}
+
+function setup(mobile: boolean): World {
   const dom = new JSDOM(`<!doctype html><html><body>
-    <main data-dsh-layout-frame data-sidebar-collapsed="true">
+    <main data-dsh-layout-frame data-sidebar-collapsed>
       <aside data-dsh-layout-sidebar-col><div><div>
-        <button id="toggle" aria-label="Open sidebar"></button>
+        <button class="x_toggle" aria-label="Open sidebar"></button>
         <button id="session">Session</button>
+        <div role="treeitem" id="treeitem">Session A</div>
       </div></div></aside>
       <section data-dsh-layout-center-col>Chat</section>
       <aside data-dsh-layout-details-col></aside>
@@ -33,12 +38,14 @@ function setup(mobile: boolean): {
   const sync = new DomSync(doc)
   const store = new LayoutStore()
   const runtime = new MobileSidebarRuntime(store, doc, sync)
-  const toggleClicks = (): number => {
-    const trigger = doc.querySelector<HTMLButtonElement>('.dsh-layout-mobile-sidebar-trigger')
-    trigger?.click()
-    return trigger ? 1 : 0
+  const toggle = doc.querySelector<HTMLButtonElement>('button[class*="toggle"]')!
+  let clicks = 0
+  toggle.addEventListener('click', () => { clicks += 1 })
+  const toggleClicks = (): number => clicks
+  const open = (): void => {
+    doc.querySelector<HTMLButtonElement>('.dsh-layout-mobile-sidebar-trigger')?.click()
   }
-  return { doc, sync, runtime, store, toggleClicks }
+  return { doc, sync, runtime, store, toggle, toggleClicks, open }
 }
 
 function setFullscreen(store: LayoutStore): void {
@@ -52,14 +59,15 @@ async function flush(): Promise<void> {
 
 describe('MobileSidebarRuntime', () => {
   it('stays fully native on desktop, whatever the setting', async () => {
-    const { doc, sync, runtime, store, toggleClicks } = setup(false)
+    const { doc, sync, runtime, store, toggleClicks, open } = setup(false)
     sync.install()
     runtime.install()
     setFullscreen(store)
     await flush()
     expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar')).toBe(false)
+    expect(doc.querySelector('.dsh-layout-mobile-sidebar-trigger')).toBeNull()
+    open()
     expect(toggleClicks()).toBe(0)
-    expect(doc.querySelector('.dsh-layout-mobile-sidebar-mask')).toBeNull()
   })
 
   it('does nothing on phones while the setting is native', async () => {
@@ -70,50 +78,81 @@ describe('MobileSidebarRuntime', () => {
     expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar')).toBe(false)
   })
 
-  it('takes over on phones once the setting is fullscreen', async () => {
-    const { doc, sync, runtime, store, toggleClicks } = setup(true)
+  it('opens the drawer and expands DSH via its own toggle; closes and collapses back', async () => {
+    const { doc, sync, runtime, store, toggle, toggleClicks, open } = setup(true)
     sync.install()
     runtime.install()
-    await flush()
     setFullscreen(store)
     await flush()
-    expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar')).toBe(true)
-    expect(toggleClicks()).toBe(1)
+    open()
     expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar-open')).toBe(true)
-    const mask = doc.querySelector<HTMLButtonElement>('.dsh-layout-mobile-sidebar-mask')
-    expect(mask?.hidden).toBe(false)
-    mask?.click()
+    // Opening expanded the native sidebar (frame no longer collapsed).
+    expect(toggleClicks()).toBe(1)
+    doc.querySelector('[data-dsh-layout-frame]')?.removeAttribute('data-sidebar-collapsed') // simulate React
+    doc.querySelector<HTMLButtonElement>('.dsh-layout-mobile-sidebar-mask')?.click()
     expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar-open')).toBe(false)
+    doc.querySelector('[data-dsh-layout-frame]')?.setAttribute('data-sidebar-collapsed', '') // React collapses back
+    expect(toggleClicks()).toBe(2)
   })
 
-  it('closes on session selection, Esc, and tears down on native', async () => {
-    const { doc, sync, runtime, store, toggleClicks } = setup(true)
+  it('closes on navigation and Escape; collapses back to native on each close', async () => {
+    const { doc, sync, runtime, store, toggle, toggleClicks, open } = setup(true)
     sync.install()
     runtime.install()
     setFullscreen(store)
     await flush()
-    toggleClicks()
-    // Plain buttons (settings, add-workspace…) keep the drawer open — their
-    // anchored UI lives inside the sidebar column.
-    doc.getElementById('session')?.click()
-    expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar-open')).toBe(true)
-    // Navigation (treeitem / link) closes it.
-    const item = doc.createElement('div')
-    item.setAttribute('role', 'treeitem')
-    item.textContent = 'session'
-    doc.getElementById('session')?.parentElement?.append(item)
-    item.click()
+    open()
+    doc.querySelector('[data-dsh-layout-frame]')?.removeAttribute('data-sidebar-collapsed') // simulate React expand
+    doc.getElementById('treeitem')?.click()
     expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar-open')).toBe(false)
+    expect(toggleClicks()).toBe(2) // open-expand + close-collapse
+    doc.querySelector('[data-dsh-layout-frame]')?.setAttribute('data-sidebar-collapsed', '') // React collapsed back
 
-    toggleClicks()
+    open()
+    doc.querySelector('[data-dsh-layout-frame]')?.removeAttribute('data-sidebar-collapsed')
     const view = doc.defaultView as Window & typeof globalThis
     doc.dispatchEvent(new view.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
     expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar-open')).toBe(false)
+    expect(toggleClicks()).toBe(4)
+  })
+
+  it('self-heals when DSH collapses the sidebar from inside the open drawer', async () => {
+    const { doc, sync, runtime, store, open } = setup(true)
+    sync.install()
+    runtime.install()
+    setFullscreen(store)
+    await flush()
+    open()
+    expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar-open')).toBe(true)
+    doc.querySelector('[data-dsh-layout-frame]')?.setAttribute('data-sidebar-collapsed', '') // native collapse mid-open
+    await flush()
+    expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar-open')).toBe(false)
+  })
+
+  it('opens from a left-edge swipe and tears down on native', async () => {
+    const { doc, sync, runtime, store, toggleClicks, open } = setup(true)
+    sync.install()
+    runtime.install()
+    setFullscreen(store)
+    await flush()
+    const view = doc.defaultView as Window & typeof globalThis
+    const touch = (type: string, x: number): void => {
+      doc.dispatchEvent(new view.TouchEvent(type, {
+        bubbles: true,
+        touches: type === 'touchend' ? [] : [{ clientX: x } as unknown as Touch],
+        changedTouches: type === 'touchend' ? [{ clientX: x } as unknown as Touch] : [],
+      }))
+    }
+    touch('touchstart', 10)
+    touch('touchend', 90)
+    await flush()
+    expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar-open')).toBe(true)
 
     const global = store.getSnapshot().global
     store.update({ global: { ...global, narrow: { ...global.narrow, sidebar: 'native' } } })
     await flush()
     expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar')).toBe(false)
     expect(doc.querySelector('.dsh-layout-mobile-sidebar-trigger')).toBeNull()
+    expect(toggleClicks()).toBe(1) // only the open-expand click happened
   })
 })

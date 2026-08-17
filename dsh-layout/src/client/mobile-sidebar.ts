@@ -6,22 +6,37 @@ const ROOT_ATTR = 'data-dsh-layout-mobile-sidebar-open'
 const FRAME_SELECTOR = '[data-dsh-layout-frame]'
 const SIDEBAR_SELECTOR = '[data-dsh-layout-sidebar-col]'
 const CENTER_SELECTOR = '[data-dsh-layout-center-col]'
+/** The native rail/wide toggle (fish logo when collapsed, panel icon when
+    wide) — DSH's own button, stable by class and present in both states. */
+const TOGGLE_SELECTOR = `${SIDEBAR_SELECTOR} button[class*='toggle']`
+/** Open affordance: swipe from the left edge, or tap the slim edge handle. */
+const EDGE_ZONE = 24
+const SWIPE_THRESHOLD = 48
 
 /**
- * Phones should spend the full viewport on the conversation. The native
- * narrow layout keeps the sidebar column in the grid, permanently squeezing
- * the content area. While the setting is 'fullscreen' (and the viewport is
- * narrow), the sidebar becomes an off-canvas FULLSCREEN overlay with one
- * small floating trigger and a tap-outside mask — the content column owns
- * the whole screen and never deforms. 'native' (the default) keeps DSH's
- * own behavior untouched.
+ * Phones should spend the full viewport on the conversation. While the
+ * setting is 'fullscreen' (and the viewport is narrow), the sidebar becomes
+ * an off-canvas FULLSCREEN overlay — the content column never squeezes.
+ *
+ * The key trick: DSH marks the mobile sidebar `collapsed` (an icon rail whose
+ * content sits at opacity:0 until expanded), so merely sliding the column out
+ * shows a fogged, non-interactive shell. Opening the drawer therefore clicks
+ * DSH's OWN toggle button (expanding to the real wide state), and closing it
+ * collapses back — the drawer always shows real content. The frame's
+ * collapsed attribute is watched so a native in-drawer collapse self-heals
+ * by closing the drawer.
+ *
+ * No floating chrome: open by swiping from the left edge or tapping the slim
+ * edge handle; close via the mask, Escape, or navigation.
  */
 export class MobileSidebarRuntime {
   private media: MediaQueryList | undefined
   private trigger: HTMLButtonElement | undefined
   private mask: HTMLButtonElement | undefined
+  private frameObserver: MutationObserver | undefined
   private unsubscribe: (() => void) | undefined
   private unregister: (() => void) | undefined
+  private touchStartX = 0
   private readonly onMedia = (): void => { this.render() }
   private readonly onDocumentClick = (event: MouseEvent): void => {
     if (!this.isMobile() || !this.isOpen()) return
@@ -34,11 +49,29 @@ export class MobileSidebarRuntime {
     // Plain buttons (settings, add-workspace…) open anchored UI that must keep
     // the drawer visible; the mask / trigger / Esc close explicitly.
     if (sidebar?.contains(target) === true && targetElement?.closest('a, [role="treeitem"]') !== null) {
-      this.setOpen(false)
+      this.close()
     }
   }
   private readonly onKeyDown = (event: KeyboardEvent): void => {
-    if (event.key === 'Escape' && this.isOpen()) this.setOpen(false)
+    if (event.key === 'Escape' && this.isOpen()) this.close()
+  }
+  private readonly onTouchStart = (event: TouchEvent): void => {
+    if (!this.isMobile() || this.isOpen()) return
+    const x = event.touches[0]?.clientX
+    if (x !== undefined && x <= EDGE_ZONE) this.touchStartX = x
+    else this.touchStartX = 0
+  }
+  private readonly onTouchEnd = (event: TouchEvent): void => {
+    if (this.touchStartX === 0) return
+    const x = event.changedTouches[0]?.clientX ?? 0
+    if (x - this.touchStartX >= SWIPE_THRESHOLD) this.open()
+    this.touchStartX = 0
+  }
+  private readonly onFrameChange = (): void => {
+    // DSH collapsed the sidebar (native toggle inside the drawer) while our
+    // drawer is open: the rail fog would return — slide the drawer away.
+    const frame = this.doc.querySelector(FRAME_SELECTOR)
+    if (this.isOpen() && frame?.hasAttribute('data-sidebar-collapsed')) this.setOpen(false)
   }
 
   constructor(
@@ -54,11 +87,20 @@ export class MobileSidebarRuntime {
     this.media.addEventListener('change', this.onMedia)
     this.doc.addEventListener('click', this.onDocumentClick)
     this.doc.addEventListener('keydown', this.onKeyDown)
+    this.doc.addEventListener('touchstart', this.onTouchStart, { passive: true })
+    this.doc.addEventListener('touchend', this.onTouchEnd, { passive: true })
+    this.frameObserver = new view.MutationObserver(this.onFrameChange)
     this.unsubscribe = this.store.subscribe(() => this.render())
     this.unregister = this.sync.register({
-      onFull: () => { this.render() },
+      onFull: () => {
+        this.observeFrame()
+        this.render()
+      },
       onStructural: roots => {
-        if (roots.some(root => root.matches(FRAME_SELECTOR) || root.querySelector(FRAME_SELECTOR) !== null)) this.render()
+        if (roots.some(root => root.matches(FRAME_SELECTOR) || root.querySelector(FRAME_SELECTOR) !== null)) {
+          this.observeFrame()
+          this.render()
+        }
       },
     })
     this.render()
@@ -70,6 +112,10 @@ export class MobileSidebarRuntime {
     this.media = undefined
     this.doc.removeEventListener('click', this.onDocumentClick)
     this.doc.removeEventListener('keydown', this.onKeyDown)
+    this.doc.removeEventListener('touchstart', this.onTouchStart)
+    this.doc.removeEventListener('touchend', this.onTouchEnd)
+    this.frameObserver?.disconnect()
+    this.frameObserver = undefined
     this.unregister?.()
     this.unregister = undefined
     this.unsubscribe?.()
@@ -91,6 +137,35 @@ export class MobileSidebarRuntime {
   private isMobile(): boolean { return this.media?.matches === true }
   private isOpen(): boolean { return this.doc.documentElement.hasAttribute(ROOT_ATTR) }
 
+  private observeFrame(): void {
+    const frame = this.doc.querySelector(FRAME_SELECTOR)
+    if (frame === null || this.frameObserver === undefined) return
+    this.frameObserver.disconnect()
+    this.frameObserver.observe(frame, { attributes: true, attributeFilter: ['data-sidebar-collapsed'] })
+  }
+
+  /** DSH renders real sidebar content only in its wide state; click the
+      native toggle so the drawer opens expanded (and collapses back on
+      close), instead of showing the fogged collapsed rail. */
+  private syncNative(expand: boolean): void {
+    const frame = this.doc.querySelector(FRAME_SELECTOR)
+    const toggle = this.doc.querySelector<HTMLButtonElement>(TOGGLE_SELECTOR)
+    if (frame === null || toggle === null) return
+    const collapsed = frame.hasAttribute('data-sidebar-collapsed')
+    if (expand && collapsed) toggle.click()
+    else if (!expand && !collapsed) toggle.click()
+  }
+
+  private open(): void {
+    this.syncNative(true)
+    this.setOpen(true)
+  }
+
+  private close(): void {
+    this.setOpen(false)
+    this.syncNative(false)
+  }
+
   private render(): void {
     const frame = this.doc.querySelector<HTMLElement>(FRAME_SELECTOR)
     const sidebar = this.doc.querySelector<HTMLElement>(SIDEBAR_SELECTOR)
@@ -107,7 +182,7 @@ export class MobileSidebarRuntime {
     }
     this.doc.documentElement.setAttribute('data-dsh-layout-mobile-sidebar', '')
     const trigger = this.ensureTrigger()
-    trigger.hidden = false
+    trigger.hidden = this.isOpen()
     this.ensureMask()
   }
 
@@ -115,6 +190,7 @@ export class MobileSidebarRuntime {
     const root = this.doc.documentElement
     root.toggleAttribute(ROOT_ATTR, open && this.isMobile())
     if (this.trigger !== undefined) {
+      this.trigger.hidden = open
       this.trigger.setAttribute('aria-expanded', open ? 'true' : 'false')
       this.trigger.setAttribute('aria-label', open ? '关闭侧边栏' : '打开侧边栏')
     }
@@ -129,8 +205,8 @@ export class MobileSidebarRuntime {
     trigger.setAttribute('aria-controls', 'dsh-layout-mobile-sidebar')
     trigger.setAttribute('aria-expanded', 'false')
     trigger.setAttribute('aria-label', '打开侧边栏')
-    trigger.innerHTML = '<span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>'
-    trigger.addEventListener('click', event => { event.stopPropagation(); this.setOpen(!this.isOpen()) })
+    trigger.innerHTML = '<span aria-hidden="true"></span>'
+    trigger.addEventListener('click', event => { event.stopPropagation(); this.open() })
     this.doc.body.append(trigger)
     this.trigger = trigger
     return trigger
@@ -143,7 +219,7 @@ export class MobileSidebarRuntime {
     mask.className = 'dsh-layout-mobile-sidebar-mask'
     mask.setAttribute('aria-label', '关闭侧边栏')
     mask.hidden = true
-    mask.addEventListener('click', () => { this.setOpen(false) })
+    mask.addEventListener('click', () => { this.close() })
     this.doc.body.append(mask)
     this.mask = mask
     return mask

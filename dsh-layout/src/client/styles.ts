@@ -623,39 +623,37 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     min-height: 44px;
   }
 
+  /* Open affordance: a slim edge handle at mid-height — no floating box over
+     the header, nothing occludes content. Hidden entirely while the drawer
+     is open (the mask owns closing). */
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger {
     position: fixed;
     z-index: 44;
-    inset-block-start: calc(10px + env(safe-area-inset-top, 0px));
-    inset-inline-start: calc(10px + env(safe-area-inset-left, 0px));
-    width: 38px;
-    height: 38px;
+    inset-block-start: 50%;
+    inset-inline-start: 0;
+    width: 22px;
+    height: 60px;
+    margin-block-start: -30px;
     padding: 0;
-    border: 1px solid var(--dsw-alias-border-l2);
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--dsw-alias-bg-layer-3) 88%, transparent);
+    border: 0;
+    border-radius: 0 12px 12px 0;
+    background: color-mix(in srgb, var(--dsw-alias-bg-layer-3) 82%, transparent);
     color: var(--dsw-alias-label-primary);
     box-shadow: var(--dsw-shadow-lv1);
     -webkit-backdrop-filter: blur(14px) saturate(125%);
     backdrop-filter: blur(14px) saturate(125%);
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
+    display: grid;
+    place-items: center;
     cursor: pointer;
   }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger > span {
-    width: 16px;
-    height: 1.5px;
-    border-radius: 2px;
-    background: currentColor;
-    transition: transform 160ms ease, opacity 160ms ease;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(-45deg);
+    margin-inline-start: -3px;
   }
-  html[data-dsh-layout-mobile-sidebar-open] .dsh-layout-mobile-sidebar-trigger > span:first-child { transform: translateY(5.5px) rotate(45deg); }
-  html[data-dsh-layout-mobile-sidebar-open] .dsh-layout-mobile-sidebar-trigger > span:nth-child(2) { opacity: 0; }
-  html[data-dsh-layout-mobile-sidebar-open] .dsh-layout-mobile-sidebar-trigger > span:last-child { transform: translateY(-5.5px) rotate(-45deg); }
-  html[data-dsh-layout-mobile-sidebar-open] .dsh-layout-mobile-sidebar-trigger { background: var(--dsw-alias-bg-layer-3); }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-mask {
     position: fixed;
     z-index: 41;
