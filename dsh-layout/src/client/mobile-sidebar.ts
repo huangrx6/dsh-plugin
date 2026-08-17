@@ -52,9 +52,13 @@ export class MobileSidebarRuntime {
     // Only NAVIGATION closes the overlay (session/workspace selection, links).
     // Plain buttons (settings, add-workspace…) open anchored UI that must keep
     // the drawer visible; the mask / trigger / Esc close explicitly.
+    // A treeitem carrying aria-expanded is a WORKSPACE DIRECTORY toggle
+    // (collapse/expand), not navigation — tapping it must keep the drawer.
+    const nav = targetElement?.closest('a, [role="treeitem"]') ?? null
     if (
       sidebar?.contains(target) === true &&
-      targetElement?.closest('a, [role="treeitem"]') !== null
+      nav !== null &&
+      !(nav.getAttribute('role') === 'treeitem' && nav.hasAttribute('aria-expanded'))
     ) {
       this.close();
     }

@@ -706,6 +706,9 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     position: fixed !important;
     z-index: 42;
     inset-block-start: 0;
+    /* 全高必须显式锚定：fixed 脱离了 grid，item 不再被拉伸，
+       只写 inset-block-start 会让高度随内容塌缩（抽屉底部悬空）。 */
+    inset-block-end: 0;
     inset-inline-start: -100%;
     box-sizing: border-box;
     /* Deterministically opaque: the drawer must never show the scrim (blur +
@@ -795,24 +798,32 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     border-radius: 50%;
     background: currentColor;
   }
-  /* Close button: a round X pinned to the top-right, only while the drawer
-     is open. */
+  /* Close button: a bare X (no chrome) pinned to the drawer's top row,
+     aligned with the brand/logo line, only while the drawer is open.
+     fullscreen: the drawer spans the viewport, so right: 12px reads as the
+     panel's inner edge. float: the drawer is min(320px, 86vw) wide flush
+     left, so the offset must be measured from the PANEL's right edge —
+     100vw - panel-width + 12px — or the X would hover over the content
+     column instead of sitting on the floating panel. */
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-close {
     position: fixed;
     z-index: 46;
-    inset-block-start: calc(env(safe-area-inset-top, 0px) + 16px);
+    inset-block-start: calc(env(safe-area-inset-top, 0px) + 12px);
     inset-inline-end: 12px;
     width: 28px;
     height: 28px;
     padding: 0;
     border: 0;
-    border-radius: 50%;
-    background: color-mix(in srgb, var(--dsw-alias-bg-layer-3) 82%, transparent);
-    color: var(--dsw-alias-label-primary);
-    box-shadow: var(--dsw-shadow-lv1);
+    border-radius: 0;
+    background: transparent;
+    color: var(--dsw-alias-label-secondary);
+    box-shadow: none;
     display: grid;
     place-items: center;
     cursor: pointer;
+  }
+  html[data-dsh-layout-mobile-sidebar][data-dsh-layout-sidebar-float] .dsh-layout-mobile-sidebar-close {
+    inset-inline-end: calc(100vw - min(320px, 86vw) + 12px);
   }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-close > span {
     position: relative;
@@ -862,8 +873,6 @@ html[data-dsh-layout-sidebar-float] [data-dsh-layout-center-col] { grid-column: 
 html[data-dsh-layout-sidebar-float] [data-dsh-layout-details-col] { grid-column: 2; }
 html[data-dsh-layout-sidebar-float] [data-dsh-layout-sidebar-col] {
   width: min(320px, 86vw) !important;
-  height: 100vh;
-  height: 100dvh;
   border-radius: 0 14px 14px 0 !important;
 }
 
