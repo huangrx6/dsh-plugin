@@ -415,7 +415,7 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
 .dsh-layout-tabs button[aria-selected='true'] { background: var(--dsw-specific-input-major); color: var(--dsw-alias-label-primary); box-shadow: 0 1px 4px rgb(0 0 0 / 9%); }
 /* Two-rail field rows: icon + label on the left, controls in one aligned
    column on the right — every control starts at the same x, nothing drifts. */
-.dsh-layout-settings__field { display: grid; grid-template-columns: 168px minmax(0, 1fr); gap: 6px 20px; align-items: center; padding: 11px 0; border-bottom: 1px solid color-mix(in srgb, var(--dsh-layout-line) 30%, transparent); }
+.dsh-layout-settings__field { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 6px 16px; align-items: center; padding: 10px 0; border-bottom: 1px solid color-mix(in srgb, var(--dsh-layout-line) 30%, transparent); }
 .dsh-layout-settings__group { display: flex; align-items: center; gap: 12px; margin: 18px 0 2px; color: var(--dsw-alias-label-tertiary); font-size: 11px; font-weight: 600; letter-spacing: .07em; }
 .dsh-layout-settings__group::after { content: ''; flex: 1; height: 1px; background: color-mix(in srgb, var(--dsh-layout-line) 45%, transparent); }
 .dsh-layout-settings__group:first-child { margin-top: 2px; }
