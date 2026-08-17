@@ -632,9 +632,11 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-sidebar-col] {
     position: fixed !important;
     z-index: 42;
-    inset-block: 0;
+    inset-block-start: 0;
     inset-inline-start: -100%;
     width: 100% !important;
+    height: 100vh;
+    height: 100dvh;
     box-sizing: border-box;
     padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px);
     border: 0 !important;
@@ -646,6 +648,13 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     box-shadow: var(--dsw-shadow-lv2);
   }
   html[data-dsh-layout-mobile-sidebar][data-dsh-layout-mobile-sidebar-open] [data-dsh-layout-sidebar-col] { inset-inline-start: 0; }
+  /* Lock the page scroll while the fullscreen drawer is open: otherwise the
+     conversation behind keeps scrolling (and iOS toggles the URL bar),
+     pulling the fixed drawer out of its full viewport. */
+  html[data-dsh-layout-mobile-sidebar-open],
+  html[data-dsh-layout-mobile-sidebar-open] body {
+    overflow: hidden !important;
+  }
   /* The app panel inside keeps its own fixed width and chrome; stretch it
      edge to edge so the drawer reads as one flat surface. The intermediate
      wrapper is display:contents, so the panel lays out against the column. */
