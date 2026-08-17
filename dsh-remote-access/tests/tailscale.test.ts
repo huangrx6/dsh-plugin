@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import {
-  buildServeOffArgs,
+  buildServeResetArgs,
   buildServeStartArgs,
   composeHttpsUrl,
   parseServeStatus,
   parseStatusJson,
   parseVersion,
+  looksLikeHttpsCertificatesDisabled,
+  parseServeAuthUrl,
+  stopServe,
+  TailscaleError,
+  type TailRunner,
 } from '../src/tailscale.ts'
 
 // ---------------------------------------------------------------------------
@@ -92,11 +97,42 @@ describe('command construction', () => {
   it('builds serve start args', () => {
     expect(buildServeStartArgs(3080)).toEqual(['serve', '--bg', '3080'])
   })
-  it('builds serve off args', () => {
-    expect(buildServeOffArgs(3080)).toEqual(['serve', '--3080', 'off'])
+  it('builds serve reset args (1.102+ has no per-port off syntax)', () => {
+    expect(buildServeResetArgs()).toEqual(['serve', 'reset'])
   })
   it('composes an HTTPS url and tolerates trailing dots', () => {
     expect(composeHttpsUrl('mac.tail.ts.net')).toBe('https://mac.tail.ts.net')
     expect(composeHttpsUrl('mac.tail.ts.net..')).toBe('https://mac.tail.ts.net')
+  })
+})
+
+describe('serve enable diagnostics', () => {
+  it('extracts the admin authorization URL from pending output', () => {
+    const out = '\nServe is not enabled on your tailnet.\nTo enable, visit:\n\n         https://login.tailscale.com/f/serve?node=nhu89kq98F11CNTRL\n'
+    expect(parseServeAuthUrl(out)).toBe('https://login.tailscale.com/f/serve?node=nhu89kq98F11CNTRL')
+    expect(parseServeAuthUrl('no url here')).toBeNull()
+  })
+  it('detects HTTPS-certificates-disabled wording for the admin-console hint', () => {
+    expect(looksLikeHttpsCertificatesDisabled('error: HTTPS is disabled on your tailnet')).toBe(true)
+    expect(looksLikeHttpsCertificatesDisabled('failed to fetch certificate via ACME')).toBe(true)
+    expect(looksLikeHttpsCertificatesDisabled('connection refused')).toBe(false)
+  })
+})
+
+describe('stopServe', () => {
+  it('resets directly (only reliable removal for classic rules)', async () => {
+    const calls: string[] = []
+    const run: TailRunner = async (args) => {
+      calls.push(args.join(' '))
+      return { stdout: '', stderr: '', code: 0 }
+    }
+    await stopServe(run, 3080)
+    expect(calls).toEqual(['serve reset'])
+  })
+  it('surfaces reset failures with the manual hint', async () => {
+    const run: TailRunner = async () => ({ stdout: '', stderr: 'boom', code: 1 })
+    const error = await stopServe(run, 3080).catch(e => e)
+    expect(error).toBeInstanceOf(TailscaleError)
+    expect((error as TailscaleError).code).toBe('serve-failed')
   })
 })

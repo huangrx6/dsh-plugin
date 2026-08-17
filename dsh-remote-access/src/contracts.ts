@@ -14,6 +14,7 @@ export type RemoteAccessIssueCode =
   | 'tailscale-not-installed'
   | 'tailscale-not-running'
   | 'tailscale-not-logged-in'
+  | 'serve-not-enabled'
   | 'https-certificates-disabled'
   | 'serve-failed'
   | 'serve-query-failed'

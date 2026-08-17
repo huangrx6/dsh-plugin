@@ -74,24 +74,3 @@ describe('startServe', () => {
   })
 })
 
-describe('stopServe', () => {
-  it('uses the per-port off first', async () => {
-    const calls: string[] = []
-    const run: TailRunner = async (args) => {
-      calls.push(args.join(' '))
-      return { stdout: '', stderr: '', code: 0 }
-    }
-    await stopServe(run, 3080)
-    expect(calls).toEqual(['serve --3080 off'])
-  })
-  it('resets when the per-port off is rejected', async () => {
-    const calls: string[] = []
-    const run: TailRunner = async (args) => {
-      const key = args.join(' ')
-      calls.push(key)
-      return { stdout: '', stderr: '', code: key === 'serve --3080 off' ? 1 : 0 }
-    }
-    await stopServe(run, 3080)
-    expect(calls).toEqual(['serve --3080 off', 'serve reset'])
-  })
-})

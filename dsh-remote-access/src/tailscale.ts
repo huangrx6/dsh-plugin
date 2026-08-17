@@ -138,15 +138,26 @@ export function buildServeStartArgs(port: number): readonly string[] {
   return ['serve', '--bg', String(port)]
 }
 
-/** `tailscale serve --3080 off`：仅摘除该端口的规则（保留其他 serve 配置）。 */
-export function buildServeOffArgs(port: number): readonly string[] {
-  return ['serve', `--${String(port)}`, 'off']
+/** 1.102+ 已无 `--3080 off` / `off 3080` 语法；旧式规则唯一可靠的摘除方式是 reset。 */
+export function buildServeResetArgs(): readonly string[] {
+  return ['serve', 'reset']
 }
 
 /** 组装 `https://<dnsName>`；容忍尾点输入。 */
 export function composeHttpsUrl(dnsName: string): string {
   const host = dnsName.replace(/\.+$/u, '')
   return `https://${host}`
+}
+
+/** tailnet 未启用 Serve：CLI 挂起并打印 login.tailscale.com 授权链接。 */
+export function parseServeAuthUrl(text: string): string | null {
+  const match = /https:\/\/login\.tailscale\.com\/f\/serve\?node=[A-Za-z0-9]+/u.exec(text)
+  return match === null ? null : match[0] ?? null
+}
+
+/** tailnet 未启用 HTTPS 证书（ACME 不可用）时的 CLI 报错特征。 */
+export function looksLikeHttpsCertificatesDisabled(text: string): boolean {
+  return /HTTPS.*disable|MagicDNS|certificate|ACME/iu.test(text)
 }
 
 // ---------------------------------------------------------------------------
@@ -213,16 +224,41 @@ export async function fetchServeStatus(run: TailRunner): Promise<ParsedServeStat
   }
 }
 
-/** 启动 serve，把证书未启用等可识别失败映射为带指引的领域错误。 */
+/** 启动 serve，把三类可识别失败映射为带指引的领域错误。 */
 export async function startServe(run: TailRunner, port: number): Promise<void> {
-  const result = await run(buildServeStartArgs(port), { timeoutMs: 20000 })
+  let result: { stdout: string; stderr: string; code: number }
+  try {
+    result = await run(buildServeStartArgs(port), { timeoutMs: 90000 })
+  } catch (error) {
+    // 超时被拉断时拿不到输出；Serve 未启用时 CLI 正是这种挂起形态。
+    // 短超时重试一次只为捕获授权链接，拿不到才当作普通超时报错。
+    const message = error instanceof Error ? error.message : String(error)
+    try {
+      const probe = await run(buildServeStartArgs(port), { timeoutMs: 8000 })
+      const url = parseServeAuthUrl(probe.stdout + probe.stderr)
+      if (url !== null) {
+        throw new TailscaleError(
+          'serve-not-enabled',
+          'tailnet 尚未启用 Serve 功能，需要管理员在浏览器授权一次（授权后永久生效）。',
+          url,
+        )
+      }
+    } catch (retry) {
+      if (retry instanceof TailscaleError) throw retry
+    }
+    throw new TailscaleError(
+      'serve-failed',
+      `tailscale serve 无响应（${message}）。`,
+      '检查 tailscaled 是否运行：tailscale status；或手动执行 tailscale serve --bg 3080 观察输出。',
+    )
+  }
   if (result.code !== 0) {
     const err = result.stderr.trim() + ' ' + result.stdout.trim()
-    if (/HTTPS.*disable|MagicDNS|certificate/iu.test(err)) {
+    if (looksLikeHttpsCertificatesDisabled(err)) {
       throw new TailscaleError(
         'https-certificates-disabled',
         'tailnet 未启用 HTTPS 证书，Tailscale Serve 无法签发 ts.net 证书。',
-        '到 Tailscale 管理后台 → DNS → MagicDNS → HTTPS Certificates，为本机域名启用证书。',
+        '到 Tailscale 管理后台 → DNS 页 → HTTPS Certificates 小节 → Enable（具体入口：https://login.tailscale.com/admin/dns）。',
       )
     }
     throw new TailscaleError(
@@ -231,20 +267,29 @@ export async function startServe(run: TailRunner, port: number): Promise<void> {
       '确认本机已在 tailnet 内，且 3080 端口上的 dsh web 正在运行。',
     )
   }
+  // 挂起被超时拉断时（exit 非零或输出里带授权链接）：Serve 功能未启用。
+  const combined = result.stdout + result.stderr
+  const authUrl = parseServeAuthUrl(combined)
+  if (authUrl !== null) {
+    throw new TailscaleError(
+      'serve-not-enabled',
+      'tailnet 尚未启用 Serve 功能，需要管理员在浏览器授权一次（授权后永久生效）。',
+      authUrl,
+    )
+  }
 }
 
 /**
- * 停止 serve：先摘当前端口的规则；老 CLI 形态或残留挂载拒绝时，
- * 回退 `serve reset`（清除全部规则 —— 本插件假设 serve 只服务 dsh）。
+ * 停止 serve。实测 1.102+ 的 CLI 已无任何 per-port off 语法
+ * （`--3080 off` / `off 3080` 均拒），旧式规则唯一可靠摘除方式是
+ * `serve reset`（清除本节点全部 serve 规则 —— 本插件假设 serve 只服务 dsh）。
  */
-export async function stopServe(run: TailRunner, port: number): Promise<void> {
-  const off = await run(buildServeOffArgs(port), { timeoutMs: 10000 })
-  if (off.code === 0) return
-  const reset = await run(['serve', 'reset'], { timeoutMs: 10000 })
-  if (reset.code !== 0) {
+export async function stopServe(run: TailRunner, _port: number): Promise<void> {
+  const result = await run(buildServeResetArgs(), { timeoutMs: 10000 })
+  if (result.code !== 0) {
     throw new TailscaleError(
       'serve-failed',
-      `停止 serve 失败：${(off.stderr.trim() + reset.stderr.trim()).slice(0, 300)}`,
+      `停止 serve 失败：${result.stderr.trim().slice(0, 300)}`,
       '可手动执行 tailscale serve reset 清除全部规则。',
     )
   }
