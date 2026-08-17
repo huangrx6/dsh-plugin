@@ -13,6 +13,7 @@ import '@deepseek-ai/dsh-client-ui-settings/client'
 import type { RemoteAccessLocaleKey } from './locales.ts'
 import { enUS, REMOTE_ACCESS_NS, zhCN } from './locales.ts'
 import { RemoteAccessApi } from './api.ts'
+import { installSettingsBridgeClient } from './settings-bridge.ts'
 import { RemoteAccessTab } from './RemoteAccessTab.tsx'
 import { installStyles } from './styles.ts'
 
@@ -22,19 +23,36 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   }
 }
 
-export const inject = ['slots', 'locale', 'connection']
+
+declare module '@deepseek-ai/dsh-client-ui-slots' {
+  interface SlotMap {
+    'settings.thirdparty.tab': {
+      kind: 'list'
+      scope: 'root'
+      owner: Record<string, never>
+    }
+  }
+}
+
+export const inject = ['slots', 'locale', 'connection', 'theme']
 
 export function apply(ctx: ClientContext): void {
   const connection = (ctx as unknown as { connection: ConnectionHandle }).connection
   const api = new RemoteAccessApi(connection.rpc)
+
+  // 远端（非 loopback）浏览器才安装设置桥：本机 SettingsScope 本就直连宿主。
+  const isLoopback = (ctx as unknown as { connection?: ConnectionHandle & { isLoopback?: boolean } }).connection?.isLoopback === true
+  if (!isLoopback) {
+    ctx.effect(() => installSettingsBridgeClient(ctx) ?? (() => {}), 'dsh-remote-access: settings bridge')
+  }
 
   ctx.effect(() => ctx.locale.register(REMOTE_ACCESS_NS, { zh: zhCN, en: enUS }), 'dsh-remote-access: dictionaries')
   const t = ctx.locale.bind(REMOTE_ACCESS_NS)
 
   ctx.effect(() => installStyles(document), 'dsh-remote-access: styles')
 
-  ctx.slots.inject('settings.plugins.tab', () => ctx.slots.register({
-    name: 'settings.plugins.tab',
+  ctx.slots.inject('settings.thirdparty.tab', () => ctx.slots.register({
+    name: 'settings.thirdparty.tab',
     id: 'remote-access',
     // 30 = mcp-manager，40 排其后。
     order: 40,

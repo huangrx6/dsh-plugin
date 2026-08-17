@@ -19,6 +19,7 @@ import {
 } from './contracts.ts'
 import { runTailscale } from './runner.ts'
 import { buildStatus } from './status.ts'
+import { createBridgeHandler, DEFAULT_BRIDGE_CONFIG, settingsOf } from './settings-bridge.ts'
 import {
   composeHttpsUrl,
   fetchServeStatus,
@@ -35,7 +36,23 @@ export const name = 'dsh-remote-access'
 // 否则运行时抛 "cannot get property ... without inject"。
 // webServer/pluginInventory 由 web profile（dsh-web-app + plugin-inventory）
 // 提供；本插件仅面向 --profile web 发布（见 README）。
-export const inject = ['connection', 'webServer', 'pluginInventory']
+export const inject = ['connection', 'webServer', 'pluginInventory', 'settings']
+
+/** 插件 config（bundle patch 行的 config，Loader 传入；未配置时用默认）。 */
+export interface PluginConfig {
+  readonly settingsBridge?: {
+    readonly enabled?: boolean
+    readonly namespaces?: readonly string[]
+  } | undefined
+}
+
+function resolveBridgeConfig(raw: PluginConfig | undefined) {
+  const bridge = raw?.settingsBridge
+  return {
+    enabled: bridge?.enabled !== false,
+    namespaces: bridge?.namespaces ?? DEFAULT_BRIDGE_CONFIG.namespaces,
+  }
+}
 
 // ---------------------------------------------------------------------------
 // RPC endpoint 实现（每个 endpoint 一个纯 async 函数）
@@ -93,7 +110,7 @@ async function getQrEndpoint(payload: unknown): Promise<QrResponse> {
 // 分发与错误折叠
 // ---------------------------------------------------------------------------
 
-type Endpoint = 'status' | 'enable' | 'disable' | 'getQr'
+type Endpoint = 'status' | 'enable' | 'disable' | 'getQr' | 'bridge'
 
 /**
  * 错误折叠点：domain 错误的 code/hint 通过 `\n[hint] ` 分隔符编入
@@ -116,13 +133,20 @@ function badRequest(message: string): RpcResult<unknown> {
   return { ok: false, error: { code: 'bad-request', message, details: { issues: [] } } }
 }
 
-async function handle(ctx: Context, endpoint: string, payload: unknown): Promise<RpcResult<unknown>> {
+async function handle(ctx: Context, endpoint: string, payload: unknown, config?: PluginConfig): Promise<RpcResult<unknown>> {
   try {
     switch (endpoint as Endpoint) {
       case 'status': return ok(await statusEndpoint(ctx))
       case 'enable': return ok(await enableEndpoint())
       case 'disable': return ok(await disableEndpoint())
       case 'getQr': return ok(await getQrEndpoint(payload))
+      case 'bridge': {
+        const settings = settingsOf(ctx)
+        if (settings === undefined) return badRequest('宿主未提供 settings 服务，桥不可用。')
+        const body = payload as { op?: unknown } | null
+        const op = typeof body?.op === 'string' ? body.op : ''
+        return createBridgeHandler(settings, resolveBridgeConfig(config))(op, body)
+      }
       default: return badRequest(`未知操作：${endpoint}`)
     }
   } catch (error) {
@@ -138,10 +162,10 @@ interface WebServerLike {
   tapIndex?: ((transform: (html: string) => string) => void) | undefined
 }
 
-export function apply(ctx: Context): void {
+export function apply(ctx: Context, config?: PluginConfig): void {
   ctx.effect(() => ctx.connection.rpc.handle(
     DSH_REMOTE_ACCESS_CHANNEL,
-    (endpoint, payload) => handle(ctx, endpoint, payload),
+    (endpoint, payload) => handle(ctx, endpoint, payload, config),
     { authority: 'trusted-host' },
   ), 'dsh-remote-access: rpc')
 
