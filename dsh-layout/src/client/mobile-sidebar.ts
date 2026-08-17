@@ -288,7 +288,11 @@ export class MobileSidebarRuntime {
     close.addEventListener("click", () => {
       this.close();
     });
-    this.doc.body.append(close);
+    /* Mount INSIDE the drawer column: the X positions absolute against the
+       drawer's top edge (aligned with the official logo row) and slides with
+       the drawer during the open/close transition. */
+    const sidebar = this.doc.querySelector<HTMLElement>(SIDEBAR_SELECTOR);
+    (sidebar ?? this.doc.body).append(close);
     this.closeButton = close;
     return close;
   }

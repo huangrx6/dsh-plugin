@@ -390,19 +390,15 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
 .dsh-layout-inline-summary__group { flex: none; }
 .dsh-layout-inline-summary__divider { flex: none; margin: 0 8px; color: var(--dsw-alias-label-tertiary); opacity: .48; }
 
-/* 手机窄屏：官方 composer 的 trailing 行 flex:0 0 auto 永不收缩，任何注入
-   （icon 26px / brief 标签 126px+）都会把它顶出视口（360px 实测行内容
-   333px > 行宽 270px，模型选择器被截断）。窄屏下：
-   1) 我们的根允许收缩、brief 标签设上限（省略号已有），icon 保持定宽；
-   2) 允许包含我们芯片的那一个 trailing 行收缩，模型标签溢出时省略号——
-      官方视觉语言不变，只是获得响应式弹性。:has() 限定只影响含统计
-   芯片的行，不碰其他 *_trailing 元素。 */
+/* 手机窄屏：官方 composer 的 trailing 行 flex:0 0 auto 永不收缩，注入的
+   统计芯片（icon 26px / brief 标签 126px+）会把它顶出视口（360px 实测行内容
+   333px > 行宽 270px）。窄屏下只需让我们的根可收缩 + brief 标签设上限
+   （省略号已有）；trailing 本身的重排/收缩由手机端 grid 重排层
+   （[data-dsh-layout-composer-trailing] 的两行 grid）接管，不额外干预。 */
 @media (max-width: 767px) {
   .dsh-layout-root--toolbar { flex: 0 1 auto; min-width: 0; }
   .dsh-layout-trigger { max-width: 88px; }
   .dsh-layout-trigger--icon { flex: none; max-width: none; }
-  [class*='_trailing']:has(.dsh-layout-root--toolbar) { flex: 0 1 auto !important; min-width: 0 !important; }
-  [class*='_trailing']:has(.dsh-layout-root--toolbar) [class*='triggerLabel'] { min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; }
 }
 .dsh-layout-panel { z-index: 120; width: 304px; box-sizing: border-box; position: fixed; padding: 14px 16px 12px; border: 1px solid var(--dsh-layout-line); border-radius: var(--dsh-layout-radius-lg); background: var(--dsh-layout-solid); color: var(--dsw-alias-label-secondary); box-shadow: 0 18px 48px light-dark(rgb(23 32 44 / .14), rgb(0 0 0 / .48)), 0 2px 8px rgb(0 0 0 / .06); font-size: 12px; line-height: 20px; animation: dsh-layout-in .12s ease-out; }
 .dsh-layout-panel::after { content: none; }
@@ -820,17 +816,18 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     border-radius: 50%;
     background: currentColor;
   }
-  /* Close button: a bare X (no chrome) pinned to the drawer's top row,
-     aligned with the brand/logo line, only while the drawer is open.
-     fullscreen: the drawer spans the viewport, so right: 12px reads as the
-     panel's inner edge. float: the drawer is min(320px, 86vw) wide flush
-     left, so the offset must be measured from the PANEL's right edge —
-     100vw - panel-width + 12px — or the X would hover over the content
-     column instead of sitting on the floating panel. */
+  /* Close button: a bare X (no chrome) pinned to the drawer's top row —
+     vertically centered on the OFFICIAL logo row (hHd-Xa_logoRow, 60px tall
+     + 8px padding both sides). Positioning off env(safe-area) + 12px was a
+     constant guess that ignored the row's own padding; anchoring to the row
+     guarantees alignment with the brand/logo in every mode.
+     Horizontal: fullscreen = viewport edge + 12px; float = measured from the
+     floating panel's right edge (100vw - min(320px, 86vw) + 12px) so the X
+     sits ON the panel, flush with the brand row, never over the content. */
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-close {
-    position: fixed;
+    position: absolute;
     z-index: 46;
-    inset-block-start: calc(env(safe-area-inset-top, 0px) + 12px);
+    top: 22px;
     inset-inline-end: 12px;
     width: 28px;
     height: 28px;
@@ -844,8 +841,14 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     place-items: center;
     cursor: pointer;
   }
+  /* The drawer column owns a containing block (fixed + overflow hidden), so
+     absolute keeps the X glued to the drawer even while it slides. */
+  html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-sidebar-col] { position: fixed !important; }
+  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-close {
+    top: calc(env(safe-area-inset-top, 0px) + 22px);
+  }
   html[data-dsh-layout-mobile-sidebar][data-dsh-layout-sidebar-float] .dsh-layout-mobile-sidebar-close {
-    inset-inline-end: calc(100vw - min(320px, 86vw) + 12px);
+    inset-inline-end: 12px;
   }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-close > span {
     position: relative;
