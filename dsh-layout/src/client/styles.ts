@@ -75,7 +75,7 @@ html[data-dsh-layout-radius] {
   --dsh-layout-radius: var(--dsh-layout-radius-user);
   --dsh-layout-radius-lg: var(--dsh-layout-radius-user-lg);
 }
-html[data-dsh-layout-radius] :where(button, input, textarea, select, [data-composer-card], [data-queue-dock], [data-dsh-layout-composer-card], [role='menu'], [role='dialog'], [role='tooltip'], [role='listbox']) {
+html[data-dsh-layout-radius] :where(button, input, textarea, select, [data-composer-card], [data-queue-dock], [data-dsh-layout-composer-card], [class*='_bubble'], .dsh-layout-settings__card, .dsh-layout-segmented, [role='menu'], [role='dialog'], [role='tooltip'], [role='listbox']) {
   border-radius: var(--dsh-layout-radius-user) !important;
 }
 /* The hero workspace-trigger card draws its dashed drop-zone ring as an SVG
