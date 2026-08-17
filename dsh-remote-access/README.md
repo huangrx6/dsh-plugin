@@ -49,10 +49,10 @@ Remote Access
 通过 GitHub Release 预构建包安装（已含构建产物，无需本机构建）：
 
 ```bash
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<tag>/dsh-remote-access-<version>.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/latest/download/dsh-remote-access.tgz
 ```
 
-把 `<tag>` 与 `<version>` 换为 [Releases 页](https://github.com/huangrx6/dsh-plugin/releases) 上最新的实际值。装完重启 dsh（或 `/reload`）；升级时用新 tag 重跑同一条命令。
+链接指向最新版；升级时重跑同一条命令。需要钉住历史版本时，到 [Releases 页](https://github.com/huangrx6/dsh-plugin/releases) 把 `latest/download` 换成 `download/<tag>`。装完重启 dsh（或 `/reload`）。
 
 ### 一次性前置
 

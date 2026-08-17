@@ -1,8 +1,10 @@
 # 打 tag（v*）时构建四个插件并把预构建的 npm tarball 挂到 GitHub Release。
-# 安装方随后可以一行安装固定版本、无需本机构建（tarball 安装不触发
-# pnpm allowBuilds 拦截，是 git 安装撞报错时的推荐替代）：
+# 产物文件名固定（不含版本号），因此安装方永远可以用「latest」固定链接，
+# 一条命令装最新版、无需知道 tag 号或各插件版本：
 #   dsh plugin --profile web add \
-#     https://github.com/huangrx6/dsh-plugin/releases/download/<tag>/dsh-layout-<version>.tgz
+#     https://github.com/huangrx6/dsh-plugin/releases/latest/download/dsh-layout.tgz
+# npm tarball 内部仍带真实版本（package.json 的 version 字段），改名只影响
+# 下载文件名，不影响 pnpm 解析。
 name: release
 
 on:
@@ -35,6 +37,12 @@ jobs:
             echo "::group::build $pkg"
             (cd "$pkg" && pnpm install --no-frozen-lockfile && pnpm run build && pnpm pack --pack-destination ../dist)
             echo "::endgroup::"
+          done
+          # 去掉版本号后缀，让 /releases/latest/download/ 固定链接永远可用。
+          # 例：dsh-remote-access-0.1.0.tgz → dsh-remote-access.tgz
+          cd dist
+          for f in *.tgz; do
+            mv "$f" "${f%-*}.tgz"
           done
           ls -lh dist/
 

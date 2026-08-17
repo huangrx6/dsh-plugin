@@ -20,16 +20,16 @@
 
 ## 安装
 
-所有插件通过 GitHub Release 预构建包安装（已含 `lib/` 产物，无需本机构建）：
+所有插件通过 GitHub Release 预构建包安装（已含 `lib/` 产物，无需本机构建）。链接指向最新版，任选所需插件：
 
 ```bash
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<tag>/dsh-layout-<version>.tgz
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<tag>/dsh-skill-manager-<version>.tgz
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<tag>/dsh-mcp-manager-<version>.tgz
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<tag>/dsh-remote-access-<version>.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/latest/download/dsh-layout.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/latest/download/dsh-skill-manager.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/latest/download/dsh-mcp-manager.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/latest/download/dsh-remote-access.tgz
 ```
 
-把 `<tag>` 与 `<version>` 换为 [Releases 页](https://github.com/huangrx6/dsh-plugin/releases) 上最新的实际值即可，任选所需插件。装完重启 dsh（或 `/reload`）；更新时用新 tag 重跑同一条命令。没有本地 `dsh` 命令时用 `npx @deepseek-ai/dsh plugin --profile web add ...`。
+装完重启 dsh（或 `/reload`）；升级时重跑同一条命令即可（latest 链接始终指向最新发布）。需要钉住某个历史版本时，到 [Releases 页](https://github.com/huangrx6/dsh-plugin/releases) 找对应 tag，把 `latest/download` 换成 `download/<tag>`。没有本地 `dsh` 命令时用 `npx @deepseek-ai/dsh plugin --profile web add ...`。
 
 ### 本地开发（clone + link）
 
