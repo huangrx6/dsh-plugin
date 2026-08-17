@@ -31,7 +31,11 @@ import { injectPolyfill } from './polyfill.ts'
 
 export const name = 'dsh-remote-access'
 
-export const inject = ['connection']
+// Cordis 硬校验：apply() 里访问过的每个 ctx 属性都必须在此声明，
+// 否则运行时抛 "cannot get property ... without inject"。
+// webServer/pluginInventory 由 web profile（dsh-web-app + plugin-inventory）
+// 提供；本插件仅面向 --profile web 发布（见 README）。
+export const inject = ['connection', 'webServer', 'pluginInventory']
 
 // ---------------------------------------------------------------------------
 // RPC endpoint 实现（每个 endpoint 一个纯 async 函数）
