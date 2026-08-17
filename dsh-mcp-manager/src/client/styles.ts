@@ -63,8 +63,10 @@ const CSS = `
 .dstmcp-heroTile, .dshmcp-heroTile { width: 44px; height: 44px; border-radius: 13px; }
 .dstmcp-cardBody, .dshmcp-cardBody { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .dstmcp-cardTitle, .dshmcp-cardTitle { font-size: 14px; font-weight: 600; letter-spacing: -.005em; line-height: 19px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dstmcp-summary, .dshmcp-summary { color: var(--dsw-alias-label-tertiary); font-family: var(--ds-font-family-code); font-size: 11.5px; line-height: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dstmcp-cardTrailing, .dshmcp-cardTrailing { flex: none; display: inline-flex; align-items: center; gap: 6px; }
+.dstmcp-summary, .dshmcp-summary { min-width: 0; display: inline-flex; align-items: center; gap: 6px; color: var(--dsw-alias-label-tertiary); font-family: var(--ds-font-family-code); font-size: 11.5px; line-height: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dstmcp-cardTrailing, .dshmcp-cardTrailing { flex: none; display: inline-flex; align-items: center; gap: 12px; padding-left: 12px; }
+.dstmcp-cardChevron, .dshmcp-cardChevron { display: inline-flex; align-items: center; color: var(--dsw-alias-label-tertiary); transition: transform .14s var(--ds-ease-in-out); }
+.dstmcp-cardChevron.is-open, .dshmcp-cardChevron.is-open { transform: rotate(180deg); }
 
 /* ── tags & status dots ─────────────────────────────────────────────────── */
 .dstmcp-tag, .dshmcp-tag { height: 22px; padding: 0 8px; white-space: nowrap; border-radius: 999px; align-items: center; display: inline-flex; font-size: 11px; font-weight: 500; line-height: 20px; background: color-mix(in srgb, var(--dsw-alias-label-primary) 5%, transparent); color: var(--dsw-alias-label-secondary); }
@@ -72,7 +74,7 @@ const CSS = `
 .dstmcp-tagWarn, .dshmcp-tagWarn { background: color-mix(in srgb, var(--dsw-alias-state-warning-primary, #d97706) 12%, transparent); color: var(--dsw-alias-state-warning-primary, #d97706); }
 .dstmcp-tagError, .dshmcp-tagError { background: color-mix(in srgb, var(--dsw-alias-state-error-primary) 10%, transparent); color: var(--dsw-alias-state-error-primary); }
 .dstmcp-tagCode, .dshmcp-tagCode { font-family: var(--ds-font-family-code); font-size: 10.5px; font-weight: 500; }
-.dstmcp-statusDot, .dshmcp-statusDot { width: 8px; height: 8px; border-radius: 999px; background: var(--dsw-alias-label-tertiary); display: inline-block; flex: none; }
+.dstmcp-summary .dshmcp-statusDot, .dshmcp-summary .dstmcp-statusDot, .dshmcp-summary .dshmcp-statusDot { flex: none; width: 7px; height: 7px; border-radius: 999px; background: var(--dsw-alias-label-tertiary); display: inline-block; flex: none; }
 .dstmcp-statusDot[data-phase=active], .dshmcp-statusDot[data-phase=active] { background: var(--dsw-alias-state-success-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--dsw-alias-state-success-primary) 18%, transparent); }
 .dstmcp-statusDot[data-phase=failed], .dshmcp-statusDot[data-phase=failed] { background: var(--dsw-alias-state-error-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--dsw-alias-state-error-primary) 16%, transparent); }
 .dstmcp-statusDot[data-phase=loading], .dstmcp-statusDot[data-phase=pending], .dshmcp-statusDot[data-phase=loading], .dshmcp-statusDot[data-phase=pending] { background: var(--dsw-alias-state-business-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--dsw-alias-state-business-primary) 16%, transparent); }

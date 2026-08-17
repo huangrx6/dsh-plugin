@@ -282,27 +282,36 @@ function ServerCard({ t, server, open, busy, cache, autoTesting, onToggleOpen, o
         </span>
         <span className="dshmcp-cardBody">
           <span className="dshmcp-cardTitle">{server.serverName}</span>
-          <span className="dshmcp-summary">{server.config?.transport === 'streamable-http' ? `${t('transportHttp')} · ${summary}` : `${t('transportStdio')} · ${summary}`}</span>
+          <span className="dshmcp-summary">
+            {!server.disabled
+              ? <span className="dshmcp-statusDot" data-phase={phase ?? 'unobserved'} role="img" aria-label={phaseLabel(t, phase)} title={phaseLabel(t, phase)} />
+              : null}
+            {server.config?.transport === 'streamable-http' ? t('transportHttp') : t('transportStdio')}
+            {' · '}
+            {summary}
+            {autoTesting
+              ? <IconLoadingOutline16 size={12} className="dshmcp-spin" aria-hidden="true" />
+              : shownCount > 0
+                ? ` · ${toolsLabel}`
+                : ''}
+          </span>
         </span>
         <span className="dshmcp-cardTrailing">
-          {autoTesting
-            ? <IconLoadingOutline16 size={14} className="dshmcp-spin" aria-hidden="true" />
-            : shownCount > 0
-              ? <span className="dshmcp-tag dshmcp-tagCode" title={testedAtLabel !== undefined ? t('lastTestAt').replace('{time}', testedAtLabel) : undefined}>{toolsLabel}</span>
-              : null}
-          {!server.disabled ? <span className="dshmcp-statusDot" data-phase={phase ?? 'unobserved'} role="img" aria-label={phaseLabel(t, phase)} title={phaseLabel(t, phase)} /> : null}
           <button
             type="button"
             role="switch"
             aria-checked={!server.disabled}
             aria-label={server.disabled ? t('enableButton') : t('disableButton')}
+            title={server.disabled ? t('enableButton') : t('disableButton')}
             className={`dshmcp-switch${server.disabled ? '' : ' is-on'}`}
             disabled={busy !== undefined}
             onClick={event => { event.stopPropagation(); onToggle() }}
           >
             <span className="dshmcp-switchKnob" />
           </button>
-          <IconChevronDownOutline14 size={12} aria-hidden="true" />
+          <span className={`dshmcp-cardChevron${open ? ' is-open' : ''}`} aria-hidden="true">
+            <IconChevronDownOutline14 size={12} />
+          </span>
         </span>
       </div>
       {open
