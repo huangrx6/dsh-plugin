@@ -32,6 +32,7 @@ const SWIPE_THRESHOLD = 48
 export class MobileSidebarRuntime {
   private media: MediaQueryList | undefined
   private trigger: HTMLButtonElement | undefined
+  private closeButton: HTMLButtonElement | undefined
   private mask: HTMLButtonElement | undefined
   private frameObserver: MutationObserver | undefined
   private unsubscribe: (() => void) | undefined
@@ -122,8 +123,10 @@ export class MobileSidebarRuntime {
     this.unsubscribe = undefined
     this.setOpen(false)
     this.trigger?.remove()
+    this.closeButton?.remove()
     this.mask?.remove()
     this.trigger = undefined
+    this.closeButton = undefined
     this.mask = undefined
     this.doc.documentElement.removeAttribute('data-dsh-layout-mobile-sidebar')
   }
@@ -175,13 +178,16 @@ export class MobileSidebarRuntime {
       this.setOpen(false)
       // Full teardown of the added chrome — back to native means no leftovers.
       this.trigger?.remove()
+      this.closeButton?.remove()
       this.mask?.remove()
       this.trigger = undefined
+      this.closeButton = undefined
       this.mask = undefined
       return
     }
     this.doc.documentElement.setAttribute('data-dsh-layout-mobile-sidebar', '')
     this.ensureTrigger()
+    this.ensureClose()
     this.ensureMask()
   }
 
@@ -189,9 +195,11 @@ export class MobileSidebarRuntime {
     const root = this.doc.documentElement
     root.toggleAttribute(ROOT_ATTR, open && this.isMobile())
     if (this.trigger !== undefined) {
+      this.trigger.hidden = open
       this.trigger.setAttribute('aria-expanded', open ? 'true' : 'false')
       this.trigger.setAttribute('aria-label', open ? '关闭侧边栏' : '打开侧边栏')
     }
+    if (this.closeButton !== undefined) this.closeButton.hidden = !open
     if (this.mask !== undefined) this.mask.hidden = !open
   }
 
@@ -206,10 +214,26 @@ export class MobileSidebarRuntime {
     const glyph = this.doc.createElement('span')
     glyph.setAttribute('aria-hidden', 'true')
     trigger.append(glyph)
-    trigger.addEventListener('click', event => { event.stopPropagation(); if (this.isOpen()) this.close(); else this.open() })
+    trigger.addEventListener('click', event => { event.stopPropagation(); this.open() })
     this.doc.body.append(trigger)
     this.trigger = trigger
     return trigger
+  }
+
+  private ensureClose(): HTMLButtonElement {
+    if (this.closeButton?.isConnected === true) return this.closeButton
+    const close = this.doc.createElement('button')
+    close.type = 'button'
+    close.className = 'dsh-layout-mobile-sidebar-close'
+    close.setAttribute('aria-label', '关闭侧边栏')
+    close.hidden = true
+    const glyph = this.doc.createElement('span')
+    glyph.setAttribute('aria-hidden', 'true')
+    close.append(glyph)
+    close.addEventListener('click', () => { this.close() })
+    this.doc.body.append(close)
+    this.closeButton = close
+    return close
   }
 
   private ensureMask(): HTMLButtonElement {

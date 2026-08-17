@@ -404,6 +404,43 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
 /* ── 设置页 ───────────────────────────────────────────────────────────────── */
 .dsh-layout-settings { display: grid; gap: 16px; max-width: 880px; color: var(--dsw-alias-label-primary); }
 .dsh-layout-settings * { box-sizing: border-box; }
+.dsh-layout-settings-close { display: none; }
+@media (max-width: 767px) {
+  /* 设置面板：右上角 X 关闭按钮（与侧边栏抽屉一致） */
+  .dsh-layout-settings-close {
+    position: fixed;
+    z-index: 10;
+    inset-block-start: calc(env(safe-area-inset-top, 0px) + 10px);
+    inset-inline-end: 12px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--dsw-alias-bg-layer-3) 82%, transparent);
+    color: var(--dsw-alias-label-primary);
+    box-shadow: var(--dsw-shadow-lv1);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+  .dsh-layout-settings-close > span { position: relative; width: 16px; height: 16px; }
+  .dsh-layout-settings-close > span::before,
+  .dsh-layout-settings-close > span::after {
+    content: '';
+    position: absolute;
+    inset-inline-start: 1px;
+    inset-block-start: 7px;
+    width: 14px;
+    height: 2px;
+    background: currentColor;
+    border-radius: 1px;
+  }
+  .dsh-layout-settings-close > span::before { transform: rotate(45deg); }
+  .dsh-layout-settings-close > span::after { transform: rotate(-45deg); }
+  /* 隐藏 DSH 原生关闭按钮，避免出现两个 X */
+  [role='dialog'][class*='_panel'] [class*='_close'] { display: none !important; }
+}
 .dsh-layout-settings__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 4px 2px 6px; }
 .dsh-layout-settings h2 { margin: 0 0 6px; font-size: 19px; letter-spacing: .01em; line-height: 26px; }
 .dsh-layout-settings h3 { margin: 0; font-size: 14px; line-height: 20px; }
@@ -590,18 +627,30 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   [data-dsh-layout-composer-trailing] [class*='_primary'] { width: 36px !important; min-width: 36px !important; }
   [data-dsh-layout-composer-tools] [class*='_triggerLabel'] { max-width: 118px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  /* 每条 AI 回复末尾的运行统计脚注（DSH MessageIconActions）：原生
-     timeStart/timeEnd 是 white-space:nowrap，在手机上整行溢出。允许换行，
-     统计行折到下一行显示。 */
-  [data-time-hover-root] [class*='actions'] {
-    flex-wrap: wrap;
-    height: auto !important;
-    min-height: 28px;
-    row-gap: 4px;
-  }
-  [data-time-hover-root] [class*='timeStart'],
+  /* 每条 AI 回复末尾的运行统计脚注（DSH MessageIconActions）：手机上长文字
+     太突兀，把 timeEnd 折叠成与前面操作图标一致的 28px 小图标（时钟），
+     保持单行不换行。 */
   [data-time-hover-root] [class*='timeEnd'] {
-    white-space: normal !important;
+    width: 28px;
+    height: 28px;
+    padding: 0 !important;
+    margin-inline-start: 4px;
+    font-size: 0 !important;
+    line-height: 28px;
+    white-space: nowrap !important;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+  }
+  [data-time-hover-root] [class*='timeEnd']::before {
+    content: '';
+    width: 15px;
+    height: 15px;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='none' stroke='black' stroke-width='2'/%3E%3Cpath d='M12 7v5l3 2' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='none' stroke='black' stroke-width='2'/%3E%3Cpath d='M12 7v5l3 2' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
   }
 }
 
@@ -615,7 +664,8 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
    plugin-owned data-dsh-layout-mobile-sidebar attribute; hash-suffix matches
    stay scoped inside the marked column and degrade to native on a rename. */
 .dsh-layout-mobile-sidebar-trigger,
-.dsh-layout-mobile-sidebar-mask { display: none; }
+.dsh-layout-mobile-sidebar-mask,
+.dsh-layout-mobile-sidebar-close { display: none; }
 @media (max-width: 767px) {
   html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-frame] {
     grid-template-columns: minmax(0, 1fr) var(--dsh-layout-details, 0px) !important;
@@ -691,8 +741,8 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     min-height: 44px;
   }
 
-  /* Edge handle: a slim bar at mid-height. Closed it shows a tiny dot and
-     opens the drawer; open it becomes a close (X) button — never hidden. */
+  /* Edge handle: a slim bar at mid-height that OPENS the drawer; hidden once
+     open (closing moves to the top-right X button). */
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger {
     position: fixed;
     z-index: 44;
@@ -713,16 +763,11 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     place-items: center;
     cursor: pointer;
   }
-  /* Enlarged invisible tap target: the visual stays a slim 6px handle while
-     the hit area reaches a phone-friendly size (smaller once open, so it
-     doesn't overlap the drawer's list rows). */
+  /* Enlarged invisible tap target for the open handle. */
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger::before {
     content: '';
     position: absolute;
     inset: -12px -32px -12px 0;
-  }
-  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger[aria-expanded='true']::before {
-    inset: -12px -16px -12px 0;
   }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger > span {
     width: 6px;
@@ -730,26 +775,44 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     border-radius: 50%;
     background: currentColor;
   }
-  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger[aria-expanded='true'] > span {
-    width: 6px;
-    height: 6px;
-    border-radius: 0;
-    background: transparent;
-    position: relative;
+  /* Close button: a round X pinned to the top-right, only while the drawer
+     is open. */
+  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-close {
+    position: fixed;
+    z-index: 46;
+    inset-block-start: calc(env(safe-area-inset-top, 0px) + 10px);
+    inset-inline-end: 12px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--dsw-alias-bg-layer-3) 82%, transparent);
+    color: var(--dsw-alias-label-primary);
+    box-shadow: var(--dsw-shadow-lv1);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
   }
-  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger[aria-expanded='true'] > span::before,
-  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger[aria-expanded='true'] > span::after {
+  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-close > span {
+    position: relative;
+    width: 16px;
+    height: 16px;
+  }
+  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-close > span::before,
+  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-close > span::after {
     content: '';
     position: absolute;
-    inset-inline-start: 0;
-    inset-block-start: 2px;
-    width: 6px;
+    inset-inline-start: 1px;
+    inset-block-start: 7px;
+    width: 14px;
     height: 2px;
     background: currentColor;
     border-radius: 1px;
   }
-  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger[aria-expanded='true'] > span::before { transform: rotate(45deg); }
-  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger[aria-expanded='true'] > span::after { transform: rotate(-45deg); }
+  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-close > span::before { transform: rotate(45deg); }
+  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-close > span::after { transform: rotate(-45deg); }
+  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-close[hidden] { display: none; }
   /* Mask: a quiet dim BELOW #root's stacking context. #root lifts to z:1
      when a background or material is on, which would trap the drawer (z:42)
      under a z:41 mask — drop the mask to z:0 so it never fogs or covers the

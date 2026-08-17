@@ -19,7 +19,7 @@ import {
   type StatsMode,
 } from './types.ts'
 
-export interface LayoutSettingsInjected { readonly store: LayoutStore }
+export interface LayoutSettingsInjected { readonly store: LayoutStore; readonly close?: () => void }
 
 const METRIC_LABELS: Readonly<Record<string, string>> = {
   turns: '轮次', steps: '步骤', llm: '模型耗时', tools: '工具耗时',
@@ -30,9 +30,16 @@ const METRIC_LABELS: Readonly<Record<string, string>> = {
     restore without prop drilling. */
 const StoreContext = createContext<LayoutStore | null>(null)
 
-export function LayoutSettingsSection({ store }: LayoutSettingsInjected): React.ReactElement {
+export function LayoutSettingsSection({ store, close }: LayoutSettingsInjected): React.ReactElement {
   const settings = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot)
-  return <SettingsBody store={store} settings={settings} />
+  return <>
+    {close !== undefined && (
+      <button type="button" className="dsh-layout-settings-close" aria-label="关闭设置" onClick={close}>
+        <span aria-hidden="true" />
+      </button>
+    )}
+    <SettingsBody store={store} settings={settings} />
+  </>
 }
 
 function SettingsBody({ store, settings }: { store: LayoutStore; settings: LayoutSettings }): React.ReactElement {
