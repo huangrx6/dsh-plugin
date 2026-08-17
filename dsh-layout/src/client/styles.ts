@@ -75,7 +75,7 @@ html[data-dsh-layout-radius] {
   --dsh-layout-radius: var(--dsh-layout-radius-user);
   --dsh-layout-radius-lg: var(--dsh-layout-radius-user-lg);
 }
-html[data-dsh-layout-radius] :where(button, input, textarea, select, [data-composer-card], [data-queue-dock], [data-dsh-layout-composer-card], [class*='_bubble'], .dsh-layout-settings__card, .dsh-layout-segmented, [role='menu'], [role='dialog'], [role='tooltip'], [role='listbox']) {
+html[data-dsh-layout-radius] :where(button, input, textarea, select, [data-composer-card], [data-queue-dock], [data-dsh-layout-composer-card], [class*='_bubble'], .dsh-layout-settings__card, .dsh-layout-segmented, .dsh-layout-field-status, [role='menu'], [role='dialog'], [role='tooltip'], [role='listbox']) {
   border-radius: var(--dsh-layout-radius-user) !important;
 }
 /* The hero workspace-trigger card draws its dashed drop-zone ring as an SVG
@@ -482,7 +482,7 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
 .dsh-layout-file-button:hover { border-color: color-mix(in srgb, #3678ea 45%, var(--dsw-alias-border-l2)); }
 label:has(> .dsh-layout-file-button) { display: inline-flex; }
 .dsh-layout-dirty { flex: none; margin-top: 4px; padding: 3px 10px; border-radius: 999px; background: color-mix(in srgb, #3678ea 12%, transparent); color: #3678ea; font-size: 11px; font-weight: 600; white-space: nowrap; }
-.dsh-layout-field-status { flex: none; padding: 1px 6px; border-radius: 999px; background: color-mix(in srgb, #3678ea 10%, transparent); color: #3678ea; font-size: 10px; font-weight: 600; white-space: nowrap; }
+.dsh-layout-field-status { flex: none; display: inline-flex; align-items: center; height: 20px; padding: 0 6px; border-radius: 999px; background: color-mix(in srgb, #3678ea 10%, transparent); color: #3678ea; font-size: 10px; font-weight: 600; white-space: nowrap; }
 .dsh-layout-field-reset { flex: none; width: 20px; height: 20px; padding: 0; border: 1px solid var(--dsw-alias-border-l2); border-radius: 999px; background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-secondary); font-size: 11px; line-height: 1; cursor: pointer; }
 .dsh-layout-field-reset:hover { border-color: #3678ea; color: #3678ea; }
 .dsh-layout-settings footer { display: flex; justify-content: flex-end; }
