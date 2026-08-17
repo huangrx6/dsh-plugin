@@ -551,7 +551,7 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   .dsh-layout-settings-tabs [class*='_navLabel'] { width: auto !important; white-space: nowrap; }
   .dsh-layout-settings-close {
     flex: 0 0 52px;
-    align-self: stretch;
+    align-self: center;
     display: flex;
     align-items: center;
     justify-content: center;
