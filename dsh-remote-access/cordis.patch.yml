@@ -1,6 +1,6 @@
 # Remote Access bundle patch.
 #
-# Three static effects, applied above dsh-base's rows at install time:
+# Static effects, applied above dsh-base's rows at install time:
 #
 # 1. Disable the adaptive directory-picker chooser. It samples boot-time
 #    signals (loopback bind, no SSH, display present) and would resolve to
@@ -9,12 +9,20 @@
 #    Serve. Patch layers cannot rename an entry (the `name` field is a
 #    guard, not an assignment), so the swap is disable + insert.
 #
-# 2. Insert the in-app browse backend. Dual-face: the host half registers
-#    ctx.directoryPicker with the `browse` capability, the browser half
-#    fills ui-workspace's Select-Workspace-Directory holes with a Miller
-#    two-column browser driving host.listDirectory / host.createDirectory.
-#    The dependency is declared in package.json so pnpm materializes it in
-#    the profile's node_modules for bare-name resolution.
+# 2. Insert the browse interaction's TWO faces, mirroring exactly what
+#    directory-picker-auto mounts at runtime (its apply() creates one Loader
+#    entry per package: BACKEND_PACKAGES + SURFACE_PACKAGES):
+#      - host half:  @deepseek-ai/dsh-host-directory-picker-browse
+#        registers ctx.directoryPicker with the `browse` capability
+#        (host.listDirectory / host.createDirectory over Node stdlib).
+#      - client half: @deepseek-ai/dsh-client-ui-directory-picker-browse
+#        fills ui-workspace's two `single` directory-flow holes (the hero
+#        Choose-workspace flow and the sidebar's add-workspace flow). Without
+#        this face the holes stay unoccupied: `useDirectoryFlow` reports
+#        false, so the sidebar renders NO add-workspace button and the hero
+#        picker opens an empty menu — exactly the symptom this row fixes.
+#    Both packages are declared in package.json dependencies so pnpm
+#    materializes them in the profile's node_modules for bare-name loading.
 #
 # 3. Insert this plugin itself.
 - id: directory-picker
@@ -22,6 +30,8 @@
 - insert:
     - id: directory-picker-browse
       name: '@deepseek-ai/dsh-host-directory-picker-browse'
+    - id: directory-picker-browse-ui
+      name: '@deepseek-ai/dsh-client-ui-directory-picker-browse'
 - insert:
     - id: dsh-remote-access
       name: dsh-remote-access
