@@ -18,6 +18,8 @@ export const zhCN = {
   tokens: 'Token 用量',
   input: '输入',
   output: '输出',
+  busyQueue: '排队',
+  busySteer: '插话',
 } as const
 
 export const enUS: Record<keyof typeof zhCN, string> = {
@@ -38,6 +40,8 @@ export const enUS: Record<keyof typeof zhCN, string> = {
   tokens: 'Token usage',
   input: 'Input',
   output: 'Output',
+  busyQueue: 'Queue',
+  busySteer: 'Steer',
 }
 
 export type LayoutLocaleKey = keyof typeof zhCN

@@ -8,6 +8,7 @@ import type { LayoutLocaleKey } from "./locales.ts";
 import { enUS, LAYOUT_NS, zhCN } from "./locales.ts";
 import { LayoutSettingsSection } from "./LayoutSettings.tsx";
 import { DockStats, ToolbarStats } from "./StatsPanel.tsx";
+import { BusySubmitRuntime, type BusyEnterScope } from "./busy-submit.ts";
 import { LayoutStore } from "./store.ts";
 import { DomSync } from "./dom-sync.ts";
 import { OriginalStatsSuppressor } from "./suppressor.ts";
@@ -25,7 +26,7 @@ declare module "@deepseek-ai/dsh-client-ui-slots" {
   }
 }
 
-export const inject = ["slots", "locale", "connection"];
+export const inject = ["slots", "locale", "connection", "remote", "settingsScope"];
 
 export function apply(ctx: ClientContext): void {
   const connection = (ctx as unknown as { connection: ConnectionHandle })
@@ -51,6 +52,12 @@ export function apply(ctx: ClientContext): void {
     "layout: dictionaries",
   );
   const t = ctx.locale.bind(LAYOUT_NS);
+  // The busy-Enter preference lives in the conversation plugin's settings
+  // namespace; the scope service binds it to OUR lifecycle.
+  const busyScope = (ctx as unknown as {
+    settingsScope: { bind(spec: { namespace: string }): BusyEnterScope };
+  }).settingsScope.bind({ namespace: "ui-conversation" });
+  const busySubmit = new BusySubmitRuntime(busyScope, document, sync, t);
 
   ctx.effect(() => installStyles(document), "dsh-layout: styles");
   ctx.effect(() => background.install(), "dsh-layout: background");
@@ -69,6 +76,7 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => workbench.install(), "dsh-layout: composer workbench");
   ctx.effect(() => mobileSidebar.install(), "dsh-layout: mobile sidebar");
   ctx.effect(() => settingsTopbar.install(), "dsh-layout: settings topbar");
+  ctx.effect(() => busySubmit.install(), "dsh-layout: busy submit");
   ctx.effect(
     () => suppressor.install(),
     "dsh-layout: original stats suppression",

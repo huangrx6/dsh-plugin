@@ -605,12 +605,18 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     flex-wrap: wrap;
   }
 
+  /* 繁忙时快捷提交（手机）：agent 运行中原生主按钮变为「停止」，排队/插话
+     没有入口（「繁忙时 Enter 键行为」只管键盘）。工具行右缘注入
+     排队/插话 胶囊（busy-submit runtime，点击合成 Enter 走原生策略）。 */
+  .dsh-layout-busy-pill { display: inline-flex; flex: none; gap: 6px; margin-inline-start: auto; align-self: center; }
+  .dsh-layout-busy-pill button { height: 26px; padding: 0 12px; border: 1px solid color-mix(in srgb, var(--dsh-layout-line) 72%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--dsh-layout-subtle) 88%, transparent); color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 1; cursor: pointer; }
+  .dsh-layout-busy-pill button:active { transform: translateY(1px); }
+
   /* 输入面板（手机）：the native row squeezes tools to 4px while trailing
      controls keep their intrinsic widths, so buttons overlap. Use the stable
      adapter marks to create two intentional rows: commands/permission above,
      model/context/send below. */
-  [data-dsh-layout-composer-actions] {
-    display: grid !important;
+  [data-dsh-layout-composer-actions] {    display: grid !important;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
     grid-template-rows: auto auto !important;
     align-items: center;
