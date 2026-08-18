@@ -1,6 +1,6 @@
 {
   "name": "dsh-launcher",
-  "version": "0.1.0",
+  "version": "0.6.0",
   "description": "Personal launcher: full-screen workspace over the side rail, replacing the stock settings modal with a launcher panel that hosts a personal archive / Skill / MCP / remote / layout marketplace.",
   "type": "module",
   "main": "lib/index.mjs",

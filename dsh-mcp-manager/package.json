@@ -1,6 +1,6 @@
 {
   "name": "dsh-mcp-manager",
-  "version": "0.1.0",
+  "version": "0.6.0",
   "description": "Manage DeepSeek Harness MCP servers from the web Settings → Plugins section: list with live status, add/edit/disable/delete, tool inspection and connection testing",
   "type": "module",
   "main": "lib/index.mjs",

@@ -33,7 +33,7 @@ dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/dow
 dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<version>/dsh-archive-manager-0.1.0.tgz
 ```
 
-例如当前最新 `v0.3.1`：把 `<version>` 换为 `v0.3.1`。**升级 = 换新版本号重跑**（URL 变了，pnpm 缓存自动失效）。装完重启 dsh（或 `/reload`）。
+例如当前最新 `v0.6.0`：把 `<version>` 换为 `v0.6.0`。**升级 = 换新版本号重跑**（URL 变了，pnpm 缓存自动失效）。装完重启 dsh（或 `/reload`）。
 
 > `releases/latest/download/` 固定链接（如 `.../dsh-remote-access.tgz`）仅供**一次性试用**：内容每次发布都会变而 URL 不变，pnpm 缓存 integrity 会冲突（`ERR_PNPM_TARBALL_INTEGRITY`）。升级请始终用版本化 URL。
 
