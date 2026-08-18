@@ -1,5 +1,6 @@
 import type { DomSync } from "./dom-sync.ts";
 import type { LayoutStore } from "./store.ts";
+import type { MobileSidebarMode, WideSidebarMode } from "./types.ts";
 
 const BREAKPOINT = 767;
 const ROOT_ATTR = "data-dsh-layout-mobile-sidebar-open";
@@ -14,9 +15,10 @@ const EDGE_ZONE = 24;
 const SWIPE_THRESHOLD = 48;
 
 /**
- * Phones should spend the full viewport on the conversation. While the
- * setting is 'fullscreen' (and the viewport is narrow), the sidebar becomes
- * an off-canvas FULLSCREEN overlay — the content column never squeezes.
+ * Off-canvas sidebar drawer. The narrow (< 768px) and wide (≥ 768px)
+ * settings each pick their own mode independently: fullscreen (phone-only)
+ * or float (fixed-width panel over the content) run the drawer on their
+ * viewport; native on both means DSH's own inline sidebar, untouched.
  *
  * The key trick: DSH marks the mobile sidebar `collapsed` (an icon rail whose
  * content sits at opacity:0 until expanded), so merely sliding the column out
@@ -152,11 +154,19 @@ export class MobileSidebarRuntime {
     this.doc.documentElement.removeAttribute("data-dsh-layout-mobile-sidebar");
   }
 
+  /** The mode that owns THIS viewport: the narrow setting below 768px, the
+      wide setting above — independent of each other. */
+  private mode(): MobileSidebarMode | WideSidebarMode {
+    const global = this.store.getSnapshot().global;
+    return this.isMobile() ? global.narrow.sidebar : global.wide.sidebar;
+  }
+
   private active(): boolean {
-    const mode = this.store.getSnapshot().global.narrow.sidebar;
     if (this.store.getPeek()) return false;
-    // float: off-canvas overlay at ANY viewport (the drawer is a fixed-width
-    // panel over the content — the content column never reflows).
+    const mode = this.mode();
+    // float: off-canvas overlay on whichever viewport configured it — a
+    // fixed-width panel over the content that never reflows the content
+    // column.
     if (mode === "float") return true;
     // fullscreen: phones only (< 768px), full-viewport drawer.
     return mode === "fullscreen" && this.media?.matches === true;
@@ -232,9 +242,10 @@ export class MobileSidebarRuntime {
       return;
     }
     this.doc.documentElement.setAttribute("data-dsh-layout-mobile-sidebar", "");
-    if (this.store.getSnapshot().global.narrow.sidebar === "float") {
-      this.doc.documentElement.setAttribute("data-dsh-layout-sidebar-float", "");
-    }
+    this.doc.documentElement.toggleAttribute(
+      "data-dsh-layout-sidebar-float",
+      this.mode() === "float",
+    );
     this.ensureTrigger();
     this.ensureClose();
     this.ensureMask();

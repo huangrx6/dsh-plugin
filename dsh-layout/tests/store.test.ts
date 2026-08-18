@@ -22,6 +22,19 @@ describe('LayoutStore', () => {
     expect(legacy.material).toEqual(DEFAULT_SETTINGS.material)
   })
 
+  it('splits the sidebar modes per viewport and carries legacy float', () => {
+    // Wide defaults to native; invalid values collapse to native.
+    expect(normalizeSettings({}).global.wide).toEqual({ sidebar: 'native' })
+    expect(normalizeSettings({ global: { wide: { sidebar: 'fullscreen' } } }).global.wide).toEqual({ sidebar: 'native' })
+    // Pre-split, narrow 'float' applied at every viewport width — keep the
+    // desktop drawer on for those users instead of silently losing it.
+    expect(normalizeSettings({ global: { narrow: { sidebar: 'float' } } }).global.wide).toEqual({ sidebar: 'float' })
+    expect(normalizeSettings({ global: { narrow: { sidebar: 'fullscreen' } } }).global.wide).toEqual({ sidebar: 'native' })
+    // An explicit wide value always wins, independent of the narrow mode.
+    expect(normalizeSettings({ global: { wide: { sidebar: 'float' }, narrow: { sidebar: 'native' } } }).global.wide).toEqual({ sidebar: 'float' })
+    expect(normalizeSettings({ global: { wide: { sidebar: 'float' }, narrow: { sidebar: 'float' } } }).global.narrow.sidebar).toBe('float')
+  })
+
   it('normalizes global overrides without changing native defaults', () => {
     const settings = normalizeSettings({
       global: {

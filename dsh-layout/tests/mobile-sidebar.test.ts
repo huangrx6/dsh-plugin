@@ -48,9 +48,20 @@ function setup(mobile: boolean): World {
   return { doc, sync, runtime, store, toggle, toggleClicks, open }
 }
 
-function setFullscreen(store: LayoutStore): void {
+function setSidebar(store: LayoutStore, scope: 'narrow', mode: 'native' | 'fullscreen' | 'float'): void
+function setSidebar(store: LayoutStore, scope: 'wide', mode: 'native' | 'float'): void
+function setSidebar(
+  store: LayoutStore,
+  scope: 'narrow' | 'wide',
+  mode: 'native' | 'fullscreen' | 'float',
+): void {
   const global = store.getSnapshot().global
-  store.update({ global: { ...global, narrow: { ...global.narrow, sidebar: 'fullscreen' } } })
+  if (scope === 'narrow') {
+    store.update({ global: { ...global, narrow: { ...global.narrow, sidebar: mode } } })
+  } else {
+    // The 'wide' overload forbids 'fullscreen' at the call sites.
+    store.update({ global: { ...global, wide: { ...global.wide, sidebar: mode as 'native' | 'float' } } })
+  }
 }
 
 async function flush(): Promise<void> {
@@ -58,11 +69,11 @@ async function flush(): Promise<void> {
 }
 
 describe('MobileSidebarRuntime', () => {
-  it('stays fully native on desktop, whatever the setting', async () => {
+  it('stays fully native on desktop, whatever the narrow setting', async () => {
     const { doc, sync, runtime, store, toggleClicks, open } = setup(false)
     sync.install()
     runtime.install()
-    setFullscreen(store)
+    setSidebar(store, 'narrow', 'fullscreen')
     await flush()
     expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar')).toBe(false)
     expect(doc.querySelector('.dsh-layout-mobile-sidebar-trigger')).toBeNull()
@@ -82,7 +93,7 @@ describe('MobileSidebarRuntime', () => {
     const { doc, sync, runtime, store, toggle, toggleClicks, open } = setup(true)
     sync.install()
     runtime.install()
-    setFullscreen(store)
+    setSidebar(store, 'narrow', 'fullscreen')
     await flush()
     open()
     expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar-open')).toBe(true)
@@ -99,7 +110,7 @@ describe('MobileSidebarRuntime', () => {
     const { doc, sync, runtime, store, toggle, toggleClicks, open } = setup(true)
     sync.install()
     runtime.install()
-    setFullscreen(store)
+    setSidebar(store, 'narrow', 'fullscreen')
     await flush()
     open()
     doc.querySelector('[data-dsh-layout-frame]')?.removeAttribute('data-sidebar-collapsed') // simulate React expand
@@ -120,7 +131,7 @@ describe('MobileSidebarRuntime', () => {
     const { doc, sync, runtime, store, open } = setup(true)
     sync.install()
     runtime.install()
-    setFullscreen(store)
+    setSidebar(store, 'narrow', 'fullscreen')
     await flush()
     open()
     expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar-open')).toBe(true)
@@ -133,7 +144,7 @@ describe('MobileSidebarRuntime', () => {
     const { doc, sync, runtime, store, toggleClicks, open } = setup(true)
     sync.install()
     runtime.install()
-    setFullscreen(store)
+    setSidebar(store, 'narrow', 'fullscreen')
     await flush()
     const view = doc.defaultView as Window & typeof globalThis
     const touch = (type: string, x: number): void => {
@@ -148,11 +159,50 @@ describe('MobileSidebarRuntime', () => {
     await flush()
     expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar-open')).toBe(true)
 
-    const global = store.getSnapshot().global
-    store.update({ global: { ...global, narrow: { ...global.narrow, sidebar: 'native' } } })
+    setSidebar(store, 'narrow', 'native')
     await flush()
     expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar')).toBe(false)
     expect(doc.querySelector('.dsh-layout-mobile-sidebar-trigger')).toBeNull()
     expect(toggleClicks()).toBe(1) // only the open-expand click happened
+  })
+
+  it('runs the float drawer on desktop only via the wide setting', async () => {
+    const { doc, sync, runtime, store } = setup(false)
+    sync.install()
+    runtime.install()
+    // A narrow 'float' no longer leaks onto wide viewports (pre-split it
+    // applied at every width) — the desktop drawer needs its own setting.
+    setSidebar(store, 'narrow', 'float')
+    await flush()
+    expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar')).toBe(false)
+    setSidebar(store, 'wide', 'float')
+    await flush()
+    expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar')).toBe(true)
+    expect(doc.documentElement.hasAttribute('data-dsh-layout-sidebar-float')).toBe(true)
+    setSidebar(store, 'wide', 'native')
+    await flush()
+    expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar')).toBe(false)
+    expect(doc.documentElement.hasAttribute('data-dsh-layout-sidebar-float')).toBe(false)
+    expect(doc.querySelector('.dsh-layout-mobile-sidebar-trigger')).toBeNull()
+  })
+
+  it('phones: the drawer follows the narrow setting only', async () => {
+    const { doc, sync, runtime, store } = setup(true)
+    sync.install()
+    runtime.install()
+    // A wide 'float' must not leak onto phones either.
+    setSidebar(store, 'wide', 'float')
+    await flush()
+    expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar')).toBe(false)
+    setSidebar(store, 'narrow', 'float')
+    await flush()
+    expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar')).toBe(true)
+    expect(doc.documentElement.hasAttribute('data-dsh-layout-sidebar-float')).toBe(true)
+    setSidebar(store, 'wide', 'native')
+    await flush()
+    expect(doc.documentElement.hasAttribute('data-dsh-layout-sidebar-float')).toBe(true)
+    setSidebar(store, 'narrow', 'native')
+    await flush()
+    expect(doc.documentElement.hasAttribute('data-dsh-layout-mobile-sidebar')).toBe(false)
   })
 })

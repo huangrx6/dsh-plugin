@@ -100,17 +100,28 @@ export const PAD_PRESETS = Object.freeze({
   }),
 })
 
-/** Narrow-viewport adaptation: header wrapping against crowding, and the
-    sidebar presentation — native keeps DSH's squeezed rail, fullscreen
-    turns it into an off-canvas overlay owning the whole viewport (phones,
-    < 768px), float turns it into a fixed-width off-canvas overlay at ANY
-    viewport so the content column never reflows when the sidebar opens
-    (narrow desktop windows included). */
+/** Narrow-viewport (< 768px) adaptation: header wrapping against crowding,
+    and the sidebar presentation — native keeps DSH's squeezed rail,
+    fullscreen turns it into an off-canvas overlay owning the whole viewport,
+    float turns it into a fixed-width off-canvas overlay over the content.
+    The wide-viewport twin is WideSettings — the two are configured
+    independently and never affect each other. */
 export type MobileSidebarMode = 'native' | 'fullscreen' | 'float'
 
 export interface NarrowSettings {
   readonly headerWrap: boolean
   readonly sidebar: MobileSidebarMode
+}
+
+/** Wide-viewport (≥ 768px) adaptation. native keeps DSH's inline sidebar
+    column (the content shrinks beside it); float turns the sidebar into a
+    fixed-width off-canvas overlay — the content column owns the full grid
+    and never reflows when the sidebar opens (narrow desktop windows
+    included). 'fullscreen' stays phone-only on purpose. */
+export type WideSidebarMode = 'native' | 'float'
+
+export interface WideSettings {
+  readonly sidebar: WideSidebarMode
 }
 
 export interface DialogSize {
@@ -129,6 +140,7 @@ export interface LayoutSettings {
     readonly dialog: DialogSize
     readonly padding: PaddingSettings
     readonly narrow: NarrowSettings
+    readonly wide: WideSettings
   }
   readonly material: MaterialSettings
   readonly conversation: ConversationSettings
@@ -196,6 +208,7 @@ export const DEFAULT_SETTINGS: LayoutSettings = Object.freeze({
       }),
     }),
     narrow: Object.freeze({ headerWrap: true, sidebar: 'native' as const }),
+    wide: Object.freeze({ sidebar: 'native' as const }),
   }),
   material: Object.freeze({ enabled: false, opacity: 86, blur: 16, saturation: 112 }),
   conversation: Object.freeze({

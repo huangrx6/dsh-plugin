@@ -24,6 +24,7 @@ import {
   type TraceBackground,
   type TraceTail,
   type TraceWidth,
+  type WideSidebarMode,
 } from './types.ts'
 
 const STORAGE_KEY = 'dsh-layout.settings.v3'
@@ -120,6 +121,13 @@ export function normalizeSettings(value: unknown): LayoutSettings {
         sidebar: isMobileSidebarMode(isRecord(globalInput.narrow) ? globalInput.narrow.sidebar : undefined)
           ? (globalInput.narrow as { sidebar: MobileSidebarMode }).sidebar
           : 'native',
+      }),
+      wide: Object.freeze({
+        // Pre-split, a 'float' narrow setting applied at EVERY viewport
+        // width — carry it over so those users keep the desktop drawer.
+        sidebar: isWideSidebarMode(isRecord(globalInput.wide) ? globalInput.wide.sidebar : undefined)
+          ? (globalInput.wide as { sidebar: WideSidebarMode }).sidebar
+          : (isRecord(globalInput.narrow) && globalInput.narrow.sidebar === 'float' ? 'float' : 'native'),
       }),
     }),
     material: material(materialInput),
@@ -225,6 +233,10 @@ function isBackgroundMode(value: unknown): value is BackgroundMode {
 
 function isMobileSidebarMode(value: unknown): value is MobileSidebarMode {
   return value === 'native' || value === 'fullscreen' || value === 'float'
+}
+
+function isWideSidebarMode(value: unknown): value is WideSidebarMode {
+  return value === 'native' || value === 'float'
 }
 
 function normalizePadding(value: unknown): LayoutSettings['global']['padding'] {

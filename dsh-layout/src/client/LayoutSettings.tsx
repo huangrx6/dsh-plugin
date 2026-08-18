@@ -535,9 +535,33 @@ function GlobalCard({
           </SegmentedButton>
         </div>
         <p>
-          全屏覆盖：窄屏下内容区独占整屏，侧边栏收起为左上角悬浮按钮，点开铺满全屏（点遮罩、选中会话或
-          Esc 关闭）。悬浮：任意窗口宽度下侧边栏变为定宽悬浮面板（点开盖在内容上方、不挤压内容列），
-          适合窄窗口桌面。原生：DSH 默认行为。
+          仅作用于窄屏（&lt;768px）。全屏覆盖：内容区独占整屏，侧边栏收起为左缘把手，点开铺满全屏。
+          悬浮：定宽悬浮抽屉盖在内容上方、不挤压内容列。原生：DSH 默认行为。桌面端在下方单独配置。
+        </p>
+      </Field>
+      <Field label="桌面侧边栏" path="global.wide.sidebar">
+        <div className="dsh-layout-segmented">
+          <SegmentedButton
+            pressed={global.wide.sidebar === "native"}
+            onClick={() =>
+              setGlobal({ wide: { ...global.wide, sidebar: "native" } })
+            }
+          >
+            原生
+          </SegmentedButton>
+          <SegmentedButton
+            pressed={global.wide.sidebar === "float"}
+            onClick={() =>
+              setGlobal({ wide: { ...global.wide, sidebar: "float" } })
+            }
+          >
+            悬浮
+          </SegmentedButton>
+        </div>
+        <p>
+          仅作用于宽屏（≥768px）。悬浮：侧边栏变为定宽悬浮抽屉，内容列独占整行、不随侧边栏开合挤压，
+          打开方式与窄屏一致（左缘把手或左滑，点遮罩、选中会话或 Esc 关闭）。原生：DSH
+          默认的内联侧边栏。
         </p>
       </Field>
     </section>

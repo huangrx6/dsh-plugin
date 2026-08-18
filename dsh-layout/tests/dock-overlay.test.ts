@@ -115,6 +115,14 @@ describe("one setting, one concern — stylesheet regression locks", () => {
     expect(css).not.toContain(":has([data-dsh-layout-workbench])");
   });
 
+  it("sidebar float CSS is viewport-agnostic — the wide setting reuses it", () => {
+    // The float panel/grid rules live OUTSIDE media queries: the same drawer
+    // serves the narrow (手机悬浮) and wide (桌面悬浮) settings; only the
+    // fullscreen variant is locked inside the phone media query.
+    expect(css).toContain("html[data-dsh-layout-sidebar-float] [data-dsh-layout-frame]");
+    expect(css).toContain("html[data-dsh-layout-sidebar-float] [data-dsh-layout-sidebar-col]");
+  });
+
   it("global blocks stay self-contained: background canvas, radius whitelist, dialog size, padding tokens", () => {
     expect(css).toContain("html[data-dsh-layout-bg] #root { position: relative; z-index: 1; }");
     expect(css).toContain("html[data-dsh-layout-radius]");
