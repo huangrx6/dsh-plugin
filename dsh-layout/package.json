@@ -1,6 +1,6 @@
 {
   "name": "dsh-layout",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Page material and conversation layout settings for the DeepSeek Harness web interface",
   "type": "module",
   "main": "lib/index.mjs",

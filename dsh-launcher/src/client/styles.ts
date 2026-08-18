@@ -646,12 +646,20 @@ export const LAUNCHER_STYLES = `
   .dsh-launcher-fab { bottom: 16px; left: 16px; width: 48px; height: 48px; }
 }
 
-/* ─── Mobile floating launcher button (FAB) ───
-   Hidden on desktop (the rail button is right there). Shown on phones
-   where the side rail is hidden by default. The element stays in the DOM
-   at all times so the React tree remains stable; CSS controls visibility. */
+/* ─── Floating launcher button (FAB) ───
+   The guaranteed entry point: visible on every viewport by default.
+   On desktop, when the best-effort side-rail button mounted successfully
+   (rail-button.ts marks <body data-dsh-launcher-rail>), the FAB yields
+   its slot so there aren't two floating entries for the same panel. On
+   phones the rail lives in an off-canvas drawer, so the FAB always shows. */
 .dsh-launcher-fab-host {
   display: contents;
+}
+.dsh-launcher-rail {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 8px;
+  margin: 2px 0;
 }
 .dsh-launcher-fab {
   position: fixed;
@@ -665,7 +673,7 @@ export const LAUNCHER_STYLES = `
   color: var(--dsw-alias-label-primary, #f4f4f5);
   box-shadow: var(--dsw-shadow-lv2, 0 12px 32px rgba(0, 0, 0, 0.35));
   cursor: pointer;
-  display: none;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   z-index: 9997;
@@ -673,6 +681,7 @@ export const LAUNCHER_STYLES = `
   padding: 0;
   -webkit-tap-highlight-color: transparent;
   font: inherit;
+  pointer-events: auto;
 }
 .dsh-launcher-fab:hover { transform: translateY(-1px); background: var(--dsw-alias-bg-layer-3, rgba(255, 255, 255, 0.06)); }
 .dsh-launcher-fab:active { transform: scale(0.96); }
@@ -681,8 +690,8 @@ export const LAUNCHER_STYLES = `
   outline: 2px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 40%, transparent);
   outline-offset: 2px;
 }
-@media (max-width: 767px) {
-  .dsh-launcher-fab { display: inline-flex; }
+@media (min-width: 768px) {
+  body[data-dsh-launcher-rail] .dsh-launcher-fab { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .dsh-launcher-fab { transition: none; }

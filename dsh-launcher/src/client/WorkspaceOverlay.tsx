@@ -1,21 +1,19 @@
 /**
- * Workspace overlay. The full-screen canvas the launcher panel's "Personal
- * workspace" entry opens. Layout: a top bar with the title and the close
- * button, a left menu (or horizontal tab bar on H5) listing the launcher-
- * owned sections, and a right content area where each section renders its
- * own component.
+ * Workspace view — the full-screen canvas the launcher panel's
+ * "Personal workspace" entry opens. Rendered inline by LauncherHost
+ * (the shell.overlay entry); no portals, no own React root.
  *
- * Section content is filled by slots contributed by other plugins (e.g.
- * dsh-skill-manager adds a Skills slot, dsh-mcp-manager adds an MCPs slot).
- * The launcher owns the chrome; the sections own their data and UI. The
- * slot key is `dsh-launcher.workspace.section`; the workspace merges
- * contributions by id with the default sections (slot entries override
- * the placeholder render for matching ids).
+ * Layout: a top bar (title + close), a left menu (a horizontal tab bar
+ * on H5) listing the launcher's default sections plus any plugin
+ * contributions, and a content area. Section content prefers the
+ * framework's renderSlot (so plugin entries render with the platform's
+ * own React and receive their injected props); entries whose component
+ * we can't dispatch that way fall back to mounting the component
+ * directly from the slot ledger.
  *
- * The slot registry is handed in as a prop because the overlay is mounted
- * as a detached React root — the cordis context lives behind the apply()
- * entry, not the React subtree. The prop surface is the same narrow shape
- * as the SlotRegistry methods the overlay actually calls.
+ * The section contract: plugins register to
+ * 'dsh-launcher.workspace.section' with id 'skills' | 'mcp' | ... —
+ * matching ids REPLACE the launcher's placeholder for that section.
  */
 import {
   useCallback,
@@ -23,8 +21,9 @@ import {
   useMemo,
   useState,
   useSyncExternalStore,
+  type ReactNode,
 } from "react";
-import { createPortal } from "react-dom";
+import type { PropsRenderSlots } from "@deepseek-ai/dsh-client-ui-slots";
 import {
   IconArchive,
   IconClose,
@@ -34,8 +33,6 @@ import {
   IconSkills,
   IconSparkle,
 } from "./icons.tsx";
-import { on, emit, LauncherEvents } from "./events.ts";
-import { useLauncherLocale } from "./use-locale.ts";
 import type { LauncherLocaleKey } from "./locales.ts";
 
 export interface WorkspaceSection {
@@ -52,11 +49,8 @@ export interface WorkspaceSection {
   readonly render: () => JSX.Element;
 }
 
-/**
- * Minimal slot view the workspace needs. We deliberately type-narrow to
- * the methods we use so the prop surface is obvious and the runtime
- * SlotRegistry can be passed without further casts.
- */
+/** Minimal slot-ledger view the workspace needs (narrowed so the runtime
+    SlotRegistry can be passed without further casts). */
 export interface SlotRegistryLike {
   readonly entries: (key: string) => readonly SlotEntryView[];
   readonly subscribe: (key: string, cb: () => void) => () => void;
@@ -73,109 +67,57 @@ export interface SlotEntryView {
 
 export const WORKSPACE_SECTION_SLOT = "dsh-launcher.workspace.section";
 
-/**
- * The default set of sections. Slot contributions override these by id.
- * The icons and labels are launcher-owned; the renderer is replaced when
- * a plugin registers a marketplace for the matching id.
- */
+/** Sections the launcher itself ships. Slot contributions override these
+    by id (a plugin registering id 'skills' replaces the placeholder). */
 export const DEFAULT_SECTIONS: readonly WorkspaceSection[] = [
-  {
-    id: "skills",
-    labelKey: "menuSkills",
-    subtitleKey: "menuSkillsSubtitle",
-    icon: <IconSkills size={20} />,
-    render: () => <SectionPlaceholder id="skills" />,
-  },
-  {
-    id: "mcp",
-    labelKey: "menuMcp",
-    subtitleKey: "menuMcpSubtitle",
-    icon: <IconMcp size={20} />,
-    render: () => <SectionPlaceholder id="mcp" />,
-  },
-  {
-    id: "remote",
-    labelKey: "menuRemote",
-    subtitleKey: "menuRemoteSubtitle",
-    icon: <IconRemote size={20} />,
-    render: () => <SectionPlaceholder id="remote" />,
-  },
-  {
-    id: "archive",
-    labelKey: "menuArchive",
-    subtitleKey: "menuArchiveSubtitle",
-    icon: <IconArchive size={20} />,
-    render: () => <SectionPlaceholder id="archive" />,
-  },
-  {
-    id: "layout",
-    labelKey: "menuLayout",
-    subtitleKey: "menuLayoutSubtitle",
-    icon: <IconLayout size={20} />,
-    render: () => <SectionPlaceholder id="layout" />,
-  },
+  { id: "skills", labelKey: "menuSkills", subtitleKey: "menuSkillsSubtitle", icon: <IconSkills size={20} />, render: () => <SectionPlaceholder id="skills" /> },
+  { id: "mcp", labelKey: "menuMcp", subtitleKey: "menuMcpSubtitle", icon: <IconMcp size={20} />, render: () => <SectionPlaceholder id="mcp" /> },
+  { id: "remote", labelKey: "menuRemote", subtitleKey: "menuRemoteSubtitle", icon: <IconRemote size={20} />, render: () => <SectionPlaceholder id="remote" /> },
+  { id: "archive", labelKey: "menuArchive", subtitleKey: "menuArchiveSubtitle", icon: <IconArchive size={20} />, render: () => <SectionPlaceholder id="archive" /> },
+  { id: "layout", labelKey: "menuLayout", subtitleKey: "menuLayoutSubtitle", icon: <IconLayout size={20} />, render: () => <SectionPlaceholder id="layout" /> },
 ];
 
-export interface WorkspaceOverlayProps {
+export interface WorkspaceViewProps {
+  readonly t: (key: LauncherLocaleKey) => string;
   readonly document: Document;
-  /** Slot registry handle. The overlay consumes its `entries` for the
-      workspace section slot and subscribes for live updates. */
-  readonly slots: SlotRegistryLike;
+  readonly slotsView: SlotRegistryLike;
+  /** Framework renderSlot narrowed to our declared children; when present,
+      plugin sections render through the platform's own machinery (props,
+      error boundaries, locale seats all included). Typed with the
+      framework's own PropsRenderSlots so the composed-props contract
+      checks structurally at the register site. `| undefined` keeps the
+      optional prop assignable under exactOptionalPropertyTypes. */
+  readonly renderSlot?:
+    | PropsRenderSlots<"dsh-launcher.workspace.section">["renderSlot"]
+    | undefined;
+  readonly onClose: () => void;
 }
 
-export function WorkspaceOverlay({
+export function WorkspaceView({
+  t,
   document,
-  slots,
-}: WorkspaceOverlayProps): JSX.Element | null {
-  const t = useLauncherLocale();
-  const [open, setOpen] = useState(false);
+  slotsView,
+  renderSlot,
+  onClose,
+}: WorkspaceViewProps): JSX.Element {
   const [activeId, setActiveId] = useState<string>(
     DEFAULT_SECTIONS[0]?.id ?? "",
   );
 
   const slotEntries = useSyncExternalStore(
-    (callback) => slots.subscribe(WORKSPACE_SECTION_SLOT, callback),
-    () => slots.entries(WORKSPACE_SECTION_SLOT),
-    () => slots.entries(WORKSPACE_SECTION_SLOT),
+    (callback) => slotsView.subscribe(WORKSPACE_SECTION_SLOT, callback),
+    () => slotsView.entries(WORKSPACE_SECTION_SLOT),
+    () => slotsView.entries(WORKSPACE_SECTION_SLOT),
   );
 
+  // Lock page scroll while the canvas is up (the overlay is fixed, so the
+  // page behind it shouldn't scroll on wheel/touch).
   useEffect(() => {
-    return on(document, LauncherEvents.WorkspaceOpen, () => {
-      setOpen(true);
-    });
-  }, [document]);
-
-  useEffect(() => {
-    return on(document, LauncherEvents.WorkspaceClose, () => {
-      setOpen(false);
-    });
-  }, [document]);
-
-  useEffect(() => {
-    return on(document, LauncherEvents.WorkspaceNavigate, (event) => {
-      const detail = event.detail;
-      if (detail !== null && typeof detail === "object" && "id" in detail) {
-        const id = (detail as { id: unknown }).id;
-        if (typeof id === "string") setActiveId(id);
-      }
-      setOpen(true);
-    });
-  }, [document]);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleKey = (event: KeyboardEvent): void => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("keydown", handleKey);
+    const previous = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = "hidden";
     return () => {
-      document.removeEventListener("keydown", handleKey);
+      document.documentElement.style.overflow = previous;
     };
-  }, [document, open]);
-
-  const close = useCallback(() => {
-    setOpen(false);
-    emit(document, LauncherEvents.WorkspaceClose);
   }, [document]);
 
   const sections = useMemo<readonly WorkspaceSection[]>(() => {
@@ -187,7 +129,10 @@ export function WorkspaceOverlay({
     return DEFAULT_SECTIONS.map((section) => {
       const override = overrides.get(section.id);
       if (override === undefined) return section;
-      const Component = override.component as React.ComponentType<unknown>;
+      const Component = override.component as
+        | React.ComponentType<Record<string, unknown>>
+        | undefined;
+      if (Component === undefined) return section;
       return {
         ...section,
         render: () => <Component />,
@@ -198,14 +143,32 @@ export function WorkspaceOverlay({
   const active =
     sections.find((section) => section.id === activeId) ?? sections[0];
 
-  if (!open) return null;
+  const renderSectionBody = useCallback((): ReactNode => {
+    if (active === undefined) {
+      return (
+        <div className="dsh-launcher-canvas-content-empty">
+          <div className="dsh-launcher-canvas-content-empty-title">
+            {t("workspace")}
+          </div>
+          <div>{t("workspaceHint")}</div>
+        </div>
+      );
+    }
+    // Preferred path: the framework's renderSlot (only this entry is
+    // authorized to render the slot, and plugin entries get their full
+    // composed props — injected api, locale seat, error boundary). The
+    // `only` opt narrows the list to the active section's id.
+    if (renderSlot !== undefined) {
+      return renderSlot(WORKSPACE_SECTION_SLOT, {}, {
+        only: active.id,
+        fallback: active.render(),
+      });
+    }
+    return active.render();
+  }, [active, renderSlot, t]);
 
-  return createPortal(
-    <div
-      className="dsh-launcher-canvas"
-      role="dialog"
-      aria-label={t("workspace")}
-    >
+  return (
+    <div className="dsh-launcher-canvas" role="dialog" aria-label={t("workspace")}>
       <header className="dsh-launcher-canvas-topbar">
         <span className="dsh-launcher-canvas-title">{t("workspace")}</span>
         <span className="dsh-launcher-canvas-hint">{t("workspaceHint")}</span>
@@ -213,7 +176,7 @@ export function WorkspaceOverlay({
         <button
           type="button"
           className="dsh-launcher-canvas-close"
-          onClick={close}
+          onClick={onClose}
           aria-label={t("workspaceClose")}
         >
           <IconClose size={12} />
@@ -241,52 +204,36 @@ export function WorkspaceOverlay({
         ))}
       </nav>
       <main className="dsh-launcher-canvas-content" aria-busy={false}>
-        {active === undefined ? (
-          <div className="dsh-launcher-canvas-content-empty">
-            <div className="dsh-launcher-canvas-content-empty-title">
-              {t("workspace")}
-            </div>
-            <div>{t("workspaceHint")}</div>
-          </div>
-        ) : (
-          <SectionContent section={active} translate={t} />
-        )}
+        <SectionContent section={active} translate={t} />
+        {renderSectionBody()}
       </main>
-    </div>,
-    document.body,
+    </div>
   );
 }
 
-/**
- * Section header + body. The header is the launcher's content-area polish
- * (icon + title + subtitle on a row, separated from the body by a thin
- * divider). The body is the section's actual render — a slot-registered
- * component or a placeholder.
- */
+/** Section header: icon tile + title + subtitle above the body. */
 function SectionContent({
   section,
   translate,
 }: {
-  readonly section: WorkspaceSection;
+  readonly section: WorkspaceSection | undefined;
   readonly translate: (key: LauncherLocaleKey) => string;
 }): JSX.Element {
+  if (section === undefined) return <></>;
   return (
-    <div>
-      <header className="dsh-launcher-section-header">
-        <span className="dsh-launcher-section-header-tile">{section.icon}</span>
-        <div className="dsh-launcher-section-header-body">
-          <h1 className="dsh-launcher-section-header-title">
-            {translate(section.labelKey)}
-          </h1>
-          {section.subtitleKey === undefined ? null : (
-            <p className="dsh-launcher-section-header-subtitle">
-              {translate(section.subtitleKey)}
-            </p>
-          )}
-        </div>
-      </header>
-      {section.render()}
-    </div>
+    <header className="dsh-launcher-section-header">
+      <span className="dsh-launcher-section-header-tile">{section.icon}</span>
+      <div className="dsh-launcher-section-header-body">
+        <h1 className="dsh-launcher-section-header-title">
+          {translate(section.labelKey)}
+        </h1>
+        {section.subtitleKey === undefined ? null : (
+          <p className="dsh-launcher-section-header-subtitle">
+            {translate(section.subtitleKey)}
+          </p>
+        )}
+      </div>
+    </header>
   );
 }
 

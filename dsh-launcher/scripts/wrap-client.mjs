@@ -1,4 +1,4 @@
-import { readFile, rename, rm, writeFile } from 'node:fs/promises'
+import { readFile, rename, rm, writeFile } from "node:fs/promises";
 
 /**
  * Wraps each raw CJS bundle into a `window.__ModuleLoader__.load(...)`
@@ -12,19 +12,19 @@ import { readFile, rename, rm, writeFile } from 'node:fs/promises'
  * needs wrapping.
  */
 const targets = [
-  {
-    rawPath: new URL('../lib/client.raw.js', import.meta.url),
-    outputPath: new URL('../lib/client.js', import.meta.url),
-    id: 'dsh-launcher',
-  },
-]
+ {
+  rawPath: new URL("../lib/client.raw.js", import.meta.url),
+  outputPath: new URL("../lib/client.js", import.meta.url),
+  id: "dsh-launcher",
+ },
+];
 
 for (const target of targets) {
-  const body = (await readFile(target.rawPath, 'utf8')).replace(
-    /\n?\/\/# sourceMappingURL=.*$/u,
-    '',
-  )
-  const wrapped = `window.__ModuleLoader__.load({
+ const body = (await readFile(target.rawPath, "utf8")).replace(
+  /\n?\/\/# sourceMappingURL=.*$/u,
+  "",
+ );
+ const wrapped = `window.__ModuleLoader__.load({
   id: "${target.id}",
   factory: (require) => {
     var module = { exports: {} };
@@ -33,17 +33,20 @@ ${indent(body, 4)}
     return module.exports;
   }
 });
-`
-  const temporaryPath = new URL(
-    `${target.outputPath.toString()}.tmp`,
-    import.meta.url,
-  )
-  await writeFile(temporaryPath, wrapped)
-  await rename(temporaryPath, target.outputPath)
-  await rm(target.rawPath, { force: true })
+`;
+ const temporaryPath = new URL(
+  `${target.outputPath.toString()}.tmp`,
+  import.meta.url,
+ );
+ await writeFile(temporaryPath, wrapped);
+ await rename(temporaryPath, target.outputPath);
+ await rm(target.rawPath, { force: true });
 }
 
 function indent(value, spaces) {
-  const prefix = ' '.repeat(spaces)
-  return value.split('\n').map((line) => `${prefix}${line}`).join('\n')
+ const prefix = " ".repeat(spaces);
+ return value
+  .split("\n")
+  .map((line) => `${prefix}${line}`)
+  .join("\n");
 }
