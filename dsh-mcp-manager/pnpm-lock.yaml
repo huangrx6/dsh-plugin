@@ -11,9 +11,6 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.12.0
         version: 1.30.0(zod@4.4.3)
-      dsh-launcher:
-        specifier: link:../dsh-launcher
-        version: link:../dsh-launcher
       js-yaml:
         specifier: ^4.1.0
         version: 4.3.1

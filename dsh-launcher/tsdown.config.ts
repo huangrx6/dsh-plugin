@@ -1,55 +1,40 @@
-import { defineConfig } from "tsdown";
+import { defineConfig } from 'tsdown'
 
+/**
+ * Two-bundle build: the host ESM entry (no-op, this plugin is pure
+ * client) and the client CJS bundle (the launcher panel + workspace
+ * overlay + sidebar trigger + FAB).
+ *
+ * Earlier builds also shipped `./client/workspace` and `./client/market`
+ * subpath bundles for cross-plugin consumption, but the platform's
+ * ModuleLoader rejects cross-plugin value imports with
+ * "missed the module table". dsh-skill-manager and dsh-mcp-manager now
+ * vendor the marketplace source inside their own packages, so those
+ * subpath bundles are gone — keeping them around would only invite
+ * future regressions.
+ */
 export default defineConfig([
   {
-    name: "dsh-launcher",
-    entry: ["src/index.ts"],
-    format: ["esm"],
-    target: "es2024",
-    outDir: "lib",
+    name: 'dsh-launcher',
+    entry: ['src/index.ts'],
+    format: ['esm'],
+    target: 'es2024',
+    outDir: 'lib',
     clean: false,
     dts: false,
   },
   {
-    name: "dsh-launcher/client",
-    entry: ["src/client/index.tsx"],
-    format: ["cjs"],
-    target: "es2022",
-    platform: "browser",
-    outDir: "lib",
+    name: 'dsh-launcher/client',
+    entry: ['src/client/index.tsx'],
+    format: ['cjs'],
+    target: 'es2022',
+    platform: 'browser',
+    outDir: 'lib',
     clean: false,
     dts: false,
     sourcemap: false,
     outputOptions: {
-      entryFileNames: "client.raw.js",
+      entryFileNames: 'client.raw.js',
     },
   },
-  {
-    name: "dsh-launcher/client/workspace",
-    entry: ["src/client/workspace.ts"],
-    format: ["cjs"],
-    target: "es2022",
-    platform: "browser",
-    outDir: "lib/client",
-    clean: false,
-    dts: false,
-    sourcemap: false,
-    outputOptions: {
-      entryFileNames: "workspace.raw.js",
-    },
-  },
-  {
-    name: "dsh-launcher/client/market",
-    entry: ["src/client/market.ts"],
-    format: ["cjs"],
-    target: "es2022",
-    platform: "browser",
-    outDir: "lib/client",
-    clean: false,
-    dts: false,
-    sourcemap: false,
-    outputOptions: {
-      entryFileNames: "market.raw.js",
-    },
-  },
-]);
+])

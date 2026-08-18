@@ -1,6 +1,6 @@
 {
   "name": "dsh-archive-manager",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Archive manager for DeepSeek Harness: lists archived (hidden) sessions, shows their message history, restores them into the workspace, and exports each one as a zip (official /api/session.export) or as a markdown transcription.",
   "type": "module",
   "main": "lib/index.mjs",

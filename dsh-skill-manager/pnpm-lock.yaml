@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      dsh-launcher:
-        specifier: link:../dsh-launcher
-        version: link:../dsh-launcher
       fflate:
         specifier: ^0.8.3
         version: 0.8.3

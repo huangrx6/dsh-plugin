@@ -21,6 +21,14 @@ export default defineConfig([
     clean: false,
     dts: false,
     sourcemap: false,
+    // Bundle dsh-launcher's market UI into this client bundle instead of
+    // emitting `require('dsh-launcher/client/market')`. The platform's
+    // ModuleLoader has no entry for cross-plugin subpaths, so a runtime
+    // require would fail with "missed the module table"; inlining keeps
+    // the source-of-truth in dsh-launcher while satisfying the loader.
+    deps: {
+      alwaysBundle: ['dsh-launcher'],
+    },
     outputOptions: {
       entryFileNames: 'client.raw.js',
     },

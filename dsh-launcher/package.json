@@ -1,6 +1,6 @@
 {
   "name": "dsh-launcher",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Personal launcher: full-screen workspace over the side rail, replacing the stock settings modal with a launcher panel that hosts a personal archive / Skill / MCP / remote / layout marketplace.",
   "type": "module",
   "main": "lib/index.mjs",
@@ -14,21 +14,11 @@
       "types": "./lib/types/client/index.d.ts",
       "default": "./lib/client.js"
     },
-    "./client/workspace": {
-      "types": "./lib/types/client/workspace.d.ts",
-      "default": "./lib/client/workspace.js"
-    },
-    "./client/market": {
-      "types": "./lib/types/client/market.d.ts",
-      "default": "./lib/client/market.js"
-    },
     "./package.json": "./package.json"
   },
   "files": [
     "lib/index.mjs",
     "lib/client.js",
-    "lib/client/workspace.js",
-    "lib/client/market.js",
     "lib/types/**/*.d.ts",
     "cordis.patch.yml",
     "README.md",

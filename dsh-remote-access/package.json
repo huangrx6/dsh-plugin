@@ -1,6 +1,6 @@
 {
   "name": "dsh-remote-access",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Remote access for DeepSeek Harness over Tailscale Serve: exposes the loopback web UI at an HTTPS ts.net URL and forces the in-app browse directory picker so remote clients can select workspaces without the host-native chooser.",
   "type": "module",
   "main": "lib/index.mjs",

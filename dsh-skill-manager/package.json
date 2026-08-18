@@ -1,6 +1,6 @@
 {
   "name": "dsh-skill-manager",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Import and inspect DeepSeek Harness skills (URL / zip / file import with a rich detail view) from the web Settings → Plugins section",
   "type": "module",
   "main": "lib/index.mjs",
@@ -52,7 +52,6 @@
     "prepare": "pnpm run build"
   },
   "dependencies": {
-    "dsh-launcher": "link:../dsh-launcher",
     "fflate": "^0.8.3",
     "yaml": "^2.9.0"
   },
@@ -64,7 +63,6 @@
     "@deepseek-ai/dsh-client-ui-primitives": "^0.1.0-rc.6",
     "@deepseek-ai/dsh-client-ui-settings": "^0.1.0-rc.6",
     "@deepseek-ai/dsh-skill": "^0.1.0-rc.6",
-    "dsh-launcher": "^0.1.0",
     "react": "^18.2.0"
   },
   "devDependencies": {
