@@ -6,23 +6,12 @@ import '@deepseek-ai/dsh-client-ui-settings/client'
 import type { SkillManagerLocaleKey } from './locales.ts'
 import { enUS, SKILL_MANAGER_NS, zhCN } from './locales.ts'
 import { SkillManagerApi } from './api.ts'
-import { SkillManagerTab } from './SkillManagerTab.tsx'
+import { SkillManagerSection } from './SkillManagerSection.tsx'
 import { installStyles } from './styles.ts'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
     'settings.skillManager': SkillManagerLocaleKey
-  }
-}
-
-
-declare module '@deepseek-ai/dsh-client-ui-slots' {
-  interface SlotMap {
-    'settings.thirdparty.tab': {
-      kind: 'list'
-      scope: 'root'
-      owner: Record<string, never>
-    }
   }
 }
 
@@ -37,14 +26,16 @@ export function apply(ctx: ClientContext): void {
 
   ctx.effect(() => installStyles(document), 'dsh-skill-manager: styles')
 
-  ctx.slots.inject('settings.thirdparty.tab', () => ctx.slots.register({
-    name: 'settings.thirdparty.tab',
+  // Independent settings nav entry (设置页左侧菜单独立入口) — no hub
+  // dependency: installing this plugin alone is enough.
+  ctx.slots.inject('settings.section', () => ctx.slots.register({
+    name: 'settings.section',
     id: 'skills',
-    order: 20,
+    order: 50,
     label: () => t('tab'),
     locale: SKILL_MANAGER_NS,
     inject: () => ({ api }),
-  }, SkillManagerTab))
+  }, SkillManagerSection))
 }
 
-export { SkillManagerTab }
+export { SkillManagerSection }

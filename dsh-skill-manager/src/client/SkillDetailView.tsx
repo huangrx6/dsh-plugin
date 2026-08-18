@@ -4,7 +4,7 @@ import { JsonTree, MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { SkillDetail } from '../contracts.ts'
 import type { SkillManagerApi } from './api.ts'
 import type { SkillManagerLocaleKey } from './locales.ts'
-import { sourceLabel } from './SkillManagerTab.tsx'
+import { sourceLabel } from './SkillManagerSection.tsx'
 import { SkillFilePreview } from './SkillFilePreview.tsx'
 import { SkillFileTree } from './SkillFileTree.tsx'
 

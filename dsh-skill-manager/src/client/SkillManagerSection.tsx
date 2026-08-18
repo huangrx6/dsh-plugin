@@ -6,7 +6,7 @@ import type { SkillManagerLocaleKey } from './locales.ts'
 import { SkillDetailView } from './SkillDetailView.tsx'
 import { SkillImportView } from './SkillImportView.tsx'
 
-export interface SkillManagerTabProps {
+export interface SkillManagerSectionProps {
   readonly t: (key: SkillManagerLocaleKey) => string
   readonly api: SkillManagerApi
 }
@@ -18,8 +18,8 @@ interface ListState {
   readonly skills?: readonly SkillListItem[]
 }
 
-/** Plugins-settings tab: skill catalog with search, import and detail views. */
-export function SkillManagerTab({ t, api }: SkillManagerTabProps) {
+/** Independent settings section: skill catalog with search, import and detail views. */
+export function SkillManagerSection({ t, api }: SkillManagerSectionProps) {
   const [view, setView] = useState<View>({ kind: 'list' })
   const [request, setRequest] = useState(0)
   const [query, setQuery] = useState('')
@@ -57,6 +57,10 @@ export function SkillManagerTab({ t, api }: SkillManagerTabProps) {
 
   return (
     <div className="dshm-tab" aria-busy={state.status === 'loading'}>
+      <header className="dshm-head">
+        <h2>{t('tab')}</h2>
+        <p>{t('intro')}</p>
+      </header>
       {state.status === 'loading'
         ? (
           <div className="dshm-skeleton" role="status" aria-label={t('loading')}>

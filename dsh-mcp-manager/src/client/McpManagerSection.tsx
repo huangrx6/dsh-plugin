@@ -7,7 +7,7 @@ import { McpEditor } from './McpEditor.tsx'
 import { cachedToolsToRows, ToolList } from './ToolList.tsx'
 import { clearCachedTest, loadCachedTest, saveCachedTest, type CachedTest } from './tool-cache.ts'
 
-export interface McpManagerTabProps {
+export interface McpManagerSectionProps {
   readonly t: (key: McpManagerLocaleKey) => string
   readonly api: McpManagerApi
 }
@@ -19,7 +19,7 @@ interface ListState {
 }
 
 /** Plugins-settings tab: MCP server cards with cached probes, auto-testing and actions. */
-export function McpManagerTab({ t, api }: McpManagerTabProps) {
+export function McpManagerSection({ t, api }: McpManagerSectionProps) {
   const [state, setState] = useState<ListState>({ status: 'loading' })
   const [request, setRequest] = useState(0)
   const [expanded, setExpanded] = useState<string | undefined>(undefined)
@@ -143,6 +143,10 @@ export function McpManagerTab({ t, api }: McpManagerTabProps) {
 
   return (
     <div className="dshmcp-tab" aria-busy={state.status === 'loading'}>
+      <header className="dshmcp-head">
+        <h2>{t('tab')}</h2>
+        <p>{t('intro')}</p>
+      </header>
       {state.status === 'loading'
         ? (
           <div className="dshmcp-skeleton" role="status" aria-label={t('loading')}>

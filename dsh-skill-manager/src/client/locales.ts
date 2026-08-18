@@ -2,6 +2,7 @@ export const SKILL_MANAGER_NS = 'settings.skillManager'
 
 export const zhCN = {
   tab: 'Skill 管理',
+  intro: '从 URL / GitHub / zip 导入 Skill，浏览文件树并实时预览文件内容。',
   loading: '正在读取 Skill…',
   error: '暂时无法读取 Skill。',
   retry: '重试',
@@ -87,6 +88,7 @@ export const zhCN = {
 
 export const enUS: Record<keyof typeof zhCN, string> = {
   tab: 'Skills',
+  intro: 'Import skills from a URL, GitHub or a zip archive, browse the file tree and preview files live.',
   loading: 'Reading skills…',
   error: 'Skills are temporarily unavailable.',
   retry: 'Retry',

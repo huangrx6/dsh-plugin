@@ -16,7 +16,7 @@ import type { RemoteAccessLocaleKey } from './locales.ts'
 import { IssuesList } from './IssuesList.tsx'
 import { QrPanel } from './QrPanel.tsx'
 
-export interface RemoteAccessTabProps {
+export interface RemoteAccessSectionProps {
   readonly t: (key: RemoteAccessLocaleKey, vars?: Record<string, string>) => string
   readonly api: RemoteAccessApi
 }
@@ -32,7 +32,7 @@ type Busy = 'enable' | 'disable' | undefined
 /** host 侧 foldError 的还原约定：`message\n[hint] hint`。 */
 const HINT_SEPARATOR = '\n[hint] '
 
-export function RemoteAccessTab({ t, api }: RemoteAccessTabProps) {
+export function RemoteAccessSection({ t, api }: RemoteAccessSectionProps) {
   const [state, setState] = useState<ListState>({ status: 'loading' })
   const [request, setRequest] = useState(0)
   const [busy, setBusy] = useState<Busy>(undefined)

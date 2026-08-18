@@ -10,7 +10,7 @@ function fakeSettings(sections: Record<string, unknown>): SettingsLike & { calls
   const revisions = new Map<string, number>(Object.keys(sections).map(ns => [ns, 1]))
   const guard = async (ns: string, expected: number | undefined, apply: () => void) => {
     const rev = revisions.get(ns) ?? 0
-    if (expected !== undefined && expected !== rev) throw new SettingsConflictError(ns, expected, rev)
+    if (expected !== undefined && expected !== rev) throw new SettingsConflictError(ns as ConstructorParameters<typeof SettingsConflictError>[0], expected, rev)
     apply()
     revisions.set(ns, rev + 1)
   }
@@ -35,7 +35,7 @@ function fakeSettings(sections: Record<string, unknown>): SettingsLike & { calls
       const section = { ...(sections[ns] as Record<string, unknown>) }
       for (const op of ops as { op: string; path: string[]; value?: unknown }[]) {
         if (op.op === 'set' && op.path.length === 1) section[op.path[0]!] = op.value
-        else if (op.op === 'unset' && op.path.length === 1) delete section[op.path[0]]
+        else if (op.op === 'unset' && op.path.length === 1) delete section[op.path[0]!]
       }
       await guard(ns, expected, () => { sections[ns] = section })
     },

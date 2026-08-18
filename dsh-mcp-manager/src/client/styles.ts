@@ -11,6 +11,10 @@ const STYLE_ID = 'dsh-mcp-manager-styles'
  */
 const CSS = `
 /* ── shell ──────────────────────────────────────────────────────────────── */
+/* 独立分区头：设置页左侧菜单已有同名入口，这里补齐标题与一句话说明。 */
+.dshmcp-head { display: flex; flex-direction: column; gap: 4px; }
+.dshmcp-head h2 { margin: 0; font-size: 16px; font-weight: 600; }
+.dshmcp-head p { margin: 0; color: var(--dsw-alias-label-tertiary); font-size: 12.5px; }
 .dshmcp-tab { width: 100%; max-width: 760px; display: flex; flex-direction: column; gap: 14px; color: var(--dsw-alias-label-primary); }
 
 /* ── heading row: title + count + actions ───────────────────────────────── */

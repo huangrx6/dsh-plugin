@@ -2,6 +2,7 @@ export const MCP_MANAGER_NS = 'settings.mcpManager'
 
 export const zhCN = {
   tab: 'MCP 服务器',
+  intro: '集中管理 MCP 服务器：新增、编辑、启停、测试连接与查看工具明细。',
   loading: '正在读取 MCP 服务器…',
   error: '暂时无法读取 MCP 服务器。',
   retry: '重试',
@@ -105,6 +106,7 @@ export const zhCN = {
 
 export const enUS: Record<keyof typeof zhCN, string> = {
   tab: 'MCP servers',
+  intro: 'Manage MCP servers end to end: add, edit, enable or disable, test connections and inspect tools.',
   loading: 'Reading MCP servers…',
   error: 'MCP servers are temporarily unavailable.',
   retry: 'Retry',

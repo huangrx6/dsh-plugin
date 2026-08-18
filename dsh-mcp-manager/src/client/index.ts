@@ -6,23 +6,12 @@ import '@deepseek-ai/dsh-client-ui-settings/client'
 import type { McpManagerLocaleKey } from './locales.ts'
 import { enUS, MCP_MANAGER_NS, zhCN } from './locales.ts'
 import { McpManagerApi } from './api.ts'
-import { McpManagerTab } from './McpManagerTab.tsx'
+import { McpManagerSection } from './McpManagerSection.tsx'
 import { installStyles } from './styles.ts'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
     'settings.mcpManager': McpManagerLocaleKey
-  }
-}
-
-
-declare module '@deepseek-ai/dsh-client-ui-slots' {
-  interface SlotMap {
-    'settings.thirdparty.tab': {
-      kind: 'list'
-      scope: 'root'
-      owner: Record<string, never>
-    }
   }
 }
 
@@ -37,14 +26,16 @@ export function apply(ctx: ClientContext): void {
 
   ctx.effect(() => installStyles(document), 'dsh-mcp-manager: styles')
 
-  ctx.slots.inject('settings.thirdparty.tab', () => ctx.slots.register({
-    name: 'settings.thirdparty.tab',
+  // Independent settings nav entry (设置页左侧菜单独立入口) — no hub
+  // dependency: installing this plugin alone is enough.
+  ctx.slots.inject('settings.section', () => ctx.slots.register({
+    name: 'settings.section',
     id: 'mcp',
-    order: 30,
+    order: 51,
     label: () => t('tab'),
     locale: MCP_MANAGER_NS,
     inject: () => ({ api }),
-  }, McpManagerTab))
+  }, McpManagerSection))
 }
 
-export { McpManagerTab }
+export { McpManagerSection }
