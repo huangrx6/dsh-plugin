@@ -33,7 +33,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          for pkg in dsh-layout dsh-skill-manager dsh-mcp-manager dsh-remote-access; do
+          for pkg in dsh-layout dsh-skill-manager dsh-mcp-manager dsh-remote-access dsh-archive-manager; do
             echo "::group::build $pkg"
             (cd "$pkg" && pnpm install --no-frozen-lockfile && pnpm run build && pnpm pack --pack-destination ../dist)
             echo "::endgroup::"
