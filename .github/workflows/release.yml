@@ -33,7 +33,11 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          for pkg in dsh-layout dsh-skill-manager dsh-mcp-manager dsh-remote-access dsh-archive-manager; do
+          # Order matters: dsh-launcher goes first because dsh-skill-manager and
+          # dsh-mcp-manager `link:` it via their workspace + market sections,
+          # so its `lib/` has to exist before their build step resolves
+          # `dsh-launcher/client/workspace` / `dsh-launcher/client/market`.
+          for pkg in dsh-launcher dsh-layout dsh-skill-manager dsh-mcp-manager dsh-remote-access dsh-archive-manager; do
             echo "::group::build $pkg"
             (cd "$pkg" && pnpm install --no-frozen-lockfile && pnpm run build && pnpm pack --pack-destination ../dist)
             echo "::endgroup::"
