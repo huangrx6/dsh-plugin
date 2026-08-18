@@ -10,6 +10,7 @@
 | [`dsh-skill-manager`](./dsh-skill-manager) | Skill 导入（URL / GitHub / zip）与详情查看：来源层级、frontmatter 元数据、文件树、多格式实时预览 | **[→ dsh-skill-manager/README.md](./dsh-skill-manager/README.md)** |
 | [`dsh-mcp-manager`](./dsh-mcp-manager) | MCP 服务器全生命周期管理：增删改、启停、测试连接、工具明细 | **[→ dsh-mcp-manager/README.md](./dsh-mcp-manager/README.md)** |
 | [`dsh-remote-access`](./dsh-remote-access) | 远程访问：Tailscale Serve 把本机 dsh 暴露为 HTTPS 地址 + 切换官方 browse 目录选择器，手机扫码即用 | **[→ dsh-remote-access/README.md](./dsh-remote-access/README.md)** |
+| [`dsh-archive-manager`](./dsh-archive-manager) | 归档会话管理：列表、阅读消息、恢复工作区、导出 zip（官方 session.export）或 Markdown | **[→ dsh-archive-manager/README.md](./dsh-archive-manager/README.md)** |
 
 深入阅读：
 
@@ -27,6 +28,7 @@ dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/dow
 dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<version>/dsh-skill-manager-0.1.0.tgz
 dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<version>/dsh-mcp-manager-0.1.0.tgz
 dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<version>/dsh-remote-access-0.1.0.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<version>/dsh-archive-manager-0.1.0.tgz
 ```
 
 例如当前最新 `v0.3.1`：把 `<version>` 换为 `v0.3.1`。**升级 = 换新版本号重跑**（URL 变了，pnpm 缓存自动失效）。装完重启 dsh（或 `/reload`）。
