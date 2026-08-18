@@ -48,6 +48,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
+    "dsh-launcher": "link:../dsh-launcher",
     "js-yaml": "^4.1.0"
   },
   "peerDependencies": {

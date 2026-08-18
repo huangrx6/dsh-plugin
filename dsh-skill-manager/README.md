@@ -48,7 +48,6 @@ pnpm（≥ 9）会克隆仓库的对应子目录、安装依赖并执行 `prepar
 dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<tag>/dsh-skill-manager-<version>.tgz
 ```
 
-
 ### 方式三：本地开发（link 热迭代）
 
 ```bash
@@ -74,3 +73,40 @@ pnpm install
 pnpm run check   # typecheck + vitest + build
 ```
 
+## Skill 市场（dsh-launcher 集成）
+
+`dsh-skill-manager` 自带一个 **Skill 市场** UI（`SkillMarketSection`）。当用户同时安装了 [`dsh-launcher`](../dsh-launcher) 时，该市场会在 launcher 的全屏工作区里出现——左侧菜单选 **Skill 管理**，右侧会看到卡片化市场。
+
+市场的核心组件复用自 launcher（`dsh-launcher/client/market` 的 `MarketShelf`），本插件只负责：
+
+- `onInstall`：从 manifest item 的 `payload` 读取 `url` + `destination`，调用现有的 `importSkill` 端点（同一个 `dsh-skill-manager` host RPC，无需新增）。
+- `onRemove`：从 manifest item 的 `payload` 读取 `path`，调用现有的 `deleteSkill` 端点。
+- `isInstalled`：用 `SkillListItem.name` 匹配 manifest item `id`，跟现有"列表"页口径一致。
+
+市场特性由 launcher 提供：
+
+- **多数据源**：默认一个内置源（`huangrx6/dsh-plugin/dsh-launcher/market/builtin.json`），可在 UI 里新增任意数量的清单 URL；持久化到 `localStorage`。
+- **数据源排序**：第一个 = 默认选中；可在 chip 上拖拽调整。
+- **模糊筛选**：跨所有源按 name / description 模糊筛选。
+- **离线提示**：fetch 失败 / 清单不合法都标记在 chip 圆点颜色上。
+
+如果未装 launcher，工作区里 "Skill 管理" 这一栏会显示 launcher 的默认占位；现有的 "设置 → 插件 → Skill 管理" 入口完全不受影响。
+
+## 清单 payload 约定
+
+Skill 市场的 manifest 项 `payload` 是 launcher 当作不透明对象传入的，本插件按以下约定解读：
+
+```jsonc
+{
+  "id": "skill-write-doc",
+  "name": "Write Doc",
+  "description": "...",
+  "kind": "skill",
+  "payload": {
+    "url": "https://github.com/user/skill-repo",   // 安装地址（GitHub / raw md / zip）
+    "destination": "user-dsh"                     // 可选，user-dsh | user-agents
+  }
+}
+```
+
+未提供 `url` 时 install 报错；卸载时如果 manifest 没给 `path` 也报错（manifest 项是可重安装的，原始路径需在打包时一起记录）。

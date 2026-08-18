@@ -39,7 +39,6 @@ pnpm（≥ 9）会克隆仓库的对应子目录、安装依赖并执行 `prepar
 dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<tag>/dsh-mcp-manager-<version>.tgz
 ```
 
-
 ### 方式三：本地开发（link 热迭代）
 
 ```bash
@@ -65,3 +64,49 @@ pnpm install
 pnpm run check   # typecheck + vitest + build
 ```
 
+## MCP 市场（dsh-launcher 集成）
+
+`dsh-mcp-manager` 自带一个 **MCP 市场** UI（`McpMarketSection`）。当用户同时安装了 [`dsh-launcher`](../dsh-launcher) 时，该市场会在 launcher 的全屏工作区里出现——左侧菜单选 **MCP 管理**，右侧会看到卡片化市场。
+
+市场的核心组件复用自 launcher（`dsh-launcher/client/market` 的 `MarketShelf`），本插件只负责：
+
+- `onInstall`：从 manifest item 的 `payload` 解析出 `McpServerConfig`（stdio / streamable-http 两种），调用现有的 `save` 端点（同一个 `dsh-mcp-manager` host RPC）。
+- `onRemove`：通过 `McpServerView.removable` 判断是否可删，调用现有的 `delete` 端点。
+- `isInstalled`：用 `McpServerView.serverName` 匹配 manifest item `id`。
+
+如果未装 launcher，工作区里 "MCP 管理" 这一栏会显示 launcher 的默认占位；现有的 "设置 → 插件 → MCP 服务器" 入口完全不受影响。
+
+## 清单 payload 约定
+
+MCP 市场的 manifest 项 `payload` 是 launcher 当作不透明对象传入的，本插件按以下约定解读：
+
+```jsonc
+// stdio
+{
+  "id": "mcp-filesystem",
+  "name": "Filesystem",
+  "description": "...",
+  "kind": "mcp",
+  "payload": {
+    "serverName": "filesystem",
+    "transport": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-filesystem"]
+  }
+}
+
+// streamable-http
+{
+  "id": "mcp-fetch",
+  "name": "Fetch",
+  "description": "...",
+  "kind": "mcp",
+  "payload": {
+    "serverName": "fetch",
+    "transport": "streamable-http",
+    "url": "https://example.com/mcp"
+  }
+}
+```
+
+`serverName` 缺省时用 manifest `id`；`transport` 决定后续字段必填校验（stdio → `command`，http → `url`）。卸载从 `McpListResponse.servers` 里按 `serverName` 匹配回 `entryId`，所以 manifest 作者要保证 `serverName` 与本机能查到的 server 一致。

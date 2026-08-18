@@ -6,9 +6,10 @@
 
 | 插件 | 一句话 | 详细文档 |
 | --- | --- | --- |
+| [`dsh-launcher`](./dsh-launcher) | 个人空间：侧栏底部 launcher 按钮 + 浮层面板 + 全屏工作区（覆盖视图），集成 Skill / MCP 市场，左菜单 + 右侧卡片化内容，H5 自适应 | **[→ dsh-launcher/README.md](./dsh-launcher/README.md)** |
 | [`dsh-layout`](./dsh-layout) | 页面布局与材质：一张磨砂材质覆盖整页，全局（圆角/背景/弹窗/边距）+ 对话排版（阅读宽度/收笔/气泡/轨迹/统计） | **[→ dsh-layout/README.md](./dsh-layout/README.md)** |
-| [`dsh-skill-manager`](./dsh-skill-manager) | Skill 导入（URL / GitHub / zip）与详情查看：来源层级、frontmatter 元数据、文件树、多格式实时预览 | **[→ dsh-skill-manager/README.md](./dsh-skill-manager/README.md)** |
-| [`dsh-mcp-manager`](./dsh-mcp-manager) | MCP 服务器全生命周期管理：增删改、启停、测试连接、工具明细 | **[→ dsh-mcp-manager/README.md](./dsh-mcp-manager/README.md)** |
+| [`dsh-skill-manager`](./dsh-skill-manager) | Skill 导入（URL / GitHub / zip）与详情查看，连同 launcher 内的 Skill 市场（多源 / 模糊筛选 / 一键安装） | **[→ dsh-skill-manager/README.md](./dsh-skill-manager/README.md)** |
+| [`dsh-mcp-manager`](./dsh-mcp-manager) | MCP 服务器全生命周期管理：增删改、启停、测试连接、工具明细，连同 launcher 内的 MCP 市场 | **[→ dsh-mcp-manager/README.md](./dsh-mcp-manager/README.md)** |
 | [`dsh-remote-access`](./dsh-remote-access) | 远程访问：Tailscale Serve 把本机 dsh 暴露为 HTTPS 地址 + 切换官方 browse 目录选择器，手机扫码即用 | **[→ dsh-remote-access/README.md](./dsh-remote-access/README.md)** |
 | [`dsh-archive-manager`](./dsh-archive-manager) | 归档会话管理：列表、阅读消息、恢复工作区、导出 zip（官方 session.export）或 Markdown | **[→ dsh-archive-manager/README.md](./dsh-archive-manager/README.md)** |
 
@@ -24,6 +25,7 @@
 所有插件通过 GitHub Release 预构建包安装（已含 `lib/` 产物，无需本机构建）。**用版本化 URL**（含版本号）——pnpm 按 URL 缓存，版本号每次不同所以永不撞 `TARBALL_INTEGRITY`（这是 `latest` 固定链接升级时的已知坑）。<version> 换成 [Releases 页](https://github.com/huangrx6/dsh-plugin/releases) 最新 tag 号：
 
 ```bash
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<version>/dsh-launcher-0.1.0.tgz
 dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<version>/dsh-layout-0.1.0.tgz
 dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<version>/dsh-skill-manager-0.1.0.tgz
 dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<version>/dsh-mcp-manager-0.1.0.tgz
@@ -42,7 +44,7 @@ dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/dow
 ```bash
 git clone git@github.com:huangrx6/dsh-plugin.git
 cd dsh-plugin
-for pkg in dsh-layout dsh-skill-manager dsh-mcp-manager dsh-remote-access; do
+for pkg in dsh-launcher dsh-layout dsh-skill-manager dsh-mcp-manager dsh-remote-access; do
   (cd "$pkg" && pnpm install && pnpm run build)
 done
 ```
@@ -54,6 +56,7 @@ done
   "name": "dsh-profile-web",
   "private": true,
   "dependencies": {
+    "dsh-launcher": "link:/绝对路径/dsh-plugin/dsh-launcher",
     "dsh-layout": "link:/绝对路径/dsh-plugin/dsh-layout",
     "dsh-skill-manager": "link:/绝对路径/dsh-plugin/dsh-skill-manager",
     "dsh-mcp-manager": "link:/绝对路径/dsh-plugin/dsh-mcp-manager",
@@ -64,6 +67,7 @@ done
       "bundles": [
         "@deepseek-ai/dsh-base",
         "@deepseek-ai/dsh-web-app",
+        "dsh-launcher",
         "dsh-layout",
         "dsh-skill-manager",
         "dsh-mcp-manager",
@@ -88,10 +92,12 @@ done
 
 ```
 dsh-plugin/
+├── dsh-launcher/        # 个人空间：launcher 面板 + 全屏工作区 + 市场（详见其 README）
 ├── dsh-layout/          # 布局 / 材质 / 背景设置（详见其 README）
-├── dsh-skill-manager/   # Skill 导入 / 详情 / 文件预览（详见其 README）
-├── dsh-mcp-manager/     # MCP 服务器管理（详见其 README）
+├── dsh-skill-manager/   # Skill 导入 / 详情 / 文件预览 + Skill 市场（详见其 README）
+├── dsh-mcp-manager/     # MCP 服务器管理 + MCP 市场（详见其 README）
 ├── dsh-remote-access/   # 远程访问：Tailscale Serve + browse picker（详见其 README）
+├── dsh-archive-manager/ # 归档会话：列表 / 阅读 / 恢复 / 导出（详见其 README）
 └── docs/                # 架构与源码解读
 ```
 

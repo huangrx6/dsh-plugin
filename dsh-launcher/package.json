@@ -1,7 +1,7 @@
 {
-  "name": "dsh-skill-manager",
+  "name": "dsh-launcher",
   "version": "0.1.0",
-  "description": "Import and inspect DeepSeek Harness skills (URL / zip / file import with a rich detail view) from the web Settings → Plugins section",
+  "description": "Personal launcher: full-screen workspace over the side rail, replacing the stock settings modal with a launcher panel that hosts a personal archive / Skill / MCP / remote / layout marketplace.",
   "type": "module",
   "main": "lib/index.mjs",
   "types": "lib/types/index.d.ts",
@@ -14,6 +14,10 @@
       "types": "./lib/types/client/index.d.ts",
       "default": "./lib/client.js"
     },
+    "./client/workspace": {
+      "types": "./lib/types/client/workspace.d.ts",
+      "default": "./lib/client/workspace.js"
+    },
     "./client/market": {
       "types": "./lib/types/client/market.d.ts",
       "default": "./lib/client/market.js"
@@ -23,10 +27,12 @@
   "files": [
     "lib/index.mjs",
     "lib/client.js",
+    "lib/client/workspace.js",
     "lib/client/market.js",
     "lib/types/**/*.d.ts",
     "cordis.patch.yml",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "dsh": {
     "bundle": {
@@ -37,9 +43,9 @@
       "inject": [
         "@deepseek-ai/dsh-client-runtime",
         "@deepseek-ai/dsh-client-locale",
-        "@deepseek-ai/dsh-client-ui-settings",
-        "@deepseek-ai/dsh-client-connection",
-        "@deepseek-ai/dsh-client-ui-primitives"
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-primitives",
+        "@deepseek-ai/dsh-client-connection"
       ]
     }
   },
@@ -51,21 +57,15 @@
     "check": "pnpm run typecheck && pnpm run test && pnpm run build",
     "prepare": "pnpm run build"
   },
-  "dependencies": {
-    "dsh-launcher": "link:../dsh-launcher",
-    "fflate": "^0.8.3",
-    "yaml": "^2.9.0"
-  },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
     "@deepseek-ai/dsh-client-connection": "^0.1.0-rc.6",
     "@deepseek-ai/dsh-client-locale": "^0.1.0-rc.6",
     "@deepseek-ai/dsh-client-runtime": "^0.1.0-rc.6",
     "@deepseek-ai/dsh-client-ui-primitives": "^0.1.0-rc.6",
-    "@deepseek-ai/dsh-client-ui-settings": "^0.1.0-rc.6",
-    "@deepseek-ai/dsh-skill": "^0.1.0-rc.6",
-    "dsh-launcher": "^0.1.0",
-    "react": "^18.2.0"
+    "@deepseek-ai/dsh-client-ui-slots": "^0.1.0-rc.6",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
@@ -73,16 +73,13 @@
     "@deepseek-ai/dsh-client-locale": "^0.1.0-rc.6",
     "@deepseek-ai/dsh-client-runtime": "^0.1.0-rc.6",
     "@deepseek-ai/dsh-client-ui-primitives": "^0.1.0-rc.6",
-    "@deepseek-ai/dsh-client-ui-settings": "^0.1.0-rc.6",
-    "@deepseek-ai/dsh-client-ui-settings-plugins": "^0.1.0-rc.6",
     "@deepseek-ai/dsh-client-ui-slots": "^0.1.0-rc.6",
-    "@deepseek-ai/dsh-skill": "^0.1.0-rc.6",
     "@types/node": "^24.0.0",
     "@types/react": "~18.3.1",
+    "@types/react-dom": "~18.3.1",
     "jsdom": "^30.0.1",
     "react": "^18.2.0",
-    "react-complex-tree": "^2.6.3",
-    "shiki": "^4.4.3",
+    "react-dom": "^18.2.0",
     "tsdown": "^0.22.2",
     "typescript": "^6.0.3",
     "vitest": "^4.1.8"
@@ -93,8 +90,8 @@
   "keywords": [
     "deepseek-harness",
     "dsh-plugin",
-    "skills",
-    "skill-import",
+    "launcher",
+    "workspace",
     "marketplace"
   ],
   "license": "MIT"
