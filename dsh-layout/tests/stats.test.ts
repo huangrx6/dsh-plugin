@@ -40,6 +40,16 @@ describe('statistics presentation', () => {
     ])
   })
 
+  it('produces no rows for a session without replies (the entry hides)', () => {
+    // The StatsPanel renders nothing while the view has no rows — a
+    // brand-new session (hero page) must not carry a stats button.
+    expect(buildStatsView(undefined, undefined, t, DEFAULT_METRICS).rows).toHaveLength(0)
+    const zero: SessionStatsProjection = {
+      turns: 0, steps: 0, llmMs: 0, toolMs: 0, ttftMs: 0, ttftSteps: 0, decodeMs: 0, decodeTokens: 0,
+    }
+    expect(buildStatsView(zero, undefined, t, DEFAULT_METRICS).rows).toHaveLength(0)
+  })
+
   it('hides rows the metric filter turns off', () => {
     const stats: SessionStatsProjection = {
       turns: 1, steps: 7, llmMs: 1_000, toolMs: 1_000, ttftMs: 500, ttftSteps: 7, decodeMs: 1_000, decodeTokens: 100,

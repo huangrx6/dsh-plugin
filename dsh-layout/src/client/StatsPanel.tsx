@@ -76,6 +76,11 @@ function StatsPanel({ store, t, useProjection, mode }: StatsPanelProps): React.R
   }, [pinned])
 
   if (peeking) return null
+  // A brand-new session (the hero/new-chat page) has no reply yet, so the
+  // projections carry nothing — an entry with no readout behind it is noise.
+  // Render nothing until the first real rows exist (icon, brief and the
+  // below-composer row all route through this gate).
+  if (view.rows.length === 0) return null
   const smartLabel = view.summary === '' ? t('stats') : view.summary
   const row = (label: LayoutLocaleKey): string | undefined => view.rows.find(item => item.label === label)?.value
   const inlineGroups = buildInlineStats(view, t)
