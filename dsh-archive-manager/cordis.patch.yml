@@ -1,0 +1,7 @@
+# dsh-archive-manager bundle patch.
+#
+# Inserts this plugin's host row. The client half is discovered by the
+# client module table (dsh.client declaration in package.json).
+- insert:
+    - id: dsh-archive-manager
+      name: dsh-archive-manager
