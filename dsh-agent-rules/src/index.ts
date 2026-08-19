@@ -35,20 +35,7 @@ function fail(message: string): RpcResult<unknown> {
   return { ok: false, error: { code: 'internal', message, details: {} } }
 }
 
-export function apply(ctx: unknown): void {
-  const ext = ctx as {
-    effect?: (fn: () => () => void, label?: string) => void
-    connection: {
-      rpc: {
-        handle: (
-          channel: string,
-          handler: ConnectionRpcHandler,
-          options: { authority: 'trusted-host' | 'loopback' },
-        ) => Promise<unknown>
-      }
-    }
-  }
-
+export function apply(ctx: { connection: { rpc: { handle: (channel: string, handler: ConnectionRpcHandler, options: { authority: 'trusted-host' | 'loopback' }) => Promise<unknown> } }; effect: (fn: () => unknown, label?: string) => void }): void {
   const handler: ConnectionRpcHandler = async (_endpoint, payload) => {
     const request = payload as AgentRulesPayload
     const file = rulesFilePath()
@@ -74,17 +61,8 @@ export function apply(ctx: unknown): void {
     }
   }
 
-  ext.effect?.(
-    () => {
-      const handlePromise = ext.connection.rpc.handle(
-        DSH_AGENT_RULES_CHANNEL,
-        handler,
-        { authority: 'trusted-host' },
-      )
-      return () => {
-        void handlePromise
-      }
-    },
+  ctx.effect(
+    () => ctx.connection.rpc.handle(DSH_AGENT_RULES_CHANNEL, handler, { authority: 'trusted-host' }),
     'dsh-agent-rules: rpc',
   )
 }

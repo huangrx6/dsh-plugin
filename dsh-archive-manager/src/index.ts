@@ -20,6 +20,7 @@
  * bridge entry.
  */
 import type { Context } from '@deepseek-ai/cordis'
+import '@deepseek-ai/dsh-client-connection'
 import type { RpcResult } from '@deepseek-ai/dsh-client-connection/client'
 import type { ConnectionRpcHandler } from '@deepseek-ai/dsh-client-connection'
 import { DSH_ARCHIVE_MANAGER_CHANNEL, type ArchiveManagerPayload, type ArchivedSummary } from './contracts.ts'
@@ -251,12 +252,13 @@ export function apply(ctx: Context): void {
     sessionPersistence: ext.sessionPersistence,
   }
   const handler = hostHandler(deps)
-  ctx.effect(() => {
-    const handlePromise = ext.connection.rpc.handle(
+  const connection = ctx.connection
+  ctx.effect(
+    () => connection.rpc.handle(
       DSH_ARCHIVE_MANAGER_CHANNEL,
       (endpoint: string, payload: unknown, _signal: AbortSignal) => handler(endpoint, payload),
       { authority: 'trusted-host' },
-    )
-    return () => { void handlePromise }
-  }, 'dsh-archive-manager: rpc')
+    ),
+    'dsh-archive-manager: rpc',
+  )
 }

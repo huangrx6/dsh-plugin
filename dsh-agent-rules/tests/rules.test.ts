@@ -3,7 +3,7 @@ import { DSH_AGENT_RULES_CHANNEL } from '../src/contracts.ts'
 
 describe('agent rules contract', () => {
   it('exposes the RPC channel name the client and host share', () => {
-    expect(DSH_AGENT_RULES_CHANNEL).toBe('dsh-agent-rules')
+    expect(DSH_AGENT_RULES_CHANNEL).toBe('/dsh-agent-rules')
   })
 
   it('keeps the global rules file at the dsh instructions location', () => {

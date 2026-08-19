@@ -136,20 +136,7 @@ function fail(error: unknown): RpcResult<unknown> {
 
 // ─── Plugin entry ───────────────────────────────────────────────────────
 
-export function apply(ctx: unknown): void {
-  const ext = ctx as {
-    effect?: (fn: () => () => void, label?: string) => void
-    connection: {
-      rpc: {
-        handle: (
-          channel: string,
-          handler: ConnectionRpcHandler,
-          options: { authority: 'trusted-host' | 'loopback' },
-        ) => Promise<unknown>
-      }
-    }
-  }
-
+export function apply(ctx: { connection: { rpc: { handle: (channel: string, handler: ConnectionRpcHandler, options: { authority: 'trusted-host' | 'loopback' }) => Promise<unknown> } }; effect: (fn: () => unknown, label?: string) => void }): void {
   const handler: ConnectionRpcHandler = async (_endpoint, _payload) => {
     try {
       const sections = await readConfig()
@@ -159,17 +146,8 @@ export function apply(ctx: unknown): void {
     }
   }
 
-  ext.effect?.(
-    () => {
-      const handlePromise = ext.connection.rpc.handle(
-        LAUNCHER_SECTIONS_CHANNEL,
-        handler,
-        { authority: 'trusted-host' },
-      )
-      return () => {
-        void handlePromise
-      }
-    },
+  ctx.effect(
+    () => ctx.connection.rpc.handle(LAUNCHER_SECTIONS_CHANNEL, handler, { authority: 'trusted-host' }),
     'dsh-launcher: sections rpc',
   )
 }
