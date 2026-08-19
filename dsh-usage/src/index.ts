@@ -191,23 +191,11 @@ async function queryGlm(entry: UsageEntry): Promise<UsageQueryResult> {
   for (const limit of limits) {
     const resetNow = limit.nextResetTime !== undefined ? limit.nextResetTime - Date.now() : undefined
     if (limit.type === 'TIME_LIMIT') {
-      // TIME_LIMIT: a separate quota dimension with a hard remaining count
-      // (e.g. remaining 4000) plus usage-detail breakdown. The API does NOT
-      // return a total, so we only surface what it gives us — remaining as a
-      // bare count (no fabricated total/unit) and the reset time.
-      const b = bar({
-        label: '每周额度',
-        remainingPercent: Math.max(0, 100 - (limit.percentage ?? 0)),
-        remaining: limit.remaining,
-      })
-      if (limit.nextResetTime !== undefined) b.detail = `刷新于 ${formatResetIn(limit.nextResetTime)}`
-      if (limit.remaining !== undefined) {
-        b.detail = b.detail === undefined
-          ? `剩余 ${limit.remaining}`
-          : `${b.detail} · 剩余 ${limit.remaining}`
-      }
-      bars.push(b)
-    } else if (limit.type === 'TOKENS_LIMIT') {
+      // TIME_LIMIT is the MCP tool quota — Zhipu now bundles it into the
+      // model, so it's not shown on the panel. Skip it entirely.
+      continue
+    }
+    if (limit.type === 'TOKENS_LIMIT') {
       // TOKENS_LIMIT carries the rolling windows; label from reset distance
       // (a reset hours away = 每 5 小时, days = 每周, past that = 每月).
       const b = bar({
