@@ -175,7 +175,7 @@ const CSS = `
 @keyframes dshm-modalFade { from { opacity: 0; } }
 @keyframes dshm-modalUp { from { opacity: 0; transform: translateY(10px); } }
 .dshm-modalOverlay { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 20px; background: rgba(0, 0, 0, 0.45); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); animation: dshm-modalFade 160ms var(--ds-ease-in-out, ease); }
-.dshm-modal { display: flex; flex-direction: column; width: min(760px, 100%); height: min(640px, 84vh); min-height: 0; background: var(--dsw-alias-bg-layer-1, #1c1c1f); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); overflow: hidden; outline: none; animation: dshm-modalUp 160ms var(--ds-ease-in-out, ease); }
+.dshm-modal { display: flex; flex-direction: column; width: min(1040px, 94vw); height: min(720px, 88vh); min-height: 0; background: var(--dsw-alias-bg-layer-1, #1c1c1f); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); overflow: hidden; outline: none; animation: dshm-modalUp 160ms var(--ds-ease-in-out, ease); }
 /* compact variant for the market item 详情 dialog: height hugs content */
 .dshm-modal.is-compact { height: auto; max-height: min(560px, 84vh); }
 
@@ -189,7 +189,20 @@ const CSS = `
 .dshm-detailHead { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
 .dshm-detailHead .dshm-iconBtn { flex: none; }
 .dshm-detailSkeleton { flex: 1; border: 0; background: none; padding: 14px; }
-.dshm-detailBody { flex: 1; min-height: 0; display: grid; grid-template-columns: 220px minmax(0, 1fr); }
+/* Skill facts strip under the hero: description one-liner + provider/path,
+   with whenToUse / metadata folded into a disclosure. The main pane below
+   is pure file preview — the info no longer repeats under every file. */
+.dshm-heroInfo { display: flex; align-items: baseline; gap: 10px 14px; flex-wrap: wrap; padding: 8px 16px; border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
+.dshm-heroDesc { flex: 1 1 240px; min-width: 0; margin: 0; font-size: 12px; line-height: 1.5; color: var(--dsw-alias-label-secondary, #b3b3b8); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.dshm-heroMeta { flex: none; max-width: 40%; font-size: 11px; line-height: 1.5; color: var(--dsw-alias-label-tertiary, #8a8a8e); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshm-heroDetails { flex-basis: 100%; }
+.dshm-heroDetails summary { cursor: pointer; list-style: none; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dsw-alias-label-tertiary, #8a8a8e); transition: color 120ms ease; user-select: none; }
+.dshm-heroDetails summary::before { content: '› '; display: inline-block; transition: transform 120ms ease; }
+.dshm-heroDetails[open] summary::before { transform: rotate(90deg); }
+.dshm-heroDetails summary:hover { color: var(--dsw-alias-label-secondary, #b3b3b8); }
+.dshm-heroDetailsBody { display: grid; gap: 8px; padding: 6px 0 2px; }
+.dshm-heroDetailsBody h4 { margin: 0; font-size: 11px; font-weight: 500; color: var(--dsw-alias-label-tertiary, #8a8a8e); }
+.dshm-detailBody { flex: 1; min-height: 0; display: grid; grid-template-columns: 232px minmax(0, 1fr); }
 .dshm-detailBody.is-single { grid-template-columns: minmax(0, 1fr); }
 .dshm-detailTree { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 6px; padding: 10px; border-right: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); overflow: hidden; }
 .dshm-detailTree .dshm-filePanel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
@@ -578,7 +591,6 @@ html[data-dsh-layout-scrollbar='hidden'] .dshm-instList,
 html[data-dsh-layout-scrollbar='hidden'] .dshm-instCards,
 html[data-dsh-layout-scrollbar='hidden'] .dshm-detailMain,
 html[data-dsh-layout-scrollbar='hidden'] .dshm-mktDetailBody,
-html[data-dsh-layout-scrollbar='hidden'] .dshm-treeScroll,
 html[data-dsh-layout-scrollbar='hidden'] .dshm-previewBody,
 html[data-dsh-layout-scrollbar='hidden'] .dshm-tableWrap { scrollbar-width: none; }
 html[data-dsh-layout-scrollbar='hidden'] .dshm-mkt-list::-webkit-scrollbar,
@@ -587,7 +599,6 @@ html[data-dsh-layout-scrollbar='hidden'] .dshm-instList::-webkit-scrollbar,
 html[data-dsh-layout-scrollbar='hidden'] .dshm-instCards::-webkit-scrollbar,
 html[data-dsh-layout-scrollbar='hidden'] .dshm-detailMain::-webkit-scrollbar,
 html[data-dsh-layout-scrollbar='hidden'] .dshm-mktDetailBody::-webkit-scrollbar,
-html[data-dsh-layout-scrollbar='hidden'] .dshm-treeScroll::-webkit-scrollbar,
 html[data-dsh-layout-scrollbar='hidden'] .dshm-previewBody::-webkit-scrollbar,
 html[data-dsh-layout-scrollbar='hidden'] .dshm-tableWrap::-webkit-scrollbar { display: none; }
 

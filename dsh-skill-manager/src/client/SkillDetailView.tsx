@@ -101,6 +101,33 @@ export function SkillDetailView({ t, api, name, path, onClose }: SkillDetailView
                 <IconClose size={14} />
               </button>
             </header>
+            {/* Skill facts live HERE, in the header strip — the main pane
+                is pure file preview, so the info no longer repeats under
+                every file. Long-form bits fold into a disclosure. */}
+            <div className="dshm-heroInfo">
+              <p className="dshm-heroDesc">{detail.description || '—'}</p>
+              <span className="dshm-heroMeta">{detail.provider}{detail.path !== undefined ? ` · ${detail.path}` : ''}</span>
+              {(detail.whenToUse !== undefined && detail.whenToUse !== '') || (detail.metadata !== undefined && Object.keys(detail.metadata).length > 0)
+                ? (
+                  <details className="dshm-heroDetails">
+                    <summary>{t('detailTitle')}</summary>
+                    <div className="dshm-heroDetailsBody">
+                      {detail.whenToUse !== undefined && detail.whenToUse !== ''
+                        ? (
+                          <>
+                            <h4>{t('fieldWhenToUse')}</h4>
+                            <p className="dshm-callout">{detail.whenToUse}</p>
+                          </>
+                        )
+                        : null}
+                      {detail.metadata !== undefined && Object.keys(detail.metadata).length > 0
+                        ? <JsonTree data={detail.metadata as Record<string, unknown>} label={detail.name} copyable />
+                        : null}
+                    </div>
+                  </details>
+                )
+                : null}
+            </div>
             <div className={`dshm-detailBody${detail.files.length > 0 ? '' : ' is-single'}`}>
               {detail.files.length > 0
                 ? (
@@ -139,30 +166,6 @@ export function SkillDetailView({ t, api, name, path, onClose }: SkillDetailView
                       </div>
                     )
                     : null}
-                <div className="dshm-detailCard">
-                  <h4>{t('detailTitle')}</h4>
-                  <p className="dshm-desc">{detail.description || '—'}</p>
-                  {detail.whenToUse !== undefined && detail.whenToUse !== ''
-                    ? (
-                      <>
-                        <h4>{t('fieldWhenToUse')}</h4>
-                        <p className="dshm-callout">{detail.whenToUse}</p>
-                      </>
-                    )
-                    : null}
-                  <dl className="dshm-details">
-                    <div><dt>{t('fieldProvider')}</dt><dd>{detail.provider}</dd></div>
-                    {detail.path !== undefined ? <div><dt>{t('fieldPath')}</dt><dd className="dshm-path">{detail.path}</dd></div> : null}
-                    {detail.metadata !== undefined && Object.keys(detail.metadata).length > 0
-                      ? (
-                        <div>
-                          <dt>{t('fieldMetadata')}</dt>
-                          <dd><JsonTree data={detail.metadata as Record<string, unknown>} label={detail.name} copyable /></dd>
-                        </div>
-                      )
-                      : null}
-                  </dl>
-                </div>
               </div>
             </div>
           </>
