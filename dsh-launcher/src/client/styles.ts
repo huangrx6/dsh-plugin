@@ -31,6 +31,20 @@ export const LAUNCHER_STYLES = `
   cursor: pointer;
   border-radius: var(--dsh-layout-radius-user, 8px);
   margin: 2px 0;
+  transition: background 120ms var(--ds-ease-in-out, ease);
+}
+/* Expanded rail: hover/press get the native rail treatment. */
+.dsh-launcher-trigger:hover {
+  background: var(--dsw-alias-interactive-bg-hover, rgba(255, 255, 255, 0.06));
+}
+.dsh-launcher-trigger:active {
+  background: var(--dsw-alias-interactive-bg-active, rgba(255, 255, 255, 0.1));
+}
+/* Collapsed (icon-only) rail: the icon buttons above carry no hover
+   fill, so neither do we. */
+.dsh-launcher-rail.is-collapsed .dsh-launcher-trigger:hover,
+.dsh-launcher-rail.is-collapsed .dsh-launcher-trigger:active {
+  background: transparent;
 }
 .dsh-launcher-trigger-icon {
   display: inline-flex;
@@ -164,6 +178,9 @@ export const LAUNCHER_STYLES = `
   justify-content: flex-end;
 }
 .dsh-launcher-panel-close {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   background: transparent;
   border: 0;
   color: var(--dsw-alias-label-secondary, #b3b3b8);
@@ -382,9 +399,6 @@ html[data-dsh-layout-material='on'] .dsh-launcher-canvas-topbar {
 html[data-dsh-layout-material='on'] .dsh-launcher-canvas-menu {
   background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 46%, transparent);
   border-right-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 55%, transparent);
-}
-html[data-dsh-layout-material='on'] .dsh-launcher-panel-item-icon {
-  background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 52%, transparent);
 }
 html[data-dsh-layout-material='on'] .dsh-launcher-panel {
   background: var(--dsh-layout-mat, var(--dsh-layout-glass-base, #1c1c1f));
