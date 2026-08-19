@@ -115,11 +115,18 @@ function formatDuration(ms: number): string {
   return `${Math.round(ms / 60_000)} 分钟`
 }
 
-/** Format a reset timestamp as "MM-dd HH:mm" in the host's local time. */
+/** Format a reset timestamp as "MM-dd HH:mm:ss" in the host's local time. */
 function formatReset(ts: number): string {
   const d = new Date(ts)
   const pad = (n: number) => String(n).padStart(2, '0')
-  return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
+/** Format a reset timestamp as "MM-dd HH:mm:ss" (now-floored, e.g. 每 5 小时). */
+function formatResetIn(ts: number): string {
+  const delta = ts - Date.now()
+  if (delta < 0) return formatReset(ts)
+  return `${formatReset(ts)}（${formatDuration(delta)}后）`
 }
 
 /** Label a TOKENS_LIMIT window from its reset distance: ≤10 days reads as
@@ -176,7 +183,7 @@ async function queryGlm(entry: UsageEntry): Promise<UsageQueryResult> {
         label: glmWindowLabel(limit.nextResetTime),
         remainingPercent: Math.max(0, 100 - (limit.percentage ?? 0)),
       })
-      if (limit.nextResetTime !== undefined) b.detail = `重置于 ${formatReset(limit.nextResetTime)}`
+      if (limit.nextResetTime !== undefined) b.detail = `刷新于 ${formatResetIn(limit.nextResetTime)}`
       bars.push(b)
     }
   }
@@ -189,13 +196,13 @@ async function queryGlm(entry: UsageEntry): Promise<UsageQueryResult> {
       total: time.usage !== undefined && time.remaining !== undefined ? time.usage + time.remaining : undefined,
       unit: time.usage !== undefined ? '次' : undefined,
     })
-    if (time.remaining !== undefined && time.usage !== undefined) {
-      b.detail = `剩余 ${time.remaining} / ${time.usage + time.remaining} 次`
+    if (time.nextResetTime !== undefined) {
+      b.detail = `刷新于 ${formatResetIn(time.nextResetTime)}`
     }
-    if (time.nextResetTime !== undefined && b.detail === undefined) {
-      b.detail = `重置于 ${formatReset(time.nextResetTime)}`
-    } else if (time.nextResetTime !== undefined) {
-      b.detail += ` · ${formatReset(time.nextResetTime)}`
+    if (time.remaining !== undefined && time.usage !== undefined) {
+      b.detail = b.detail === undefined
+        ? `剩余 ${time.remaining} / ${time.usage + time.remaining} 次`
+        : `${b.detail} · 剩余 ${time.remaining} / ${time.usage + time.remaining} 次`
     }
     bars.unshift(b)
   }
@@ -255,12 +262,20 @@ async function queryMinimax(entry: UsageEntry): Promise<UsageQueryResult> {
     const prefix = bucket.model_name === 'general' || bucket.model_name === undefined ? '' : `${bucket.model_name} · `
     if (bucket.current_interval_remaining_percent !== undefined) {
       const b = bar({ label: `${prefix}5 小时`, remainingPercent: bucket.current_interval_remaining_percent })
-      if (bucket.remains_time !== undefined) b.detail = `剩余 ${formatDuration(bucket.remains_time)}`
+      if (bucket.end_time !== undefined) {
+        b.detail = `刷新于 ${formatResetIn(bucket.end_time)}`
+      } else if (bucket.remains_time !== undefined) {
+        b.detail = `剩余 ${formatDuration(bucket.remains_time)}`
+      }
       bars.push(b)
     }
     if (bucket.current_weekly_remaining_percent !== undefined) {
       const b = bar({ label: `${prefix}每周`, remainingPercent: bucket.current_weekly_remaining_percent })
-      if (bucket.weekly_remains_time !== undefined) b.detail = `剩余 ${formatDuration(bucket.weekly_remains_time)}`
+      if (bucket.weekly_end_time !== undefined) {
+        b.detail = `刷新于 ${formatResetIn(bucket.weekly_end_time)}`
+      } else if (bucket.weekly_remains_time !== undefined) {
+        b.detail = `剩余 ${formatDuration(bucket.weekly_remains_time)}`
+      }
       bars.push(b)
     }
   }
@@ -290,7 +305,11 @@ async function queryOpencode(entry: UsageEntry): Promise<UsageQueryResult> {
     return { id: entry.id, label: entry.label, ok: false, message: `HTTP ${response.status}` }
   }
   const json = (await response.json()) as {
-    usage?: { rolling?: { percent?: number; status?: string }; weekly?: { percent?: number; status?: string }; monthly?: { percent?: number; status?: string } }
+    usage?: {
+      rolling?: { percent?: number; status?: string; resetsAt?: number }
+      weekly?: { percent?: number; status?: string; resetsAt?: number }
+      monthly?: { percent?: number; status?: string; resetsAt?: number }
+    }
   }
   const usage = json.usage ?? {}
   const bars: UsageBar[] = []
@@ -303,7 +322,9 @@ async function queryOpencode(entry: UsageEntry): Promise<UsageQueryResult> {
     const window = usage[key]
     const percent = window?.percent
     if (window === undefined || typeof percent !== 'number') continue
-    bars.push(bar({ label, remainingPercent: Math.max(0, 100 - percent) }))
+    const b = bar({ label, remainingPercent: Math.max(0, 100 - percent) })
+    if (window.resetsAt !== undefined) b.detail = `刷新于 ${formatResetIn(window.resetsAt)}`
+    bars.push(b)
   }
   if (bars.length === 0) {
     return { id: entry.id, label: entry.label, ok: false, message: '响应中无 usage 字段' }

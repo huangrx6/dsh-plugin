@@ -290,12 +290,17 @@ export const USAGE_STYLES = `
 }
 .u-statBarDetail {
   font-size: 10px;
-  line-height: 1.3;
+  line-height: 1.35;
   color: var(--dsw-alias-label-tertiary, #8a8a8e);
-  opacity: 0.75;
+  opacity: 0.8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* roomier label column on H5 so long reset timestamps are readable */
+@media (max-width: 767px) {
+  .u-statBarRow { grid-template-columns: minmax(96px, auto) minmax(0, 1fr) 40px; }
+  .u-statBarDetail { font-size: 9.5px; }
 }
 .u-statBarTrack {
   display: block;
