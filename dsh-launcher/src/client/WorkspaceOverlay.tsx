@@ -341,21 +341,6 @@ export function WorkspaceView({
             </div>
           ))}
         </div>
-        {/* Pinned to the rail's true bottom as a centered bordered pill —
-            symmetric padding, clearly the rail's secondary action. */}
-        <button
-          type="button"
-          className="dsh-launcher-canvas-menu-item is-exit"
-          onClick={beginClose}
-          aria-label={t("workspaceClose")}
-        >
-          <span className="dsh-launcher-canvas-menu-item-icon">
-            <IconClose size={16} />
-          </span>
-          <span className="dsh-launcher-canvas-menu-item-label">
-            {t("workspaceClose")}
-          </span>
-        </button>
       </nav>
       <main className="dsh-launcher-canvas-content" aria-busy={false}>
         <SectionContent section={active} translate={t} />

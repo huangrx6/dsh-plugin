@@ -873,6 +873,13 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   }
   /* Hidden while the drawer is open — closing moves to the drawer's own
      X (and the mask). Previously only the comment claimed this. */
+  /* The floated / drawer sidebar's close must always be reachable while
+     it is open — author display wins over the runtime's hidden flag, so
+     the X cannot be lost to a state/attribute mismatch. */
+  html[data-dsh-layout-mobile-sidebar-open] .dsh-layout-mobile-sidebar-close {
+    display: grid;
+    place-items: center;
+  }
   html[data-dsh-layout-mobile-sidebar-open] .dsh-layout-mobile-sidebar-trigger {
     display: none;
   }

@@ -212,6 +212,7 @@ export const LAUNCHER_STYLES = `
   --dsh-launcher-ease: cubic-bezier(0.22, 1, 0.36, 1);
   position: fixed;
   inset: 0;
+  overflow-x: hidden;
   background: var(--dsw-alias-bg-module-platform, #0f0f12);
   z-index: 9998;
   display: grid;
@@ -275,20 +276,6 @@ export const LAUNCHER_STYLES = `
 }
 /* Exit lives at the rail's bottom, full-bleed with a hairline above —
    the sidebar's secondary action, like the reference layout. */
-.dsh-launcher-canvas-menu-item.is-exit {
-  flex: none;
-  /* Pinned to the rail's true bottom (margin-top auto), a centered
-     bordered pill with symmetric padding — reads as the rail's
-     secondary action without the full-bleed alignment quirks. */
-  margin: auto 8px 8px;
-  justify-content: center;
-  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
-  border-radius: var(--dsh-layout-radius-user, 10px);
-  padding: 9px 10px;
-  color: var(--dsw-alias-label-secondary, #b3b3b8);
-  animation-delay: 260ms;
-}
-.dsh-launcher-canvas-menu-item.is-exit:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
 .dsh-launcher-canvas-menu-label {
   font-size: 11px;
   letter-spacing: 0.04em;
@@ -375,6 +362,7 @@ export const LAUNCHER_STYLES = `
 
 .dsh-launcher-canvas-content {
   grid-area: content;
+  min-width: 0;
   overflow-y: auto;
   padding: 28px 32px 80px;
   -webkit-overflow-scrolling: touch;
@@ -546,15 +534,6 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
   /* Breathes on every side inside the tab row — the pill never touches
      the row's edges (it previously sat flush right/bottom, reading as
      an overflow), and never shrinks the scrolling tabs out of view. */
-  .dsh-launcher-canvas-menu-item.is-exit {
-    flex: 0 0 auto;
-    margin: 8px;
-    border-top: 0;
-    border-radius: 999px;
-    padding: 8px 14px;
-    white-space: nowrap;
-    animation-delay: 140ms;
-  }
   .dsh-launcher-canvas-menu-label { display: none; }
   .dsh-launcher-canvas-menu-item {
     flex: 0 0 auto;
