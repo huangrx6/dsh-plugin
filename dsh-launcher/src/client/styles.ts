@@ -212,7 +212,6 @@ export const LAUNCHER_STYLES = `
   --dsh-launcher-ease: cubic-bezier(0.22, 1, 0.36, 1);
   position: fixed;
   inset: 0;
-  overflow-x: hidden;
   background: var(--dsw-alias-bg-module-platform, #0f0f12);
   z-index: 9998;
   display: grid;
@@ -501,6 +500,7 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
    action button docked at the bottom-left. */
 @media (max-width: 767px) {
   .dsh-launcher-canvas {
+    overflow-x: hidden;
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
     grid-template-areas:
