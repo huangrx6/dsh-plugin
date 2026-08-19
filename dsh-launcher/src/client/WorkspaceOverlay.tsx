@@ -32,6 +32,7 @@ import {
   IconLayout,
   IconMcp,
   IconRemote,
+  IconRules,
   IconSkills,
   IconSparkle,
 } from "./icons.tsx";
@@ -113,6 +114,14 @@ export const DEFAULT_SECTIONS: readonly WorkspaceSection[] = [
     groupKey: "menuGroupAppearance",
     icon: <IconLayout size={20} />,
     render: () => <SectionPlaceholder id="layout" />,
+  },
+  {
+    id: "rules",
+    labelKey: "menuAgentRules",
+    subtitleKey: "menuAgentRulesSubtitle",
+    groupKey: "menuGroupManage",
+    icon: <IconRules size={20} />,
+    render: () => <SectionPlaceholder id="rules" />,
   },
 ];
 

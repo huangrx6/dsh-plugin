@@ -1,0 +1,5 @@
+# dsh-agent-rules bundle patch. Host row only — the client half is
+# discovered via the dsh.client declaration in package.json.
+- insert:
+    - id: dsh-agent-rules
+      name: dsh-agent-rules

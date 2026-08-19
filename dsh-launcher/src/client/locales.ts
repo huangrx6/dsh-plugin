@@ -35,6 +35,8 @@ export type LauncherLocaleKey =
  | "menuArchiveSubtitle"
  | "menuLayout"
  | "menuLayoutSubtitle"
+ | "menuAgentRules"
+ | "menuAgentRulesSubtitle"
  | "marketTitle"
  | "marketSources"
  | "marketAddSource"
@@ -89,6 +91,8 @@ export const zhCN: Record<LauncherLocaleKey, string> = {
  menuArchiveSubtitle: "恢复工作区、导出 zip / Markdown。",
  menuLayout: "页面布局",
  menuLayoutSubtitle: "页面材质、阅读宽度、收笔、气泡、轨迹、统计。",
+ menuAgentRules: "Agent 全局指令",
+ menuAgentRulesSubtitle: "编辑 ~/.dsh/AGENTS.md，注入每个会话的全局 Agent 指令。",
  marketTitle: "市场",
  marketSources: "数据源",
  marketAddSource: "新增数据源",
@@ -145,6 +149,9 @@ export const enUS: Record<LauncherLocaleKey, string> = {
  menuLayout: "Layout",
  menuLayoutSubtitle:
   "Page material, reading width, scroll end, bubbles, trace, stats.",
+ menuAgentRules: "Agent rules",
+ menuAgentRulesSubtitle:
+  "Edit ~/.dsh/AGENTS.md, the global instructions injected into every session.",
  marketTitle: "Marketplace",
  marketSources: "Sources",
  marketAddSource: "Add source",

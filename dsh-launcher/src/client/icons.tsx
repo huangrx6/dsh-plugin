@@ -153,3 +153,14 @@ export function IconLayout({ size = 16, className, title }: IconProps): ReactEle
     </svg>
   )
 }
+
+/** A prompt/rule document — the Agent rules (global instructions) section. */
+export function IconRules({ size = 16, className, title }: IconProps): ReactElement {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden={title === undefined ? 'true' : undefined} className={className} width={size} height={size} role={title === undefined ? undefined : 'img'}>
+      {title === undefined ? null : <title>{title}</title>}
+      {svgInner('M5 2.5h6a.5.5 0 0 1 .5.5v10a.5.5 0 0 1-.5.5H5a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5Z')}
+      {svgInner('M6 5.5h4M6 7.5h4M6 9.5h2.5')}
+    </svg>
+  )
+}
