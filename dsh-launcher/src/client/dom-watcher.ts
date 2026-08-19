@@ -45,23 +45,45 @@ export function watchDocument(target: Document, onChange: () => void): Watcher {
 export function findNativeSettingsTrigger(
  target: Document,
 ): HTMLButtonElement | undefined {
- const sidebar = findSidebarColumn(target);
- if (sidebar === null) return undefined;
- // The platform footer is appended to the sidebar in the wide layout and
+ // Try the sidebar first (marked column, else frame fallback). The
+ // platform footer is appended to the sidebar in the wide layout and
  // mounted as a sticky bottom slot in the narrow layout. Either way, an
  // aria-label/hearing-empty <button> with the gear glyph lives there.
- const buttons = Array.from(
-  sidebar.querySelectorAll<HTMLButtonElement>("button"),
- ).filter(
-  // Never hand back our own injected rail button (rail-button.ts) —
-  // once it mounts inside the footer, an unfiltered scan could pick it
-  // as "the last button" and the replacement logic would target itself.
-  (button) => button.closest(".dsh-launcher-rail") === null,
- );
+ const sidebar = findSidebarColumn(target);
+ let buttons: HTMLButtonElement[] = [];
+ if (sidebar !== null) {
+  buttons = Array.from(
+   sidebar.querySelectorAll<HTMLButtonElement>("button"),
+  ).filter(isNotOwnRailButton);
+ }
+ let hit = pickSettingsButton(buttons);
+ // Mobile layouts can host the drawer / trigger outside the sidebar
+ // column the frame heuristics resolve — fall back to a document-wide
+ // scan so the launcher's "system settings" entry still finds a native
+ // trigger (and the replacement can still hide it).
+ if (hit === undefined) {
+  hit = pickSettingsButton(
+   Array.from(target.querySelectorAll<HTMLButtonElement>("button")).filter(
+    isNotOwnRailButton,
+   ),
+  );
+ }
+ return hit;
+}
+
+/** Our injected rail button must never become the "settings trigger" —
+    the replacement logic would then target itself. */
+function isNotOwnRailButton(button: HTMLButtonElement): boolean {
+ return button.closest(".dsh-launcher-rail") === null;
+}
+
+/** Prefer the bottom-most button that looks like a settings trigger
+    (multi-language "设置" / "Settings" hits, or the only icon-only button
+    in the footer area); fall back to the last button as a safety net. */
+function pickSettingsButton(
+ buttons: readonly HTMLButtonElement[],
+): HTMLButtonElement | undefined {
  if (buttons.length === 0) return undefined;
- // Prefer the bottom-most button that looks like a settings trigger
- // (multi-language "设置" / "Settings" hits, or the only icon-only button
- // in the footer area); fall back to the last button as a safety net.
  for (let index = buttons.length - 1; index >= 0; index -= 1) {
   const button = buttons[index];
   if (button === undefined) continue;
