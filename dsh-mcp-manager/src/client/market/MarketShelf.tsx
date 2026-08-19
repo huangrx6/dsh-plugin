@@ -8,7 +8,8 @@
  *     a search field, a refresh icon button, a list/card view toggle, an
  *     add-source icon button with a compact inline form and a manage
  *     sources icon button that opens a grouped panel (rename / re-point /
- *     delete — visible UI, right-click delete on chips stays as a shortcut)
+ *     delete — deleting asks again in a self-drawn modal, never a native
+ *     confirm, and spells out that installed servers stay untouched)
  *   - items render either as compact rows in one grouped container
  *     (hairline separated, quiet background-only hover) or as a textured
  *     card grid — per-item hue icon plinth, gradient surface with a light
@@ -22,6 +23,7 @@
  * `installedVersion`.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ModalShell } from "../ModalShell.tsx";
 import {
   IconArchive,
   IconGrid,
@@ -127,11 +129,13 @@ export type MarketUiLocaleKey =
   | "marketManageSources"
   | "marketEditSource"
   | "marketDeleteSource"
-  | "marketDeleteSourceConfirm"
+  | "marketDeleteSourceHint"
   | "marketSourceBuiltinTag"
   | "marketSourceBuiltinHint"
   | "marketSourceSave"
   | "marketSourceCancel"
+  | "deleteButton"
+  | "drawerClose"
   | "marketViewList"
   | "marketViewCard"
   | "marketUpdatable"
@@ -262,6 +266,10 @@ export function MarketShelf({
   const [editSource, setEditSource] = useState<
     { readonly id: string; readonly name: string; readonly url: string } | undefined
   >(undefined);
+  /** Pending source deletion, confirmed through the self-drawn modal. */
+  const [confirmSource, setConfirmSource] = useState<
+    { readonly id: string; readonly name: string } | undefined
+  >(undefined);
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
@@ -311,15 +319,26 @@ export function MarketShelf({
     [storage, sources, activeSourceId],
   );
 
-  const handleRemoveWithConfirm = useCallback(
+  /**
+   * Deletion always goes through the confirm modal first: a native
+   * window.confirm is jarring and blocks the host page, and a one-click
+   * (or right-click) delete is too easy to hit by accident. The modal
+   * spells out that removing a source leaves installed servers alone.
+   */
+  const requestRemove = useCallback(
     (id: string) => {
-      if (typeof window !== "undefined" && typeof window.confirm === "function") {
-        if (!window.confirm(t("marketDeleteSourceConfirm"))) return;
-      }
-      handleRemove(id);
+      const source = sources.find((entry) => entry.id === id);
+      if (source === undefined) return;
+      setConfirmSource({ id, name: source.name });
     },
-    [handleRemove, t],
+    [sources],
   );
+
+  const confirmRemoveNow = useCallback(() => {
+    if (confirmSource === undefined) return;
+    handleRemove(confirmSource.id);
+    setConfirmSource(undefined);
+  }, [confirmSource, handleRemove]);
 
   const handleSaveEdit = useCallback(() => {
     if (editSource === undefined) return;
@@ -417,7 +436,6 @@ export function MarketShelf({
           onPick={(id) => {
             setActiveSourceId(id);
           }}
-          onRemove={handleRemove}
           translate={translate}
         />
         <label className="dshmcp-mkt-search">
@@ -523,7 +541,7 @@ export function MarketShelf({
           editSource={editSource}
           onEditChange={setEditSource}
           onSaveEdit={handleSaveEdit}
-          onRemove={handleRemoveWithConfirm}
+          onRemove={requestRemove}
           translate={translate}
           t={t}
         />
@@ -601,6 +619,40 @@ export function MarketShelf({
           ))}
         </ul>
       )}
+      {confirmSource === undefined ? null : (
+        <ModalShell
+          open
+          t={t}
+          title={t("marketDeleteSource")}
+          onClose={() => {
+            setConfirmSource(undefined);
+          }}
+          footer={(
+            <>
+              <button
+                type="button"
+                className="dshmcp-button"
+                onClick={() => {
+                  setConfirmSource(undefined);
+                }}
+              >
+                {t("marketSourceCancel")}
+              </button>
+              <button
+                type="button"
+                className="dshmcp-button dshmcp-buttonDanger"
+                onClick={confirmRemoveNow}
+              >
+                {t("deleteButton")}
+              </button>
+            </>
+          )}
+        >
+          <p className="dshmcp-status">
+            {fill(t("marketDeleteSourceHint"), { name: confirmSource.name })}
+          </p>
+        </ModalShell>
+      )}
     </div>
   );
 }
@@ -610,7 +662,6 @@ interface SourceSegmentedProps {
   readonly snapshots: readonly SourceSnapshot[];
   readonly activeSourceId: string | "all";
   readonly onPick: (id: string | "all") => void;
-  readonly onRemove: (id: string) => void;
   readonly translate: (key: MarketplaceLocaleKey) => string;
 }
 
@@ -620,7 +671,6 @@ function SourceSegmented({
   snapshots,
   activeSourceId,
   onPick,
-  onRemove,
   translate,
 }: SourceSegmentedProps): JSX.Element {
   return (
@@ -655,10 +705,6 @@ function SourceSegmented({
             aria-pressed={activeSourceId === source.id}
             onClick={() => {
               onPick(source.id);
-            }}
-            onContextMenu={(event) => {
-              event.preventDefault();
-              if (!source.builtIn) onRemove(source.id);
             }}
             title={
               snapshot?.state === "ok"
@@ -700,8 +746,8 @@ interface SourceManagePanelProps {
  * Visible source management: one grouped container of rows, each with the
  * source name + manifest URL, health dot, and — for user-added sources —
  * inline edit (rename / re-point) and delete. Built-in sources render
- * display-only with a tag; the chip right-click shortcut stays but is no
- * longer the only entry point.
+ * display-only with a tag; every delete asks again through the confirm
+ * modal before it touches storage.
  */
 function SourceManagePanel({
   sources,

@@ -6,6 +6,7 @@ import type { SkillManagerApi } from './api.ts'
 import type { SkillManagerLocaleKey } from './locales.ts'
 import { sourceLabel } from './SkillManagerSection.tsx'
 import { IconClose } from './market/icons.tsx'
+import { IconChevron } from './market/icons.tsx'
 import { SkillFilePreview } from './SkillFilePreview.tsx'
 import { SkillFileTree } from './SkillFileTree.tsx'
 
@@ -29,12 +30,16 @@ interface DetailState {
 export function SkillDetailView({ t, api, name, path, onClose }: SkillDetailViewProps) {
   const [state, setState] = useState<DetailState>({ status: 'loading' })
   const [selectedFile, setSelectedFile] = useState<string | undefined>(undefined)
+  // hero description clamp toggle: long descriptions stay 2-line clamped
+  // until the user expands them (click the text or the tail chevron)
+  const [descOpen, setDescOpen] = useState(false)
   const previewRef = useRef<HTMLDivElement | null>(null)
   const scrollRequested = useRef(false)
 
   useEffect(() => {
     let current = true
     setSelectedFile(undefined)
+    setDescOpen(false)
     Promise.resolve()
       .then(() => api.detail(name, path))
       .then(detail => {
@@ -105,7 +110,23 @@ export function SkillDetailView({ t, api, name, path, onClose }: SkillDetailView
                 is pure file preview, so the info no longer repeats under
                 every file. Long-form bits fold into a disclosure. */}
             <div className="dshm-heroInfo">
-              <p className="dshm-heroDesc">{detail.description || '—'}</p>
+              <div className="dshm-heroDescRow">
+                <p
+                  className={`dshm-heroDesc${descOpen ? ' is-open' : ''}`}
+                  title={t(descOpen ? 'textCollapse' : 'textExpand')}
+                  onClick={() => { setDescOpen(value => !value) }}
+                >{detail.description || '—'}</p>
+                <button
+                  type="button"
+                  className={`dshm-clampToggle${descOpen ? ' is-open' : ''}`}
+                  onClick={() => { setDescOpen(value => !value) }}
+                  aria-expanded={descOpen}
+                  aria-label={t(descOpen ? 'textCollapse' : 'textExpand')}
+                  title={t(descOpen ? 'textCollapse' : 'textExpand')}
+                >
+                  <IconChevron size={12} />
+                </button>
+              </div>
               <span className="dshm-heroMeta">{detail.provider}{detail.path !== undefined ? ` · ${detail.path}` : ''}</span>
               {(detail.whenToUse !== undefined && detail.whenToUse !== '') || (detail.metadata !== undefined && Object.keys(detail.metadata).length > 0)
                 ? (

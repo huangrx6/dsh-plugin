@@ -184,6 +184,12 @@ const CSS = `
 .dshm-mktDetailBody { flex: 1; min-height: 120px; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; }
 .dshm-mktDetailFoot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
 
+/* ── source delete confirm (compact modal shell, alertdialog) ───────────── */
+.dshm-modal.dshm-mktConfirm { width: min(400px, 92vw); }
+.dshm-mktConfirmBody { display: flex; flex-direction: column; gap: 6px; padding: 16px 16px 4px; }
+.dshm-mktConfirmBody h4 { margin: 0; font-size: 13.5px; font-weight: 600; line-height: 18px; color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dshm-mktConfirmBody p { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--dsw-alias-label-secondary, #b3b3b8); overflow-wrap: anywhere; }
+
 /* ── detail content (renders inside the modal dialog) ──────────────────── */
 .dshm-detail { flex: 1; min-height: 0; display: flex; flex-direction: column; color: var(--dsw-alias-label-primary, #f4f4f5); }
 .dshm-detailHead { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
@@ -193,7 +199,16 @@ const CSS = `
    with whenToUse / metadata folded into a disclosure. The main pane below
    is pure file preview — the info no longer repeats under every file. */
 .dshm-heroInfo { display: flex; align-items: baseline; gap: 10px 14px; flex-wrap: wrap; padding: 8px 16px; border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
-.dshm-heroDesc { flex: 1 1 240px; min-width: 0; margin: 0; font-size: 12px; line-height: 1.5; color: var(--dsw-alias-label-secondary, #b3b3b8); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+/* description row: the clamp toggle rides the text's tail edge; the text
+   itself stays 2-line clamped until .is-open lifts the clamp */
+.dshm-heroDescRow { flex: 1 1 240px; min-width: 0; display: flex; align-items: flex-end; gap: 4px; }
+.dshm-heroDesc { flex: 1 1 auto; min-width: 0; margin: 0 0 2px; font-size: 12px; line-height: 1.5; color: var(--dsw-alias-label-secondary, #b3b3b8); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; cursor: pointer; }
+.dshm-heroDesc.is-open { display: block; -webkit-line-clamp: unset; overflow: visible; }
+.dshm-clampToggle { flex: none; width: 18px; height: 18px; margin-bottom: 1px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 4px); background: transparent; color: var(--dsw-alias-label-tertiary, #8a8a8e); cursor: pointer; transition: color 120ms var(--ds-ease-in-out, ease), background-color 120ms var(--ds-ease-in-out, ease); }
+.dshm-clampToggle:hover { color: var(--dsw-alias-label-secondary, #b3b3b8); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); }
+.dshm-clampToggle:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #6ea8fe); outline-offset: -2px; }
+.dshm-clampToggle svg { transition: transform 120ms var(--ds-ease-in-out, ease); }
+.dshm-clampToggle.is-open svg { transform: rotate(180deg); }
 .dshm-heroMeta { flex: none; max-width: 40%; font-size: 11px; line-height: 1.5; color: var(--dsw-alias-label-tertiary, #8a8a8e); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dshm-heroDetails { flex-basis: 100%; }
 .dshm-heroDetails summary { cursor: pointer; list-style: none; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dsw-alias-label-tertiary, #8a8a8e); transition: color 120ms ease; user-select: none; }
@@ -681,8 +696,9 @@ html[data-dsh-layout-material='on'] .dshm-mkt-blankTile {
    prefers-reduced-motion the transitions, the shimmer, the spin and the
    press scale all drop out. */
 @media (prefers-reduced-motion: reduce) {
-  .dshm-button, .dshm-iconBtn, .dshm-search input, .dshm-input, .dshm-select, .dshm-seg button, .dshm-segSm button, .dshm-drop, .dshm-failure button, .dshm-instRow, .dshm-instCard, .dshm-mkt-row, .dshm-mkt-card, .dshm-mkt-segBtn, .dshm-mkt-btn, .dshm-mkt-iconBtn, .dshm-mkt-addrow input, .dshm-mkt-addbtn, .dshm-mkt-srcRow, .dshm-mkt-srcBtn, .dshm-mkt-srcEdit input, .dshm-mkt-viewseg button, .dshm-treeRow { transition: none; }
+  .dshm-button, .dshm-iconBtn, .dshm-search input, .dshm-input, .dshm-select, .dshm-seg button, .dshm-segSm button, .dshm-drop, .dshm-failure button, .dshm-instRow, .dshm-instCard, .dshm-mkt-row, .dshm-mkt-card, .dshm-mkt-segBtn, .dshm-mkt-btn, .dshm-mkt-iconBtn, .dshm-mkt-addrow input, .dshm-mkt-addbtn, .dshm-mkt-srcRow, .dshm-mkt-srcBtn, .dshm-mkt-srcEdit input, .dshm-mkt-viewseg button, .dshm-clampToggle, .dshm-treeRow { transition: none; }
   .dshm-button:active, .dshm-iconBtn:active, .dshm-mkt-btn:active, .dshm-mkt-iconBtn:active, .dshm-mkt-addbtn:active, .dshm-mkt-srcBtn:active { transform: none; }
+  .dshm-clampToggle svg { transition: none; }
   .dshm-modalOverlay, .dshm-modal { animation: none; }
   .dshm-mkt-iconBtn.is-spin svg { animation: none; }
 }

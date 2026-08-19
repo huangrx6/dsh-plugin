@@ -180,3 +180,14 @@ export function IconGrid({ size = 14, className, title }: IconProps): ReactEleme
     </svg>
   )
 }
+
+/** Down-pointing chevron for expand / collapse affordances (rotates 180°
+ *  via CSS while expanded). */
+export function IconChevron({ size = 14, className, title }: IconProps): ReactElement {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden={title === undefined ? "true" : undefined} className={className} width={size} height={size} role={title === undefined ? undefined : "img"}>
+      {title === undefined ? null : <title>{title}</title>}
+      {svgInner("M4 6l4 4 4-4")}
+    </svg>
+  )
+}

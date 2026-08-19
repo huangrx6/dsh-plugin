@@ -7,6 +7,14 @@
  * The store is intentionally sync — sources are tiny and reads happen at
  * React render time. Persistence writes are debounced via the React commit
  * cycle, so we don't need to batch here.
+ *
+ * Every mutation is a read-modify-write: it re-reads the persisted list and
+ * unions it with the caller's in-memory list before saving, so a stale or
+ * empty `sources` argument (a second shelf instance, a load that fell back
+ * to defaults) can never overwrite sources another instance already saved.
+ * Reads and writes are additionally guarded: a quarantined / quota-exhausted
+ * storage degrades to "nothing stored" / "best-effort write" instead of
+ * throwing into React render or a click handler.
  */
 import { DEFAULT_MARKET_SOURCES, type MarketSource } from "./types.ts";
 
@@ -21,7 +29,14 @@ export function storageKey(): string {
 }
 
 function readRaw(storage: Storage): MarketSource[] {
-  const raw = storage.getItem(STORAGE_KEY);
+  let raw: string | null;
+  try {
+    raw = storage.getItem(STORAGE_KEY);
+  } catch {
+    // Storage itself unavailable (quarantined webview, privacy mode) —
+    // report "nothing stored" instead of throwing into React render.
+    return [];
+  }
   if (raw === null) return [];
   try {
     const parsed = JSON.parse(raw) as unknown;
@@ -53,7 +68,14 @@ function readRaw(storage: Storage): MarketSource[] {
 }
 
 function writeRaw(storage: Storage, sources: readonly MarketSource[]): void {
-  storage.setItem(STORAGE_KEY, JSON.stringify(sources.map(sanitize)));
+  try {
+    storage.setItem(STORAGE_KEY, JSON.stringify(sources.map(sanitize)));
+  } catch {
+    // Best-effort persistence (quota exceeded, storage quarantined): the
+    // caller's in-memory list still updates; a failed write must never
+    // crash the click handler that triggered it. Same policy as
+    // preferences.ts.
+  }
 }
 
 /** Strip user-supplied fields we don't trust (e.g. `payload`). */
@@ -70,7 +92,6 @@ function sanitize(source: MarketSource): MarketSource {
 
 export function loadMarketSources(storage: Storage): MarketSource[] {
   const user = readRaw(storage);
-  const userIds = new Set(user.map((source) => source.id));
   // The built-in sources always appear; if the user has stored a copy
   // under the same id, the user's updated url / name wins. Stored records
   // flagged builtIn that are no longer in the default list are retired
@@ -88,10 +109,29 @@ export function loadMarketSources(storage: Storage): MarketSource[] {
     merged.push(override ?? builtIn);
   }
   for (const source of user) {
-    if (!userIds.has(source.id)) continue;
     if (retiredBuiltIn.has(source.id)) continue;
     if (merged.some((existing) => existing.id === source.id)) continue;
     merged.push(source);
+  }
+  merged.sort((a, b) => a.order - b.order);
+  return merged;
+}
+
+/**
+ * Read-modify-write base for every mutation: the persisted list unioned
+ * with the caller's in-memory list (on id collisions the caller's fresher
+ * copy wins). Mutations derive their `next` from this, so a stale or empty
+ * `sources` argument can never overwrite sources another shelf instance
+ * already saved under the same key.
+ */
+function mergeWithStored(
+  storage: Storage,
+  sources: readonly MarketSource[],
+): MarketSource[] {
+  const merged = [...sources];
+  for (const entry of loadMarketSources(storage)) {
+    if (merged.some((existing) => existing.id === entry.id)) continue;
+    merged.push(entry);
   }
   merged.sort((a, b) => a.order - b.order);
   return merged;
@@ -109,11 +149,12 @@ export function addMarketSource(
   sources: readonly MarketSource[],
   candidate: { name: string; url: string },
 ): MarketSource[] {
+  const base = mergeWithStored(storage, sources);
   const id = `user-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
   const order =
-    sources.reduce((max, source) => Math.max(max, source.order), -1) + 1;
+    base.reduce((max, source) => Math.max(max, source.order), -1) + 1;
   const next = [
-    ...sources,
+    ...base,
     { id, name: candidate.name, url: candidate.url, builtIn: false, order },
   ];
   saveMarketSources(storage, next);
@@ -125,7 +166,9 @@ export function removeMarketSource(
   sources: readonly MarketSource[],
   id: string,
 ): MarketSource[] {
-  const next = sources.filter((source) => source.id !== id || source.builtIn);
+  const next = mergeWithStored(storage, sources).filter(
+    (source) => source.id !== id || source.builtIn,
+  );
   saveMarketSources(storage, next);
   return next;
 }
@@ -141,7 +184,7 @@ export function updateMarketSource(
   id: string,
   patch: { name: string; url: string },
 ): MarketSource[] {
-  const next = sources.map((source) =>
+  const next = mergeWithStored(storage, sources).map((source) =>
     source.id === id
       ? { ...source, name: patch.name, url: patch.url }
       : source,
@@ -155,7 +198,8 @@ export function reorderMarketSources(
   sources: readonly MarketSource[],
   orderedIds: readonly string[],
 ): MarketSource[] {
-  const lookup = new Map(sources.map((source) => [source.id, source] as const));
+  const base = mergeWithStored(storage, sources);
+  const lookup = new Map(base.map((source) => [source.id, source] as const));
   const next: MarketSource[] = [];
   for (let index = 0; index < orderedIds.length; index += 1) {
     const id = orderedIds[index];
@@ -165,7 +209,7 @@ export function reorderMarketSources(
     next.push({ ...source, order: index });
   }
   // Append any source the user didn't reorder (e.g. brand-new sources).
-  for (const source of sources) {
+  for (const source of base) {
     if (next.some((existing) => existing.id === source.id)) continue;
     next.push({ ...source, order: next.length });
   }

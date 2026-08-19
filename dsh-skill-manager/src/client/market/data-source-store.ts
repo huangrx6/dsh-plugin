@@ -1,12 +1,15 @@
 /**
  * Source persistence. A marketplace source is a (name, url, order, builtIn)
- * record that lives in localStorage under a per-plugin key. The launcher
- * seeds the storage with the package's built-in list on first read; every
- * subsequent read returns the merged list.
+ * record that lives in localStorage under a per-plugin key. Reads merge the
+ * stored list with the package's built-in list (currently empty — the
+ * built-in feed was retired); every mutation persists the full merged list
+ * back, so a fresh reader (page reload) sees exactly what the user left.
  *
  * The store is intentionally sync — sources are tiny and reads happen at
- * React render time. Persistence writes are debounced via the React commit
- * cycle, so we don't need to batch here.
+ * React render time. Storage failures never throw: reads degrade to the
+ * empty list and writes degrade to session-only (see readRaw / writeRaw),
+ * so a blocked localStorage can't break the add / edit / remove handlers
+ * or make saved sources look lost.
  */
 import { DEFAULT_MARKET_SOURCES, type MarketSource } from "./types.ts";
 
@@ -21,9 +24,13 @@ export function storageKey(): string {
 }
 
 function readRaw(storage: Storage): MarketSource[] {
-  const raw = storage.getItem(STORAGE_KEY);
-  if (raw === null) return [];
   try {
+    // getItem itself can throw (storage disabled / private mode) — that
+    // must degrade to "empty list", never propagate: a throwing read
+    // would push the shelf onto its defaultSources fallback and make
+    // every source look like it vanished.
+    const raw = storage.getItem(STORAGE_KEY);
+    if (raw === null) return [];
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
     const out: MarketSource[] = [];
@@ -53,7 +60,13 @@ function readRaw(storage: Storage): MarketSource[] {
 }
 
 function writeRaw(storage: Storage, sources: readonly MarketSource[]): void {
-  storage.setItem(STORAGE_KEY, JSON.stringify(sources.map(sanitize)));
+  try {
+    storage.setItem(STORAGE_KEY, JSON.stringify(sources.map(sanitize)));
+  } catch {
+    // Storage unavailable (quota / private mode): the list stays
+    // session-only, matching saveMarketView / saveMode semantics. Never
+    // let a failed write break the add / edit / remove click handler.
+  }
 }
 
 /** Strip user-supplied fields we don't trust (e.g. `payload`). */

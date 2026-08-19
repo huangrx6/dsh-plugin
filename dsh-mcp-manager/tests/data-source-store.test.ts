@@ -3,6 +3,7 @@ import {
   addMarketSource,
   loadMarketSources,
   removeMarketSource,
+  reorderMarketSources,
   updateMarketSource,
 } from '../src/client/market/data-source-store.ts'
 import { storageKey } from '../src/client/market/data-source-store.ts'
@@ -16,6 +17,16 @@ class MemoryStorage implements Storage {
   key(index: number): string | null { return [...this.map.keys()][index] ?? null }
   removeItem(key: string): void { this.map.delete(key) }
   setItem(key: string, value: string): void { this.map.set(key, value) }
+}
+
+/** Storage whose reads blow up (quarantined webview / privacy mode). */
+class QuarantinedStorage extends MemoryStorage {
+  getItem(): string | null { throw new Error('storage quarantined') }
+}
+
+/** Storage whose writes blow up (quota exhausted). */
+class FullStorage extends MemoryStorage {
+  setItem(): void { throw new Error('quota exceeded') }
 }
 
 describe('market data source store', () => {
@@ -100,5 +111,77 @@ describe('market data source store', () => {
     const syntheticBuiltIn = { id: 'future-builtin', name: '内置', url: 'https://example.com/b.json', builtIn: true, order: 0 }
     const afterBuiltIn = removeMarketSource(storage, [syntheticBuiltIn], syntheticBuiltIn.id)
     expect(afterBuiltIn.some((source) => source.id === syntheticBuiltIn.id && source.builtIn)).toBe(true)
+  })
+
+  it('round-trips: a fresh load (new shelf instance) reads adds back, and stays consistent after remove', () => {
+    const storage = new MemoryStorage()
+    // "instance 1": a shelf that loaded before anything was stored
+    const withAdded = addMarketSource(storage, loadMarketSources(storage), {
+      name: 'A',
+      url: 'https://a.example.com/m.json',
+    })
+    expect(withAdded).toHaveLength(1)
+
+    // "instance 2": a brand-new mount reading the same storage back
+    const reloaded = loadMarketSources(storage)
+    expect(reloaded).toHaveLength(1)
+    expect(reloaded[0]).toMatchObject({
+      name: 'A',
+      url: 'https://a.example.com/m.json',
+      builtIn: false,
+    })
+
+    // removing from the reloaded list, a third load stays in sync
+    const id = reloaded[0]?.id
+    expect(id).toBeDefined()
+    if (id === undefined) return
+    const afterRemove = removeMarketSource(storage, reloaded, id)
+    expect(afterRemove).toHaveLength(0)
+    expect(loadMarketSources(storage)).toEqual(afterRemove)
+  })
+
+  it('never clobbers persisted sources when invoked with a stale or empty list', () => {
+    const storage = new MemoryStorage()
+    const seeded = addMarketSource(storage, loadMarketSources(storage), {
+      name: 'A',
+      url: 'https://a.example.com/m.json',
+    })
+    addMarketSource(storage, seeded, { name: 'B', url: 'https://b.example.com/m.json' })
+    expect(loadMarketSources(storage)).toHaveLength(2)
+
+    // a second shelf instance still holding its pre-add (empty) state fires
+    // a remove / edit / reorder — the write must not wipe what the first
+    // instance already saved (read-modify-write, never blind overwrite)
+    removeMarketSource(storage, [], 'no-such-id')
+    expect(loadMarketSources(storage)).toHaveLength(2)
+    updateMarketSource(storage, [], 'no-such-id', {
+      name: 'X',
+      url: 'https://x.example.com/m.json',
+    })
+    expect(loadMarketSources(storage)).toHaveLength(2)
+    reorderMarketSources(storage, [], [])
+    expect(loadMarketSources(storage)).toHaveLength(2)
+  })
+
+  it('degrades to an empty list when storage reads throw (no exception into render)', () => {
+    const storage = new QuarantinedStorage()
+    expect(() => loadMarketSources(storage)).not.toThrow()
+    expect(loadMarketSources(storage)).toEqual([])
+  })
+
+  it('keeps the in-memory result intact when a write fails (quota)', () => {
+    const storage = new FullStorage()
+    expect(() =>
+      addMarketSource(storage, loadMarketSources(storage), {
+        name: 'A',
+        url: 'https://a.example.com/m.json',
+      }),
+    ).not.toThrow()
+    const next = addMarketSource(storage, loadMarketSources(storage), {
+      name: 'A',
+      url: 'https://a.example.com/m.json',
+    })
+    expect(next).toHaveLength(1)
+    expect(next[0]).toMatchObject({ name: 'A', url: 'https://a.example.com/m.json' })
   })
 })

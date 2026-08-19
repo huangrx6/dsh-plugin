@@ -9,8 +9,8 @@
  *     health dots), a 34px search field, a list⇄cards view toggle, a
  *     refresh icon button, an add-source icon button with a compact
  *     inline form and a manage-sources icon button that opens a grouped
- *     panel (rename / re-point / delete — visible UI, right-click delete
- *     on chips stays as a shortcut)
+ *     panel (rename / re-point / delete — delete goes through a
+ *     self-drawn confirm dialog; there is no right-click shortcut)
  *   - items: either a grouped container of compact rows (32px icon base,
  *     13px name + 11px source meta, single-line description) or a card
  *     grid (40px+ hue-keyed gradient icon base, version badge, two-line
@@ -24,7 +24,7 @@
  * as `onInstall` / `onRemove` callbacks so the consumer plugin owns the
  * wire call.
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   IconArchive,
   IconGrid,
@@ -123,7 +123,8 @@ export type MarketplaceLocaleKey =
   | "marketNoSourcesHint"
   | "marketAddFirstSource"
   | "marketManageSources"
-  | "marketDeleteSourceConfirm"
+  | "marketDeleteSourceTitle"
+  | "marketDeleteSourceHint"
   | "marketSourceBuiltinTag"
   | "marketSourceBuiltinHint"
   | "marketDetail"
@@ -250,6 +251,14 @@ export function MarketShelf({
     { readonly id: string; readonly name: string; readonly url: string } | undefined
   >(undefined);
   const [view, setView] = useState<MarketViewMode>(() => loadMarketView(storage));
+  /** Source id pending the delete-confirm dialog (undefined = closed). */
+  const [removeConfirmId, setRemoveConfirmId] = useState<string | undefined>(
+    undefined,
+  );
+  const removeConfirmRef = useRef<HTMLDivElement | null>(null);
+  const removeConfirmSource = sources.find(
+    (source) => source.id === removeConfirmId,
+  );
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
@@ -304,15 +313,26 @@ export function MarketShelf({
     [storage, sources, activeSourceId],
   );
 
-  const handleRemoveWithConfirm = useCallback(
-    (id: string) => {
-      if (typeof window !== "undefined" && typeof window.confirm === "function") {
-        if (!window.confirm(translate("marketDeleteSourceConfirm"))) return;
-      }
-      handleRemove(id);
-    },
-    [handleRemove, translate],
-  );
+  // Delete confirm dialog: Esc and overlay clicks cancel; the dialog is
+  // a plain modal-shell overlay (no window.confirm — that reads as a
+  // browser popup and can't carry the "installed items stay" hint).
+  useEffect(() => {
+    if (removeConfirmId === undefined) return;
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === "Escape") setRemoveConfirmId(undefined);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    removeConfirmRef.current?.focus();
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [removeConfirmId]);
+
+  const confirmRemove = useCallback(() => {
+    if (removeConfirmId === undefined) return;
+    handleRemove(removeConfirmId);
+    setRemoveConfirmId(undefined);
+  }, [removeConfirmId, handleRemove]);
 
   const handleViewChange = useCallback(
     (next: MarketViewMode) => {
@@ -509,7 +529,6 @@ export function MarketShelf({
           onPick={(id) => {
             setActiveSourceId(id);
           }}
-          onRemove={handleRemove}
           translate={translate}
         />
         <label className="dshm-mkt-search">
@@ -618,10 +637,54 @@ export function MarketShelf({
           editSource={editSource}
           onEditChange={setEditSource}
           onSaveEdit={handleSaveEdit}
-          onRemove={handleRemoveWithConfirm}
+          onRequestRemove={setRemoveConfirmId}
           translate={translate}
         />
       ) : null}
+      {removeConfirmSource === undefined ? null : (
+        <div
+          className="dshm-modalOverlay"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setRemoveConfirmId(undefined);
+          }}
+        >
+          <div
+            className="dshm-modal is-compact dshm-mktConfirm"
+            role="alertdialog"
+            aria-modal="true"
+            aria-label={translate("marketDeleteSourceTitle")}
+            ref={removeConfirmRef}
+            tabIndex={-1}
+          >
+            <div className="dshm-mktConfirmBody">
+              <h4>{translate("marketDeleteSourceTitle")}</h4>
+              <p>
+                {fill(translate("marketDeleteSourceHint"), {
+                  name: removeConfirmSource.name,
+                })}
+              </p>
+            </div>
+            <footer className="dshm-mktDetailFoot">
+              <button
+                type="button"
+                className="dshm-button"
+                onClick={() => {
+                  setRemoveConfirmId(undefined);
+                }}
+              >
+                {translate("marketCancel")}
+              </button>
+              <button
+                type="button"
+                className="dshm-button dshm-buttonDanger"
+                onClick={confirmRemove}
+              >
+                {translate("marketDeleteSource")}
+              </button>
+            </footer>
+          </div>
+        </div>
+      )}
       {error === undefined ? null : (
         <div className="dshm-mkt-error" role="alert">
           {translate("marketFailed")}: {error}
@@ -637,21 +700,21 @@ interface SourceSegmentedProps {
   readonly snapshots: readonly SourceSnapshot[];
   readonly activeSourceId: string | "all";
   readonly onPick: (id: string | "all") => void;
-  readonly onRemove: (id: string) => void;
   readonly translate: (key: MarketplaceLocaleKey) => string;
 }
 
 /**
  * Equal-width segmented control: All | one capsule per source (6px health
- * dot + name). Right-click on a user source removes it — the visible
- * management surface lives in the manage panel.
+ * dot + name). Pure picker — deletion only happens through the manage
+ * panel's confirm dialog (the old right-click-to-delete shortcut on the
+ * chips was removed: it deleted with no confirmation and users found the
+ * gesture uncomfortable).
  */
 function SourceSegmented({
   sources,
   snapshots,
   activeSourceId,
   onPick,
-  onRemove,
   translate,
 }: SourceSegmentedProps): JSX.Element {
   return (
@@ -686,10 +749,6 @@ function SourceSegmented({
             onClick={() => {
               onPick(source.id);
             }}
-            onContextMenu={(event) => {
-              event.preventDefault();
-              if (!source.builtIn) onRemove(source.id);
-            }}
             title={
               segmentTitle(snapshot, translate) +
               (source.builtIn ? ` · ${translate("marketSourceBuiltIn")}` : "")
@@ -714,7 +773,8 @@ interface SourceManagePanelProps {
     value: { readonly id: string; readonly name: string; readonly url: string } | undefined,
   ) => void;
   readonly onSaveEdit: () => void;
-  readonly onRemove: (id: string) => void;
+  /** Opens the delete confirm dialog for this source id. */
+  readonly onRequestRemove: (id: string) => void;
   readonly translate: (key: MarketplaceLocaleKey) => string;
 }
 
@@ -722,8 +782,8 @@ interface SourceManagePanelProps {
  * Visible source management (mirrors dsh-mcp-manager): one grouped
  * container of rows, each with the source name + manifest URL, health
  * dot, and — for user-added sources — inline edit (rename / re-point)
- * and delete. Built-in sources render display-only with a tag; the chip
- * right-click shortcut stays but is no longer the only entry point.
+ * and delete. Deleting opens a self-drawn confirm dialog (the shelf's
+ * modal shell); the chip right-click shortcut is gone.
  */
 function SourceManagePanel({
   sources,
@@ -731,7 +791,7 @@ function SourceManagePanel({
   editSource,
   onEditChange,
   onSaveEdit,
-  onRemove,
+  onRequestRemove,
   translate,
 }: SourceManagePanelProps): JSX.Element {
   return (
@@ -835,7 +895,7 @@ function SourceManagePanel({
                   type="button"
                   className="dshm-mkt-srcBtn is-danger"
                   onClick={() => {
-                    onRemove(source.id);
+                    onRequestRemove(source.id);
                   }}
                   disabled={source.builtIn}
                   title={
@@ -844,6 +904,7 @@ function SourceManagePanel({
                       : `${translate("marketDeleteSource")}: ${source.name}`
                   }
                   aria-label={`${translate("marketDeleteSource")}: ${source.name}`}
+                  aria-haspopup="dialog"
                 >
                   <IconTrash size={13} />
                 </button>

@@ -1,6 +1,5 @@
 import { IconCloseOutline16, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ReactNode } from 'react'
-import type { McpManagerLocaleKey } from './locales.ts'
 
 /**
  * Shared Quiet Structure modal shell for the 已安装 pane's edit and detail
@@ -25,7 +24,13 @@ export interface ModalShellProps {
   readonly onClose: () => void
   /** Also used as the dialog's accessible name; omit for headless content. */
   readonly title?: string
-  readonly t: (key: McpManagerLocaleKey) => string
+  /**
+   * Locale lookup for the close affordance — deliberately the narrow
+   * literal the shell actually reads, so callers whose translator covers
+   * only a key subset (the vendored market shelf) can mount it too.
+   * Full-dictionary translators remain assignable.
+   */
+  readonly t: (key: 'drawerClose') => string
   /** Dialog max-width: 'md' = 560px (edit), 'lg' = 640px (detail). */
   readonly size?: 'md' | 'lg'
   /** Action row pinned under the body (hairline above). */

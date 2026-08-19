@@ -97,6 +97,79 @@ describe("data-source-store", () => {
     expect(reloaded.find((source) => source.name === "社区")).toBeDefined();
   });
 
+  // Regression: "the market doesn't persist — sources vanish after a
+  // reload". A reload keeps the Storage but throws away all in-memory
+  // state, so these tests only ever trust what a FRESH reader (a plain
+  // loadMarketSources call) returns, never the arrays the mutations
+  // returned. Anything the fresh reader can't see back is data loss.
+  it("a fresh reader (simulated reload) reads an added source back", () => {
+    const added = addMarketSource(storage, loadMarketSources(storage), {
+      name: "社区",
+      url: "https://example.com/market.json",
+    });
+    // sanity: the write really hit the slot as a valid JSON array
+    const raw = storage.getItem(storageKey());
+    expect(typeof raw).toBe("string");
+    expect(Array.isArray(JSON.parse(raw ?? "[]"))).toBe(true);
+    // the fresh reader sees the same source, byte for byte
+    const reloaded = loadMarketSources(storage);
+    expect(reloaded).toHaveLength(1);
+    expect(reloaded[0]).toEqual(added[0]);
+  });
+
+  it("a fresh reader (simulated reload) stays consistent after a remove", () => {
+    const first = addMarketSource(storage, loadMarketSources(storage), {
+      name: "一",
+      url: "https://example.com/a.json",
+    });
+    const two = addMarketSource(storage, first, {
+      name: "二",
+      url: "https://example.com/b.json",
+    });
+    expect(loadMarketSources(storage).map((source) => source.name)).toEqual(["一", "二"]);
+    removeMarketSource(storage, loadMarketSources(storage), two.at(-1)!.id);
+    const reloaded = loadMarketSources(storage);
+    expect(reloaded.map((source) => source.name)).toEqual(["一"]);
+  });
+
+  it("keeps the last source's removal persisted (an empty save is legitimate)", () => {
+    const added = addMarketSource(storage, loadMarketSources(storage), {
+      name: "社区",
+      url: "https://example.com/market.json",
+    });
+    removeMarketSource(storage, loadMarketSources(storage), added[0]!.id);
+    expect(loadMarketSources(storage)).toHaveLength(0);
+  });
+
+  it("degrades to an empty list when the storage read throws", () => {
+    const broken = {
+      ...mockStorage(),
+      getItem(): string | null {
+        throw new Error("SecurityError");
+      },
+    } as unknown as Storage;
+    expect(() => loadMarketSources(broken)).not.toThrow();
+    expect(loadMarketSources(broken)).toHaveLength(0);
+  });
+
+  it("does not throw when the storage write fails (session-only fallback)", () => {
+    const quotaFull = {
+      ...mockStorage(),
+      setItem(): void {
+        throw new Error("QuotaExceededError");
+      },
+    } as unknown as Storage;
+    expect(() =>
+      addMarketSource(quotaFull, loadMarketSources(quotaFull), {
+        name: "社区",
+        url: "https://example.com/market.json",
+      }),
+    ).not.toThrow();
+    expect(() =>
+      removeMarketSource(quotaFull, [], "user-missing"),
+    ).not.toThrow();
+  });
+
   it("refuses to remove a built-in source", () => {
     const builtIn: MarketSource = {
       id: "seed-builtin",
