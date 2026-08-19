@@ -85,35 +85,70 @@ const CSS = `
 .dshm-empty p { font-size: 12px; color: var(--dsw-alias-label-tertiary, #8a8a8e); margin: 0; line-height: 18px; }
 .dshm-emptyDense { padding: 26px 12px 22px; }
 
-/* ── manager (own catalog): master-detail ───────────────────────────────── */
-.dshm-managerGrid { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 14px; align-items: start; }
-.dshm-managerMaster { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
-.dshm-managerBar { display: flex; align-items: center; gap: 6px; }
-.dshm-managerLabelRow { display: flex; align-items: center; gap: 8px; padding: 2px 4px 0; }
-.dshm-managerCount { margin-left: auto; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--dsw-alias-label-tertiary, #8a8a8e); }
-.dshm-managerList { margin: 0; padding: 6px; list-style: none; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
-.dshm-managerRow { min-width: 0; }
-.dshm-managerRow + .dshm-managerRow { border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
-.dshm-managerRowBtn { box-sizing: border-box; width: 100%; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 8px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: calc(var(--dsh-layout-radius-user-lg, 12px) - 6px); transition: background-color 120ms var(--ds-ease-in-out, ease); }
-.dshm-managerRowBtn:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
-.dshm-managerRow.is-selected .dshm-managerRowBtn { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
-.dshm-managerRowBtn:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #6ea8fe); outline-offset: -2px; }
-.dshm-managerTile { color: var(--dsw-alias-label-secondary, #b3b3b8); }
-.dshm-managerRowBody { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.dshm-managerRowName { font-size: 13px; font-weight: 600; line-height: 17px; color: var(--dsw-alias-label-primary, #f4f4f5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dshm-managerRowMeta { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 11px; line-height: 15px; color: var(--dsw-alias-label-tertiary, #8a8a8e); overflow: hidden; white-space: nowrap; }
-.dshm-managerRowMeta > :not(.dshm-managerFlag) { overflow: hidden; text-overflow: ellipsis; }
-.dshm-managerFlag { flex: none; font-size: 10.5px; font-weight: 500; letter-spacing: 0.02em; }
-.dshm-managerFlag.is-warn { color: var(--dsw-alias-state-warning-primary, #d97706); }
-.dshm-managerFlag.is-error { color: var(--dsw-alias-state-error-primary, #ef5350); }
-.dshm-managerDetail { min-width: 0; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); padding: 14px; }
-.dshm-managerDetail > .dshm-tab { max-width: none; width: auto; gap: 12px; }
-.dshm-managerHint { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 56px 16px; text-align: center; }
-.dshm-managerHintTile { width: 36px; height: 36px; color: var(--dsw-alias-label-tertiary, #8a8a8e); }
-.dshm-managerHint p { margin: 0; max-width: 240px; font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary, #8a8a8e); }
+/* ── installed catalog: full-width list⇄cards + detail modal ────────────── */
+.dshm-inst { max-width: none; }
+.dshm-instToolbar { display: flex; align-items: center; gap: 6px; }
+.dshm-instToolbar .dshm-search { flex: 1; min-width: 140px; }
+.dshm-instHead { display: flex; align-items: center; gap: 8px; padding: 2px 4px 0; }
+.dshm-instCount { margin-left: auto; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--dsw-alias-label-tertiary, #8a8a8e); }
+.dshm-instImport { max-width: 720px; }
 
-/* ── detail page (renders inside the manager detail panel) ─────────────── */
-.dshm-detailHead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+/* the grouped row list (same quiet container grammar as the market list) */
+.dshm-instList { margin: 0; padding: 6px; list-style: none; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
+.dshm-instRow { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 8px; border-radius: calc(var(--dsh-layout-radius-user-lg, 12px) - 6px); transition: background-color 120ms var(--ds-ease-in-out, ease); }
+.dshm-instRow:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
+.dshm-instRow + .dshm-instRow { border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
+.dshm-instRowMain { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; padding: 0; border-radius: calc(var(--dsh-layout-radius-user-lg, 12px) - 6px); }
+.dshm-instRowMain:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #6ea8fe); outline-offset: -2px; }
+.dshm-instRowId { flex: 0 1 auto; min-width: 0; max-width: 46%; display: flex; flex-direction: column; gap: 2px; }
+.dshm-instRowName { font-size: 13px; font-weight: 600; line-height: 17px; color: var(--dsw-alias-label-primary, #f4f4f5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshm-instRowMeta { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 11px; line-height: 15px; color: var(--dsw-alias-label-tertiary, #8a8a8e); overflow: hidden; white-space: nowrap; }
+.dshm-instRowMeta > :not(.dshm-instFlag) { overflow: hidden; text-overflow: ellipsis; }
+.dshm-instRowDesc { flex: 1; min-width: 0; align-self: center; font-size: 12px; line-height: 17px; color: var(--dsw-alias-label-secondary, #b3b3b8); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshm-instRowSide { flex: none; display: flex; align-items: center; gap: 6px; }
+.dshm-instFlag { flex: none; font-size: 10.5px; font-weight: 500; letter-spacing: 0.02em; }
+.dshm-instFlag.is-warn { color: var(--dsw-alias-state-warning-primary, #d97706); }
+.dshm-instFlag.is-error { color: var(--dsw-alias-state-error-primary, #ef5350); }
+.dshm-mkt-iconBtn.is-danger { color: var(--dsw-alias-state-error-primary, #ef5350); border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 28%, transparent); }
+.dshm-mkt-iconBtn.is-danger:hover { background: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 10%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 40%, transparent); }
+
+/* the card grid: auto-fill cards at ≥240px inside one grouped container */
+.dshm-instCards { margin: 0; padding: 6px; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
+.dshm-instCard { min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: calc(var(--dsh-layout-radius-user-lg, 12px) - 5px); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 3%, transparent); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease); }
+.dshm-instCard:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); }
+.dshm-instCardHead { display: flex; align-items: center; gap: 10px; min-width: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; padding: 0; }
+.dshm-instCardHead:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #6ea8fe); outline-offset: 2px; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px); }
+.dshm-instCardTile { width: 40px; height: 40px; border-radius: var(--dsh-layout-radius-user, 10px); }
+.dshm-instCardId { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dshm-instCardNameRow { min-width: 0; display: flex; align-items: center; gap: 6px; }
+.dshm-instCardName { font-size: 13px; font-weight: 600; line-height: 17px; color: var(--dsw-alias-label-primary, #f4f4f5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshm-instCardVer { flex: none; height: 17px; padding: 0 6px; display: inline-flex; align-items: center; border-radius: 999px; background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); color: var(--dsw-alias-label-secondary, #b3b3b8); font-family: var(--ds-font-family-code); font-size: 10px; font-weight: 500; line-height: 15px; white-space: nowrap; }
+.dshm-instCardMeta { font-size: 11px; line-height: 15px; color: var(--dsw-alias-label-tertiary, #8a8a8e); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshm-instCardDesc { margin: 0; font-size: 12px; line-height: 17px; color: var(--dsw-alias-label-secondary, #b3b3b8); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.dshm-instCardInfo { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 11px; line-height: 15px; color: var(--dsw-alias-label-tertiary, #8a8a8e); flex-wrap: wrap; }
+.dshm-instCardInfo > span { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshm-instCardBar { margin-top: auto; display: flex; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
+.dshm-instCardBarMeta { min-width: 0; font-size: 11px; color: var(--dsw-alias-label-tertiary, #8a8a8e); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshm-instCardBarActions { margin-left: auto; display: flex; align-items: center; gap: 6px; flex: none; }
+
+/* ── detail modal: dimmed blurred overlay + 760px slide-up dialog ───────── */
+@keyframes dshm-modalFade { from { opacity: 0; } }
+@keyframes dshm-modalUp { from { opacity: 0; transform: translateY(10px); } }
+.dshm-modalOverlay { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 20px; background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 32%, transparent); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); animation: dshm-modalFade 160ms var(--ds-ease-in-out, ease); }
+.dshm-modal { display: flex; flex-direction: column; width: min(760px, 100%); height: min(640px, 84vh); min-height: 0; background: var(--dsw-alias-bg-layer-1, #1c1c1f); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); overflow: hidden; outline: none; animation: dshm-modalUp 160ms var(--ds-ease-in-out, ease); }
+
+/* ── detail content (renders inside the modal dialog) ──────────────────── */
+.dshm-detail { flex: 1; min-height: 0; display: flex; flex-direction: column; color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dshm-detailHead { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
+.dshm-detailHead .dshm-iconBtn { flex: none; }
+.dshm-detailSkeleton { flex: 1; border: 0; background: none; padding: 14px; }
+.dshm-detailBody { flex: 1; min-height: 0; display: grid; grid-template-columns: 220px minmax(0, 1fr); }
+.dshm-detailBody.is-single { grid-template-columns: minmax(0, 1fr); }
+.dshm-detailTree { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 6px; padding: 10px; border-right: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); overflow: hidden; }
+.dshm-detailTree .dshm-filePanel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.dshm-detailTree .dshm-treeScroll { flex: 1; max-height: none; }
+.dshm-detailMain { min-width: 0; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; }
+.dshm-detailMain .dshm-previewWrap { margin-top: 0; }
 .dshm-heroTile { width: 40px; height: 40px; border-radius: var(--dsh-layout-radius-user, 10px); }
 .dshm-hero { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; flex-wrap: wrap; }
 .dshm-heroBody { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
@@ -318,8 +353,8 @@ button.dshm-mkt-rowMain:focus-visible { outline: 2px solid var(--dsw-alias-state
 .dshm-mkt-error { color: var(--dsw-alias-state-error-primary, #ef5350); font-size: 12px; line-height: 18px; padding: 8px 12px; background: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 8%, transparent); border-radius: var(--dsh-layout-radius-user, 8px); }
 
 /* workspace dual-mode head: segmented 已安装 | 市场. The wrapper stays
-   uncapped (the market toolbar wants the full rail width); the nested
-   manager keeps its own 960px reading measure. */
+   uncapped — both the market toolbar and the installed list⇄cards catalog
+   want the full rail width. */
 .dshm-ws { max-width: none; }
 .dshm-wsHead { display: flex; align-items: center; gap: 10px; min-height: 30px; }
 
@@ -379,15 +414,20 @@ button.dshm-mkt-rowMain:focus-visible { outline: 2px solid var(--dsw-alias-state
 
 /* ── responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  .dshm-managerGrid { grid-template-columns: 1fr; }
-  .dshm-managerMaster { order: 0; }
   .dshm-mkt-toolbar { gap: 6px; }
   .dshm-mkt-cards { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .dshm-instCards { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
 }
 @media (max-width: 640px) {
   .dshm-mkt-rowDesc { display: none; }
   .dshm-mkt-rowId { flex: 1 1 auto; max-width: none; }
   .dshm-mkt-cards { grid-template-columns: 1fr; }
+  .dshm-instRowDesc { display: none; }
+  .dshm-instRowId { flex: 1 1 auto; max-width: none; }
+  .dshm-instCards { grid-template-columns: 1fr; }
+  .dshm-detailBody { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+  .dshm-detailTree { border-right: 0; border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
+  .dshm-detailTree .dshm-treeScroll { flex: none; max-height: 180px; }
 }
 
 /* ── dsh-layout material bridge ──────────────────────────────────────────
@@ -396,7 +436,8 @@ button.dshm-mkt-rowMain:focus-visible { outline: 2px solid var(--dsw-alias-state
    blurred canvas: grouped lists 34%, panels/inputs 46%, icon bases 52%;
    borders move to --dsh-layout-line at 45-55%. Hover stays a flat 4%
    lighten — only the fill and border recipes change. */
-html[data-dsh-layout-material='on'] .dshm-managerList,
+html[data-dsh-layout-material='on'] .dshm-instList,
+html[data-dsh-layout-material='on'] .dshm-instCards,
 html[data-dsh-layout-material='on'] .dshm-detailCard,
 html[data-dsh-layout-material='on'] .dshm-previewCard,
 html[data-dsh-layout-material='on'] .dshm-resultCard,
@@ -407,7 +448,7 @@ html[data-dsh-layout-material='on'] .dshm-mkt-blank {
   background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 34%, transparent);
   border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 45%, transparent);
 }
-html[data-dsh-layout-material='on'] .dshm-managerDetail,
+html[data-dsh-layout-material='on'] .dshm-modal,
 html[data-dsh-layout-material='on'] .dshm-filePanel,
 html[data-dsh-layout-material='on'] .dshm-previewHead,
 html[data-dsh-layout-material='on'] .dshm-seg,
@@ -425,7 +466,6 @@ html[data-dsh-layout-material='on'] .dshm-tile,
 html[data-dsh-layout-material='on'] .dshm-emptyTile,
 html[data-dsh-layout-material='on'] .dshm-dropIcon,
 html[data-dsh-layout-material='on'] .dshm-resultIcon,
-html[data-dsh-layout-material='on'] .dshm-managerHintTile,
 html[data-dsh-layout-material='on'] .dshm-mkt-rowTile,
 html[data-dsh-layout-material='on'] .dshm-mkt-cardTile,
 html[data-dsh-layout-material='on'] .dshm-mkt-blankTile {
@@ -438,8 +478,9 @@ html[data-dsh-layout-material='on'] .dshm-mkt-blankTile {
    prefers-reduced-motion the transitions, the shimmer, the spin and the
    press scale all drop out. */
 @media (prefers-reduced-motion: reduce) {
-  .dshm-button, .dshm-iconBtn, .dshm-search input, .dshm-input, .dshm-select, .dshm-seg button, .dshm-segSm button, .dshm-drop, .dshm-failure button, .dshm-managerRowBtn, .dshm-mkt-row, .dshm-mkt-card, .dshm-mkt-segBtn, .dshm-mkt-btn, .dshm-mkt-iconBtn, .dshm-mkt-addrow input, .dshm-mkt-chipAct, .dshm-mkt-chipActs, .dshm-treeRow { transition: none; }
+  .dshm-button, .dshm-iconBtn, .dshm-search input, .dshm-input, .dshm-select, .dshm-seg button, .dshm-segSm button, .dshm-drop, .dshm-failure button, .dshm-instRow, .dshm-instCard, .dshm-mkt-row, .dshm-mkt-card, .dshm-mkt-segBtn, .dshm-mkt-btn, .dshm-mkt-iconBtn, .dshm-mkt-addrow input, .dshm-mkt-chipAct, .dshm-mkt-chipActs, .dshm-treeRow { transition: none; }
   .dshm-button:active, .dshm-iconBtn:active, .dshm-mkt-btn:active, .dshm-mkt-iconBtn:active { transform: none; }
+  .dshm-modalOverlay, .dshm-modal { animation: none; }
   .dshm-mkt-iconBtn.is-spin svg { animation: none; }
 }
 `

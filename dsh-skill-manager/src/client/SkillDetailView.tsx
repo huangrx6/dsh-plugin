@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { IconChevronLeftOutline14, IconSkillOutline16, IconTrashOutline16, IconWarningOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import { JsonTree, MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconSkillOutline16, IconWarningOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { SkillDetail } from '../contracts.ts'
 import type { SkillManagerApi } from './api.ts'
 import type { SkillManagerLocaleKey } from './locales.ts'
 import { sourceLabel } from './SkillManagerSection.tsx'
+import { IconClose } from './market/icons.tsx'
 import { SkillFilePreview } from './SkillFilePreview.tsx'
 import { SkillFileTree } from './SkillFileTree.tsx'
 
@@ -13,8 +14,7 @@ export interface SkillDetailViewProps {
   readonly api: SkillManagerApi
   readonly name: string
   readonly path?: string | undefined
-  readonly onBack: () => void
-  readonly onDeleted: () => void
+  readonly onClose: () => void
 }
 
 interface DetailState {
@@ -22,11 +22,12 @@ interface DetailState {
   readonly detail?: SkillDetail
 }
 
-/** Full-page skill detail: frontmatter, invocation policy, files, rendered body. */
-export function SkillDetailView({ t, api, name, path, onBack, onDeleted }: SkillDetailViewProps) {
+/** Skill detail content for the detail modal: head (tile, name, invocation
+ *  tags, close), a 220px file tree pane and a preview + metadata pane.
+ *  Rendered inside SkillDetailModal's dialog shell — this component owns
+ *  no overlay / layering of its own. */
+export function SkillDetailView({ t, api, name, path, onClose }: SkillDetailViewProps) {
   const [state, setState] = useState<DetailState>({ status: 'loading' })
-  const [deleting, setDeleting] = useState(false)
-  const [deleteError, setDeleteError] = useState<string | undefined>(undefined)
   const [selectedFile, setSelectedFile] = useState<string | undefined>(undefined)
   const previewRef = useRef<HTMLDivElement | null>(null)
   const scrollRequested = useRef(false)
@@ -39,14 +40,15 @@ export function SkillDetailView({ t, api, name, path, onBack, onDeleted }: Skill
       .then(detail => {
         if (!current) return
         setState({ status: 'ready', detail })
-        // the single preview box starts on the skill body (= SKILL.md)
+        // the preview pane starts on the skill body (= SKILL.md)
         setSelectedFile(detail.files.find(file => file.name === 'SKILL.md')?.name ?? detail.files[0]?.name)
       })
       .catch(() => { if (current) setState({ status: 'error' }) })
     return () => { current = false }
   }, [api, name, path])
 
-  // only user-driven clicks scroll the preview into view, not the initial body
+  // only user-driven tree clicks scroll the preview into view (narrow
+  // layouts stack the panes), not the initial body selection
   useEffect(() => {
     if (selectedFile !== undefined && scrollRequested.current) {
       scrollRequested.current = false
@@ -54,28 +56,13 @@ export function SkillDetailView({ t, api, name, path, onBack, onDeleted }: Skill
     }
   }, [selectedFile])
 
-  const handleDelete = async () => {
-    if (state.status !== 'ready' || state.detail === undefined) return
-    if (state.detail.path === undefined) return
-    if (!window.confirm(t('deleteConfirm'))) return
-    setDeleting(true)
-    setDeleteError(undefined)
-    try {
-      await api.deleteSkill(state.detail.path)
-      onDeleted()
-      onBack()
-    } catch (error) {
-      setDeleteError(error instanceof Error ? error.message : String(error))
-    } finally {
-      setDeleting(false)
-    }
-  }
+  const detail = state.status === 'ready' ? state.detail : undefined
 
   return (
-    <div className="dshm-tab" aria-busy={state.status === 'loading'}>
+    <div className="dshm-detail" aria-busy={state.status === 'loading'}>
       {state.status === 'loading'
         ? (
-          <div className="dshm-skeleton" role="status" aria-label={t('loading')}>
+          <div className="dshm-skeleton dshm-detailSkeleton" role="status" aria-label={t('loading')}>
             <div className="dshm-skelRow" />
             <div className="dshm-skelRow" />
             <div className="dshm-skelRow" />
@@ -84,114 +71,100 @@ export function SkillDetailView({ t, api, name, path, onBack, onDeleted }: Skill
         : null}
       {state.status === 'error'
         ? (
-          <>
-            <div className="dshm-toolbar">
-              <button type="button" className="dshm-button" onClick={onBack}>
-                <IconChevronLeftOutline14 size={12} aria-hidden="true" />
-                {t('back')}
-              </button>
-            </div>
-            <div className="dshm-failure" role="alert"><p>{t('detailFailed')}</p></div>
-          </>
+          <div className="dshm-detailMain">
+            <p className="dshm-callout dshm-calloutError" role="alert">{t('detailFailed')}</p>
+          </div>
         )
         : null}
-      {state.status === 'ready' && state.detail !== undefined
+      {detail !== undefined
         ? (
           <>
-            <div className="dshm-detailHead">
-              <button type="button" className="dshm-button" onClick={onBack}>
-                <IconChevronLeftOutline14 size={12} aria-hidden="true" />
-                {t('back')}
-              </button>
-              <span className="dshm-spacer" />
-              {state.detail.managed === true && state.detail.path !== undefined
-                ? (
-                  <button type="button" className="dshm-button dshm-buttonDanger" disabled={deleting} onClick={() => { void handleDelete() }}>
-                    <IconTrashOutline16 size={14} aria-hidden="true" />
-                    {deleting ? t('deleting') : t('deleteButton')}
-                  </button>
-                )
-                : null}
-            </div>
-            <div className="dshm-hero">
-              <span className={`dshm-tile dshm-heroTile ${state.detail.invalid !== undefined ? 'dshm-tileError' : state.detail.shadowed ? 'dshm-tileWarn' : ''}`}>
-                <IconSkillOutline16 size={20} aria-hidden="true" />
-              </span>
-              <span className="dshm-heroBody">
-                <h3 className="dshm-heroName">{state.detail.name}</h3>
-                <span className="dshm-heroTags">
-                  <span className="dshm-tag">{sourceLabel(t, state.detail.source)}{state.detail.rank !== undefined ? ` · rank ${state.detail.rank}` : ''}</span>
-                  <span className={`dshm-tag ${state.detail.invocation.modelInvocable ? 'dshm-tagOk' : 'dshm-tagWarn'}`}>
-                    {state.detail.invocation.modelInvocable ? t('tagModelOn') : t('tagModelOff')}
-                  </span>
-                  <span className={`dshm-tag ${state.detail.invocation.userInvocable ? '' : 'dshm-tagWarn'}`}>
-                    {state.detail.invocation.userInvocable ? t('tagUserOn') : t('tagUserOff')}
+            <header className="dshm-detailHead">
+              <div className="dshm-hero">
+                <span className={`dshm-tile dshm-heroTile ${detail.invalid !== undefined ? 'dshm-tileError' : detail.shadowed ? 'dshm-tileWarn' : ''}`}>
+                  <IconSkillOutline16 size={20} aria-hidden="true" />
+                </span>
+                <span className="dshm-heroBody">
+                  <h3 className="dshm-heroName">{detail.name}</h3>
+                  <span className="dshm-heroTags">
+                    <span className="dshm-tag">{sourceLabel(t, detail.source)}{detail.rank !== undefined ? ` · rank ${detail.rank}` : ''}</span>
+                    <span className={`dshm-tag ${detail.invocation.modelInvocable ? 'dshm-tagOk' : 'dshm-tagWarn'}`}>
+                      {detail.invocation.modelInvocable ? t('tagModelOn') : t('tagModelOff')}
+                    </span>
+                    <span className={`dshm-tag ${detail.invocation.userInvocable ? '' : 'dshm-tagWarn'}`}>
+                      {detail.invocation.userInvocable ? t('tagUserOn') : t('tagUserOff')}
+                    </span>
                   </span>
                 </span>
-              </span>
-            </div>
-            {state.detail.shadowed
-              ? <p className="dshm-callout dshm-calloutWarn"><IconWarningOutline16 size={13} aria-hidden="true" /> {t('shadowedHint')}</p>
-              : null}
-            {state.detail.invalid !== undefined
-              ? <p className="dshm-callout dshm-calloutError" role="alert">{t('invalidHint')}（{state.detail.invalid}）</p>
-              : null}
-            {deleteError !== undefined ? <div className="dshm-failure" role="alert"><p>{t('deleteFailed')}：{deleteError}</p></div> : null}
-            <div className="dshm-detailCard">
-              <h4>{t('fieldDescription')}</h4>
-              <p className="dshm-desc">{state.detail.description || '—'}</p>
-              {state.detail.whenToUse !== undefined && state.detail.whenToUse !== ''
+              </div>
+              <button type="button" className="dshm-iconBtn" onClick={onClose} title={t('modalClose')} aria-label={t('modalClose')}>
+                <IconClose size={14} />
+              </button>
+            </header>
+            <div className={`dshm-detailBody${detail.files.length > 0 ? '' : ' is-single'}`}>
+              {detail.files.length > 0
                 ? (
-                  <>
-                    <h4>{t('fieldWhenToUse')}</h4>
-                    <p className="dshm-callout">{state.detail.whenToUse}</p>
-                  </>
+                  <aside className="dshm-detailTree">
+                    <span className="dshm-sectionLabel">{t('fieldFiles')} · {fileCountLabel(t, detail.files.length)}</span>
+                    <SkillFileTree
+                      key={detail.path ?? detail.name}
+                      files={detail.files}
+                      label={detail.name}
+                      selectedFile={selectedFile}
+                      onSelectFile={next => { scrollRequested.current = true; setSelectedFile(next) }}
+                    />
+                  </aside>
                 )
                 : null}
-              <h4>{t('detailTitle')}</h4>
-              <dl className="dshm-details">
-                <div><dt>{t('fieldProvider')}</dt><dd>{state.detail.provider}</dd></div>
-                {state.detail.path !== undefined ? <div><dt>{t('fieldPath')}</dt><dd className="dshm-path">{state.detail.path}</dd></div> : null}
-                {state.detail.metadata !== undefined && Object.keys(state.detail.metadata).length > 0
+              <div className="dshm-detailMain">
+                {detail.shadowed
+                  ? <p className="dshm-callout dshm-calloutWarn"><IconWarningOutline16 size={13} aria-hidden="true" /> {t('shadowedHint')}</p>
+                  : null}
+                {detail.invalid !== undefined
+                  ? <p className="dshm-callout dshm-calloutError" role="alert">{t('invalidHint')}（{detail.invalid}）</p>
+                  : null}
+                {selectedFile !== undefined
                   ? (
-                    <div>
-                      <dt>{t('fieldMetadata')}</dt>
-                      <dd><JsonTree data={state.detail.metadata as Record<string, unknown>} label={state.detail.name} copyable /></dd>
+                    <div className="dshm-previewWrap" ref={previewRef}>
+                      <SkillFilePreview t={t} api={api} skillName={detail.name} file={selectedFile} />
                     </div>
                   )
-                  : null}
-              </dl>
-            </div>
-            {state.detail.files.length > 0
-              ? (
-                <div className="dshm-detailCard">
-                  <h4>{t('fieldFiles')} · {fileCountLabel(t, state.detail.files.length)}</h4>
-                  <SkillFileTree
-                    key={state.detail.path ?? state.detail.name}
-                    files={state.detail.files}
-                    label={state.detail.name}
-                    selectedFile={selectedFile}
-                    onSelectFile={next => { scrollRequested.current = true; setSelectedFile(next) }}
-                  />
-                  {selectedFile !== undefined
+                  : detail.content.trim() !== ''
                     ? (
-                      <div className="dshm-previewWrap" ref={previewRef}>
-                        <SkillFilePreview t={t} api={api} skillName={state.detail.name} file={selectedFile} />
+                      <div className="dshm-detailCard">
+                        <h4>{t('bodyHeading')}</h4>
+                        <div className="dshm-md">
+                          <MarkdownText text={detail.content} />
+                        </div>
                       </div>
                     )
                     : null}
+                <div className="dshm-detailCard">
+                  <h4>{t('detailTitle')}</h4>
+                  <p className="dshm-desc">{detail.description || '—'}</p>
+                  {detail.whenToUse !== undefined && detail.whenToUse !== ''
+                    ? (
+                      <>
+                        <h4>{t('fieldWhenToUse')}</h4>
+                        <p className="dshm-callout">{detail.whenToUse}</p>
+                      </>
+                    )
+                    : null}
+                  <dl className="dshm-details">
+                    <div><dt>{t('fieldProvider')}</dt><dd>{detail.provider}</dd></div>
+                    {detail.path !== undefined ? <div><dt>{t('fieldPath')}</dt><dd className="dshm-path">{detail.path}</dd></div> : null}
+                    {detail.metadata !== undefined && Object.keys(detail.metadata).length > 0
+                      ? (
+                        <div>
+                          <dt>{t('fieldMetadata')}</dt>
+                          <dd><JsonTree data={detail.metadata as Record<string, unknown>} label={detail.name} copyable /></dd>
+                        </div>
+                      )
+                      : null}
+                  </dl>
                 </div>
-              )
-              : state.detail.content.trim() !== ''
-                ? (
-                  <div className="dshm-detailCard">
-                    <h4>{t('bodyHeading')}</h4>
-                    <div className="dshm-md">
-                      <MarkdownText text={state.detail.content} />
-                    </div>
-                  </div>
-                )
-                : null}
+              </div>
+            </div>
           </>
         )
         : null}

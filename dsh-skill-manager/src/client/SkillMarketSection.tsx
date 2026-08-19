@@ -2,10 +2,10 @@
  * Workspace section for the dsh-skill-manager plugin: one segmented
  * control, two modes.
  *
- *   - "Installed" — the master-detail manager (280px catalog on the left,
- *     file tree + live preview detail on the right) reused from
- *     SkillManagerSection, so every installed skill has a single browsing
- *     entry with delete for managed copies.
+ *   - "Installed" — the full-width skill catalog from
+ *     SkillManagerSection: toolbar + list⇄cards views (persisted under
+ *     their own storage key), "详情" opens the file tree / preview /
+ *     metadata in a modal, delete stays on rows for managed copies.
  *   - "Market" — the upgraded MarketShelf (multi-source toolbar with
  *     edit/delete per source, list⇄cards views, install / update /
  *     remove wired to this plugin's RPC client).
