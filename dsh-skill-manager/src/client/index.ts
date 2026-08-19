@@ -56,7 +56,7 @@ export function apply(ctx: ClientContext): void {
         name: "dsh-launcher.workspace.section",
         id: "skills",
         order: 50,
-        label: () => t("marketTab"),
+        label: () => t("sectionLabel"),
         locale: SKILL_MANAGER_NS,
         inject: () => ({ api, t, launcherT }),
       },

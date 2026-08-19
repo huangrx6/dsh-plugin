@@ -114,3 +114,39 @@ export function IconRefresh({ size = 14, className, title }: IconProps): ReactEl
     </svg>
   )
 }
+
+export function IconPencil({ size = 14, className, title }: IconProps): ReactElement {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden={title === undefined ? "true" : undefined} className={className} width={size} height={size} role={title === undefined ? undefined : "img"}>
+      {title === undefined ? null : <title>{title}</title>}
+      {svgInner("M11.5 2.5l2 2-8 8H3.5v-2l8-8Z")}
+    </svg>
+  )
+}
+
+export function IconClose({ size = 14, className, title }: IconProps): ReactElement {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden={title === undefined ? "true" : undefined} className={className} width={size} height={size} role={title === undefined ? undefined : "img"}>
+      {title === undefined ? null : <title>{title}</title>}
+      {svgInner("M4 4l8 8M12 4l-8 8")}
+    </svg>
+  )
+}
+
+export function IconRows({ size = 14, className, title }: IconProps): ReactElement {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden={title === undefined ? "true" : undefined} className={className} width={size} height={size} role={title === undefined ? undefined : "img"}>
+      {title === undefined ? null : <title>{title}</title>}
+      {svgInner("M2.5 4h11M2.5 8h11M2.5 12h11")}
+    </svg>
+  )
+}
+
+export function IconGrid({ size = 14, className, title }: IconProps): ReactElement {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden={title === undefined ? "true" : undefined} className={className} width={size} height={size} role={title === undefined ? undefined : "img"}>
+      {title === undefined ? null : <title>{title}</title>}
+      {svgInner("M2.5 2.5h4.5v4.5H2.5V2.5ZM9 2.5h4.5v4.5H9V2.5ZM2.5 9h4.5v4.5H2.5V9ZM9 9h4.5v4.5H9V9Z")}
+    </svg>
+  )
+}

@@ -4,6 +4,7 @@ import {
   type SkillDetail,
   type SkillDestination,
   type SkillFileContent,
+  type SkillImportOptions,
   type SkillImportResult,
   type SkillImportSource,
   type SkillListItem,
@@ -26,8 +27,12 @@ export class SkillManagerApi {
     return result.value as SkillDetail
   }
 
-  async importSkill(source: SkillImportSource, destination: SkillDestination): Promise<SkillImportResult> {
-    const result = await this.rpc.call(DSH_SKILL_MANAGER_CHANNEL, 'import', { source, destination })
+  async importSkill(source: SkillImportSource, destination: SkillDestination, options: SkillImportOptions = {}): Promise<SkillImportResult> {
+    const result = await this.rpc.call(DSH_SKILL_MANAGER_CHANNEL, 'import', {
+      source,
+      destination,
+      ...(options.overwrite === true ? { overwrite: true } : {}),
+    })
     if (!result.ok) throw new Error(result.error.message)
     return result.value as SkillImportResult
   }

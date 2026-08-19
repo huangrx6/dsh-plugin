@@ -67,16 +67,24 @@ function sanitize(source: MarketSource): MarketSource {
 
 export function loadMarketSources(storage: Storage): MarketSource[] {
   const user = readRaw(storage);
-  const userIds = new Set(user.map((source) => source.id));
   // The built-in sources always appear; if the user has stored a copy
-  // under the same id, the user's updated url / name wins.
+  // under the same id, the user's updated url / name wins. Stored records
+  // flagged builtIn that are no longer in the default list are retired
+  // built-ins (e.g. the removed "DSH 内置" feed) — they drop out here so
+  // the shelf stops rendering them once the package retires them.
+  const retiredBuiltIn = new Set(
+    user
+      .filter((source) => source.builtIn)
+      .map((source) => source.id)
+      .filter((id) => !DEFAULT_MARKET_SOURCES.some((builtIn) => builtIn.id === id)),
+  );
   const merged: MarketSource[] = [];
   for (const builtIn of DEFAULT_MARKET_SOURCES) {
     const override = user.find((source) => source.id === builtIn.id);
     merged.push(override ?? builtIn);
   }
   for (const source of user) {
-    if (!userIds.has(source.id)) continue;
+    if (retiredBuiltIn.has(source.id)) continue;
     if (merged.some((existing) => existing.id === source.id)) continue;
     merged.push(source);
   }
@@ -103,6 +111,35 @@ export function addMarketSource(
     ...sources,
     { id, name: candidate.name, url: candidate.url, builtIn: false, order },
   ];
+  saveMarketSources(storage, next);
+  return next;
+}
+
+/**
+ * Edit an existing source's display name and/or manifest URL in place —
+ * id, order and the builtIn flag survive, so edits never reorder the
+ * toolbar or unlock a built-in for deletion. Editing a retired built-in
+ * id is a no-op returning the input list.
+ */
+export function updateMarketSource(
+  storage: Storage,
+  sources: readonly MarketSource[],
+  id: string,
+  changes: { name?: string; url?: string },
+): MarketSource[] {
+  const next = sources.map((source) => {
+    if (source.id !== id) return source;
+    const name = changes.name?.trim();
+    const url = changes.url?.trim();
+    if ((name === undefined || name === "") && (url === undefined || url === "")) {
+      return source;
+    }
+    return {
+      ...source,
+      ...(name !== undefined && name !== "" ? { name } : {}),
+      ...(url !== undefined && url !== "" ? { url } : {}),
+    };
+  });
   saveMarketSources(storage, next);
   return next;
 }

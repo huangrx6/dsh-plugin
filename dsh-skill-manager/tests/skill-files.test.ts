@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
@@ -48,6 +48,21 @@ describe('parseSkillFile', () => {
     expect(parsed.metadata).toEqual({ version: 2 })
     expect(parsed.invocation).toEqual({ modelInvocable: true, userInvocable: true })
     expect(parsed.body).toContain('# 内容')
+  })
+
+  it('extracts a top-level frontmatter version for update detection', () => {
+    const parsed = parseSkillFile('---\nname: a-b\ndescription: d\nversion: 0.3.1\n---\nbody')
+    expect(parsed.version).toBe('0.3.1')
+  })
+
+  it('trims and drops empty version strings', () => {
+    expect(parseSkillFile('---\nname: a-b\ndescription: d\nversion: " 1.2 "\n---\nb').version).toBe('1.2')
+    expect(parseSkillFile('---\nname: a-b\ndescription: d\nversion: ""\n---\nb').version).toBeUndefined()
+    expect(parseSkillFile('---\nname: a-b\ndescription: d\n---\nb').version).toBeUndefined()
+  })
+
+  it('rejects a non-string version', () => {
+    expect(() => parseSkillFile('---\nname: a-b\ndescription: d\nversion: 2\n---\nb')).toThrow(/version/)
   })
 
   it('honors invocation switches including boolean words', () => {
@@ -117,6 +132,23 @@ describe('writeImportedSkill / deleteManagedSkill', () => {
 
   it('refuses name conflicts', async () => {
     await expect(writeImportedSkill('user-dsh', material(), new Set(['imported-skill']))).rejects.toThrow(/already exists/)
+  })
+
+  it('replaces an existing skill when overwrite is set', async () => {
+    await writeImportedSkill('user-dsh', material(), new Set())
+    const next: ImportMaterial = {
+      skillMd: '---\nname: imported-skill\ndescription: updated\nversion: 2.0.0\n---\n\nnew body',
+      resources: [{ name: 'assets/next.txt', data: new Uint8Array([7]) }],
+      warnings: [],
+    }
+    const result = await writeImportedSkill('user-dsh', next, new Set(['imported-skill']), { overwrite: true })
+    expect(result.name).toBe('imported-skill')
+    expect(result.files).toBe(2)
+    const dir = join(root.root, 'imported-skill')
+    // the old resource is gone with the replaced directory, the new one is in
+    await expect(readdir(join(dir, 'assets'))).resolves.toEqual(['next.txt'])
+    const skillMd = await readFile(join(dir, 'SKILL.md'), 'utf8')
+    expect(skillMd).toContain('version: 2.0.0')
   })
 
   it('deletes bundle directories and flat files under managed roots only', async () => {

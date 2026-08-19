@@ -52,6 +52,8 @@ export interface ParsedSkillFile {
   readonly name: string
   readonly description: string
   readonly whenToUse?: string | undefined
+  /** Optional top-level frontmatter `version` (market update detection). */
+  readonly version?: string | undefined
   readonly metadata?: Record<string, unknown> | undefined
   readonly invocation: { modelInvocable: boolean; userInvocable: boolean }
   readonly body: string
@@ -96,6 +98,9 @@ export function parseSkillFile(text: string): ParsedSkillFile {
   if (typeof description !== 'string' || description.trim() === '') throw new Error('frontmatter "description" must be a non-empty string')
   const whenToUse = data['whenToUse']
   if (whenToUse !== undefined && typeof whenToUse !== 'string') throw new Error('frontmatter "whenToUse" must be a string')
+  const versionRaw = data['version']
+  if (versionRaw !== undefined && typeof versionRaw !== 'string') throw new Error('frontmatter "version" must be a string')
+  const version = versionRaw === undefined || versionRaw.trim() === '' ? undefined : versionRaw.trim()
   const metadata = data['metadata']
   if (metadata !== undefined && (typeof metadata !== 'object' || metadata === null || Array.isArray(metadata))) throw new Error('frontmatter "metadata" must be a mapping')
   const disableModelInvocation = data['disable-model-invocation']
@@ -108,6 +113,7 @@ export function parseSkillFile(text: string): ParsedSkillFile {
     name,
     description,
     whenToUse: whenToUse === undefined ? undefined : whenToUse,
+    ...(version === undefined ? {} : { version }),
     metadata: metadata === undefined ? undefined : metadata as Record<string, unknown>,
     invocation: { modelInvocable: modelFlag === undefined ? true : !modelFlag, userInvocable: userFlag === undefined ? true : userFlag },
     body: text.slice(match[0].length),
@@ -226,12 +232,14 @@ function sanitizeResourceName(name: string): string | undefined {
 /**
  * Validate import material and write it into `root` as `<root>/<name>/`.
  * The directory is staged as a hidden temp dir and renamed into place, so a
- * half-written import never occupies the final name.
+ * half-written import never occupies the final name. With `overwrite` the
+ * existing skill of the same name is removed just before the swap (the
+ * market's update path); otherwise an existing name is refused.
  */
-export async function writeImportedSkill(rootId: 'user-dsh' | 'user-agents', material: ImportMaterial, existingNames: ReadonlySet<string>): Promise<{ name: string; path: string; files: number }> {
+export async function writeImportedSkill(rootId: 'user-dsh' | 'user-agents', material: ImportMaterial, existingNames: ReadonlySet<string>, options: { overwrite?: boolean } = {}): Promise<{ name: string; path: string; files: number }> {
   const parsed = parseSkillFile(material.skillMd)
   if (!SKILL_NAME_PATTERN.test(parsed.name)) throw new Error(`invalid skill name "${parsed.name}"`)
-  if (existingNames.has(parsed.name)) throw new Error(`skill "${parsed.name}" already exists`)
+  if (existingNames.has(parsed.name) && options.overwrite !== true) throw new Error(`skill "${parsed.name}" already exists`)
   const root = managedRoots().find(candidate => candidate.id === rootId)
   if (root === undefined) throw new Error(`unknown destination "${rootId}"`)
   const target = join(root.root, parsed.name)
@@ -250,6 +258,7 @@ export async function writeImportedSkill(rootId: 'user-dsh' | 'user-agents', mat
       files += 1
     }
     await mkdir(root.root, { recursive: true })
+    if (options.overwrite === true) await rm(target, { recursive: true, force: true })
     try {
       await rename(staging, target)
     } catch (error) {

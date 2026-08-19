@@ -6,7 +6,9 @@ const STYLE_ID = 'dsh-skill-manager-styles'
  *   - content lives in grouped containers (bg layer-2, 1px hairline
  *     borders mixed from label-primary, radius bridged to the user's
  *     dsh-layout corner radii) holding compact rows separated by 1px
- *     hairlines — one list per group, no card grids
+ *     hairlines — one list per group; the market's opt-in card grid is
+ *     the single exception, built from the same quiet fills (3% base,
+ *     4% hover, no lift / shadow / gradient)
  *   - typography is fixed and small: names 13px/600, meta 11px tertiary,
  *     descriptions 12px secondary, section labels 11px/500 with wide
  *     tracking; the workspace shell owns the big titles
@@ -315,6 +317,64 @@ button.dshm-mkt-rowMain:focus-visible { outline: 2px solid var(--dsw-alias-state
 .dshm-mkt-empty { padding: 36px 12px; text-align: center; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 12px; line-height: 18px; }
 .dshm-mkt-error { color: var(--dsw-alias-state-error-primary, #ef5350); font-size: 12px; line-height: 18px; padding: 8px 12px; background: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 8%, transparent); border-radius: var(--dsh-layout-radius-user, 8px); }
 
+/* workspace dual-mode head: segmented 已安装 | 市场. The wrapper stays
+   uncapped (the market toolbar wants the full rail width); the nested
+   manager keeps its own 960px reading measure. */
+.dshm-ws { max-width: none; }
+.dshm-wsHead { display: flex; align-items: center; gap: 10px; min-height: 30px; }
+
+/* source chips: positioned wrapper so hover actions sit beside the pick
+   button (no nested buttons); actions fade in on hover / focus-within */
+.dshm-mkt-chip { position: relative; display: block; min-width: 0; }
+.dshm-mkt-chip > .dshm-mkt-segBtn { width: 100%; }
+.dshm-mkt-chipActs { position: absolute; top: 2px; bottom: 2px; right: 2px; display: flex; align-items: center; gap: 1px; padding-left: 4px; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 4px); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 120ms var(--ds-ease-in-out, ease), visibility 120ms var(--ds-ease-in-out, ease); }
+.dshm-mkt-chip:hover .dshm-mkt-chipActs, .dshm-mkt-chip:focus-within .dshm-mkt-chipActs { opacity: 1; visibility: visible; pointer-events: auto; }
+.dshm-mkt-chipAct { width: 19px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border: 0; background: transparent; color: var(--dsw-alias-label-secondary, #b3b3b8); cursor: pointer; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 5px); transition: background-color 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease); }
+.dshm-mkt-chipAct:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dshm-mkt-chipAct.is-danger:hover { color: var(--dsw-alias-state-error-primary, #ef5350); }
+.dshm-mkt-chipAct:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #6ea8fe); outline-offset: -2px; }
+.dshm-mkt-chipAct svg { width: 11px; height: 11px; }
+
+/* add / edit source row: quiet 11px heading chip before the inputs */
+.dshm-mkt-addrowLabel { flex: none; align-self: center; padding-left: 2px; font-size: 11px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dsw-alias-label-tertiary, #8a8a8e); }
+
+/* view toggle: auto-width icon segments inside the seg grammar */
+.dshm-mkt-viewSeg { grid-auto-columns: auto; flex: none; }
+.dshm-mkt-segIcon { width: 26px; min-width: 26px; padding: 0; justify-content: center; }
+.dshm-mkt-segIcon svg { width: 14px; height: 14px; }
+
+/* update state: business-colored badge + button (list rows and cards) */
+.dshm-mkt-badge.is-update { background: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 12%, transparent); color: var(--dsw-alias-state-business-primary, #6ea8fe); }
+.dshm-mkt-badge.is-update .dshm-mkt-badgeDot { background: var(--dsw-alias-state-business-primary, #6ea8fe); }
+.dshm-mkt-btn.is-update { background: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 16%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 30%, transparent); }
+.dshm-mkt-btn.is-update:hover { background: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 20%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 38%, transparent); }
+
+/* card grid view: one grouped container, auto-fill cards at ≥240px */
+.dshm-mkt-cards { margin: 0; padding: 6px; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
+.dshm-mkt-card { min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: calc(var(--dsh-layout-radius-user-lg, 12px) - 5px); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 3%, transparent); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease); }
+.dshm-mkt-card:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); }
+.dshm-mkt-card.is-installed .dshm-mkt-cardTile { color: var(--dsw-alias-state-success-primary, #4caf50); }
+.dshm-mkt-cardHead { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.dshm-mkt-cardTile { width: 40px; height: 40px; flex: none; border-radius: var(--dsh-layout-radius-user, 10px); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); color: var(--dsw-alias-label-secondary, #b3b3b8); display: grid; place-items: center; }
+.dshm-mkt-cardId { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dshm-mkt-cardNameRow { min-width: 0; display: flex; align-items: center; gap: 6px; }
+.dshm-mkt-cardName { font-size: 13px; font-weight: 600; line-height: 17px; color: var(--dsw-alias-label-primary, #f4f4f5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshm-mkt-cardVer { flex: none; height: 17px; padding: 0 6px; display: inline-flex; align-items: center; border-radius: 999px; background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); color: var(--dsw-alias-label-secondary, #b3b3b8); font-family: var(--ds-font-family-code); font-size: 10px; font-weight: 500; line-height: 15px; white-space: nowrap; }
+.dshm-mkt-cardMeta { font-size: 11px; line-height: 15px; color: var(--dsw-alias-label-tertiary, #8a8a8e); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshm-mkt-cardDesc { margin: 0; font-size: 12px; line-height: 17px; color: var(--dsw-alias-label-secondary, #b3b3b8); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.dshm-mkt-cardTags { display: flex; flex-wrap: wrap; gap: 4px; }
+.dshm-mkt-cardTag { height: 18px; max-width: 130px; padding: 0 7px; display: inline-flex; align-items: center; border-radius: 999px; background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); color: var(--dsw-alias-label-secondary, #b3b3b8); font-size: 10.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dshm-mkt-cardBar { margin-top: auto; display: flex; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
+.dshm-mkt-cardKind { min-width: 0; display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--dsw-alias-label-tertiary, #8a8a8e); text-transform: capitalize; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshm-mkt-cardKind svg { width: 11px; height: 11px; flex: none; }
+.dshm-mkt-cardActions { margin-left: auto; display: flex; align-items: center; gap: 6px; flex: none; }
+
+/* no-sources blank state: guided CTA inside the group container */
+.dshm-mkt-blank { padding: 38px 16px 34px; display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
+.dshm-mkt-blankTile { width: 44px; height: 44px; border-radius: var(--dsh-layout-radius-user, 10px); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); color: var(--dsw-alias-label-tertiary, #8a8a8e); display: grid; place-items: center; margin-bottom: 6px; }
+.dshm-mkt-blankTitle { margin: 0; font-size: 13px; font-weight: 600; color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dshm-mkt-blankHint { margin: 0 0 9px; max-width: 300px; font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary, #8a8a8e); }
+
 @keyframes dshm-mkt-spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
 
 /* ── responsive ─────────────────────────────────────────────────────────── */
@@ -322,10 +382,12 @@ button.dshm-mkt-rowMain:focus-visible { outline: 2px solid var(--dsw-alias-state
   .dshm-managerGrid { grid-template-columns: 1fr; }
   .dshm-managerMaster { order: 0; }
   .dshm-mkt-toolbar { gap: 6px; }
+  .dshm-mkt-cards { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
 }
 @media (max-width: 640px) {
   .dshm-mkt-rowDesc { display: none; }
   .dshm-mkt-rowId { flex: 1 1 auto; max-width: none; }
+  .dshm-mkt-cards { grid-template-columns: 1fr; }
 }
 
 /* ── dsh-layout material bridge ──────────────────────────────────────────
@@ -339,7 +401,9 @@ html[data-dsh-layout-material='on'] .dshm-detailCard,
 html[data-dsh-layout-material='on'] .dshm-previewCard,
 html[data-dsh-layout-material='on'] .dshm-resultCard,
 html[data-dsh-layout-material='on'] .dshm-skeleton,
-html[data-dsh-layout-material='on'] .dshm-mkt-list {
+html[data-dsh-layout-material='on'] .dshm-mkt-list,
+html[data-dsh-layout-material='on'] .dshm-mkt-cards,
+html[data-dsh-layout-material='on'] .dshm-mkt-blank {
   background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 34%, transparent);
   border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 45%, transparent);
 }
@@ -362,7 +426,9 @@ html[data-dsh-layout-material='on'] .dshm-emptyTile,
 html[data-dsh-layout-material='on'] .dshm-dropIcon,
 html[data-dsh-layout-material='on'] .dshm-resultIcon,
 html[data-dsh-layout-material='on'] .dshm-managerHintTile,
-html[data-dsh-layout-material='on'] .dshm-mkt-rowTile {
+html[data-dsh-layout-material='on'] .dshm-mkt-rowTile,
+html[data-dsh-layout-material='on'] .dshm-mkt-cardTile,
+html[data-dsh-layout-material='on'] .dshm-mkt-blankTile {
   background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 52%, transparent);
   border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 55%, transparent);
 }
@@ -372,7 +438,7 @@ html[data-dsh-layout-material='on'] .dshm-mkt-rowTile {
    prefers-reduced-motion the transitions, the shimmer, the spin and the
    press scale all drop out. */
 @media (prefers-reduced-motion: reduce) {
-  .dshm-button, .dshm-iconBtn, .dshm-search input, .dshm-input, .dshm-select, .dshm-seg button, .dshm-segSm button, .dshm-drop, .dshm-failure button, .dshm-managerRowBtn, .dshm-mkt-row, .dshm-mkt-segBtn, .dshm-mkt-btn, .dshm-mkt-iconBtn, .dshm-mkt-addrow input, .dshm-treeRow { transition: none; }
+  .dshm-button, .dshm-iconBtn, .dshm-search input, .dshm-input, .dshm-select, .dshm-seg button, .dshm-segSm button, .dshm-drop, .dshm-failure button, .dshm-managerRowBtn, .dshm-mkt-row, .dshm-mkt-card, .dshm-mkt-segBtn, .dshm-mkt-btn, .dshm-mkt-iconBtn, .dshm-mkt-addrow input, .dshm-mkt-chipAct, .dshm-mkt-chipActs, .dshm-treeRow { transition: none; }
   .dshm-button:active, .dshm-iconBtn:active, .dshm-mkt-btn:active, .dshm-mkt-iconBtn:active { transform: none; }
   .dshm-mkt-iconBtn.is-spin svg { animation: none; }
 }

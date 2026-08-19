@@ -27,6 +27,8 @@ export interface SkillListItem {
   readonly shadowed: boolean
   /** The file lives under a root this plugin may import into / delete from. */
   readonly managed: boolean
+  /** Optional frontmatter `version` — feeds the market's update badge. */
+  readonly version?: string | undefined
   /** Frontmatter failed validation; `invalid` carries the reason. */
   readonly invalid?: string | undefined
 }
@@ -46,6 +48,12 @@ export interface SkillDetail extends SkillListItem {
 }
 
 export type SkillDestination = 'user-dsh' | 'user-agents'
+
+/** Extra knobs for the import call. */
+export interface SkillImportOptions {
+  /** Replace an existing skill of the same name (market "update" path). */
+  readonly overwrite?: boolean | undefined
+}
 
 export type SkillImportSource =
   | { readonly kind: 'url'; readonly url: string }

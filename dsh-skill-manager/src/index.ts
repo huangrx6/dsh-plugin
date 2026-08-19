@@ -79,6 +79,7 @@ function summaryItem(summary: SkillSummary, scanned: readonly ScannedSkill[]): S
     rank: match?.rank,
     shadowed: false,
     managed: path !== undefined && managedRootByPath(path) !== undefined,
+    ...(match?.parsed?.version === undefined ? {} : { version: match.parsed.version }),
     invalid: undefined,
   }
 }
@@ -97,6 +98,7 @@ function scannedItem(entry: ScannedSkill, winnerDirectory: string | undefined): 
     rank: entry.rank,
     shadowed: entry.invalid === undefined && winnerDirectory !== undefined && winnerDirectory !== entry.directory,
     managed: true,
+    ...(parsed?.version === undefined ? {} : { version: parsed.version }),
     invalid: entry.invalid,
   }
 }
@@ -133,6 +135,7 @@ async function detailSkill(ctx: Context, payload: { name?: unknown; path?: unkno
     const scanned = await scanManagedRoots()
     const base = definition.resourceBase
     const directory = base !== undefined && base.kind === 'directory' ? base.path : definition.path !== undefined ? parentOf(definition.path) : undefined
+    const match = scanned.find(entry => entry.directory === directory)
     const files = directory !== undefined && basename(definition.path ?? '') === 'SKILL.md'
       ? await listSkillFiles(directory)
       : definition.path !== undefined ? [{ name: basename(definition.path), size: (await readFile(definition.path, 'utf8')).length, directory: false }] : []
@@ -145,11 +148,12 @@ async function detailSkill(ctx: Context, payload: { name?: unknown; path?: unkno
       provider: definition.provider,
       path: definition.path,
       directory,
-      rank: scanned.find(entry => entry.directory === directory)?.rank,
+      rank: match?.rank,
       shadowed: false,
       managed: definition.path !== undefined && managedRootByPath(definition.path) !== undefined,
       content: definition.content,
       metadata: definition.metadata === undefined ? undefined : { ...definition.metadata },
+      ...(match?.parsed?.version === undefined ? metadataVersion(definition.metadata) : { version: match.parsed.version }),
       files,
     }
   }
@@ -162,6 +166,13 @@ async function detailSkill(ctx: Context, payload: { name?: unknown; path?: unkno
 function parentOf(path: string): string | undefined {
   const index = path.lastIndexOf('/')
   return index <= 0 ? undefined : path.slice(0, index)
+}
+
+/** Registry winners may carry the version inside `metadata` instead of the
+ *  top-level frontmatter field; string values surface, anything else drops. */
+function metadataVersion(metadata: Record<string, unknown> | undefined): { version: string } | Record<string, never> {
+  const value = metadata?.['version']
+  return typeof value === 'string' && value.trim() !== '' ? { version: value.trim() } : {}
 }
 
 async function detailFromPath(path: string): Promise<SkillDetail> {
@@ -182,6 +193,7 @@ async function detailFromPath(path: string): Promise<SkillDetail> {
       managed: managedRootByPath(path) !== undefined,
       content: parsed.body,
       metadata: parsed.metadata === undefined ? undefined : { ...parsed.metadata },
+      ...(parsed.version === undefined ? {} : { version: parsed.version }),
       files: [],
       invalid: undefined,
     }
@@ -206,10 +218,11 @@ async function detailFromPath(path: string): Promise<SkillDetail> {
   return detail
 }
 
-async function importSkill(ctx: Context, payload: { source?: unknown; destination?: unknown } | null): Promise<{ name: string; path: string; files: number; warnings: string[] }> {
+async function importSkill(ctx: Context, payload: { source?: unknown; destination?: unknown; overwrite?: unknown } | null): Promise<{ name: string; path: string; files: number; warnings: string[] }> {
   const source = payload?.source
   if (source === null || typeof source !== 'object') throw new ImportValidationError('缺少导入来源')
   const destination = payload?.destination === 'user-agents' ? 'user-agents' : 'user-dsh'
+  const overwrite = payload?.overwrite === true
   const material = await (async () => {
     const record = source as { kind?: unknown; url?: unknown; filename?: unknown; base64?: unknown }
     if (record.kind === 'url') return materialFromUrl(requireString(record.url, 'URL'))
@@ -224,7 +237,7 @@ async function importSkill(ctx: Context, payload: { source?: unknown; destinatio
   const [snapshot, scanned] = await Promise.all([ctx.skills.snapshot(), scanManagedRoots()])
   const existing = new Set<string>(snapshot.skills.map(summary => summary.name))
   for (const entry of scanned) existing.add(entry.name)
-  const result = await writeImportedSkill(destination, material, existing)
+  const result = await writeImportedSkill(destination, material, existing, { overwrite })
   return { ...result, warnings: [...material.warnings] }
 }
 

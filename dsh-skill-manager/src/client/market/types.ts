@@ -92,24 +92,15 @@ export type MarketSourceState =
   | "invalid";
 
 /**
- * The built-in starter sources. The package ships these in the bundle so
- * the marketplace has content on first run; users can add or remove
- * sources on top of them via the source chip "Add" affordance.
+ * The built-in starter sources. Deliberately empty: the platform's
+ * "DSH 内置" feed was retired — the market starts blank and users add
+ * their own manifest URLs via the source toolbar (the shelf renders a
+ * guided empty state when no source exists yet).
  *
- * The list is intentionally conservative — a single offline-friendly
- * starter that the package owner can swap out by editing this file and
- * bumping the package version.
+ * Keeping the constant (and the merge logic in data-source-store) means a
+ * future package version can seed sources again by editing this file.
  */
-export const DEFAULT_MARKET_SOURCES: readonly MarketSource[] = [
-  {
-    id: "dsh-launcher-builtin",
-    name: "DSH 内置",
-    url: "https://raw.githubusercontent.com/huangrx6/dsh-plugin/main/dsh-launcher/market/builtin.json",
-    builtIn: true,
-    order: 0,
-    tag: "official",
-  },
-];
+export const DEFAULT_MARKET_SOURCES: readonly MarketSource[] = [];
 
 /**
  * Parse and validate a manifest response. Defensive: the manifest is user-
@@ -140,6 +131,7 @@ export function parseManifest(input: unknown): ManifestEnvelope {
       item["kind"] === "mcp" ||
       item["kind"] === "archive" ||
       item["kind"] === "layout" ||
+      item["kind"] === "remote" ||
       item["kind"] === "general"
         ? item["kind"]
         : "general";
