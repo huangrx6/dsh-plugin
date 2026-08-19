@@ -1,9 +1,9 @@
 /**
  * Subscription usage monitor — rendered in the launcher personal space.
  *
- * Lists every configured subscription as a card with quota bars (GLM 5h +
- * weekly from the real API / MiniMax / manual), refreshes automatically and
- * on demand, and edits entries through a small modal. All keys and outbound
+ * Dashboard-style card grid: each subscription is a stat card whose hero is
+ * the lowest remaining percentage across its quota bars (big tabular number
+ * + slim bar), with the per-window breakdown beneath. All keys and outbound
  * HTTP live host-side; this component only talks to the trusted RPC.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -27,9 +27,9 @@ interface EditState {
 
 const EMPTY: EditState = { label: '', provider: 'glm', apiKey: '', endpoint: '', region: 'bigmodel' }
 
-/** Provider metadata — initials used as icon text, color as accent. */
+/** Provider metadata — brand wordmark as the tile text, hue as accent. */
 const PROVIDERS: { id: UsageProvider; color: string; initials: string }[] = [
-  { id: 'glm', color: '#4285f4', initials: 'GLM' },
+  { id: 'glm', color: '#3b82f6', initials: 'GLM' },
   { id: 'minimax', color: '#8b5cf6', initials: 'MM' },
   { id: 'opencode', color: '#10b981', initials: 'OC' },
 ]
@@ -122,47 +122,32 @@ export function UsageSection({ t, api }: UsageSectionProps): JSX.Element {
         </button>
       </div>
 
-      {status === 'loading' ? <div className="u-empty"><span className="u-empty-text">{t('loading')}</span></div> : null}
-      {status === 'error' ? <div className="u-empty u-empty--error" role="alert"><span className="u-empty-text">{message}</span></div> : null}
-      {entries.length === 0 && status === 'ready' ? (
-        <div className="u-empty">
-          <span className="u-empty-text">{t('addEntry')}</span>
-        </div>
-      ) : null}
+      {status === 'loading' ? <div className="u-empty"><span>{t('loading')}</span></div> : null}
+      {status === 'error' ? <div className="u-empty u-empty--error" role="alert"><span>{message}</span></div> : null}
 
-      {/* ── subscription cards ── */}
-      <div className="u-list">
-        {entries.map((entry) => {
-          const r = results.get(entry.id)
-          const pmeta = PROVIDERS.find((p) => p.id === entry.provider)
-          return (
-            <div key={entry.id} className="u-row" style={{ '--u-accent': pmeta?.color ?? '#6ea8fe' } as React.CSSProperties}>
-              <div className="u-rowHead">
-                <span className="u-provider-icon">{pmeta?.initials ?? '—'}</span>
-                <div className="u-rowInfo">
-                  <span className="u-label">{entry.label}</span>
-                  <span className="u-provider">{providerLabel(t, entry.provider)}{r?.level !== undefined ? ` · ${r.level}` : ''}</span>
-                </div>
-                <span className="u-actions">
-                  <button type="button" className="u-mini" onClick={() => setEditing({
-                    id: entry.id, label: entry.label, provider: entry.provider,
-                    apiKey: entry.apiKey ?? '', endpoint: entry.endpoint ?? '',
-                    region: entry.region ?? 'bigmodel',
-                  })}>{t('editEntry')}</button>
-                  <button type="button" className="u-mini u-mini--danger" onClick={() => void remove(entry.id)}>{t('delete')}</button>
-                </span>
-              </div>
-              {r === undefined ? <div className="u-bar-loading">{t('loading')}</div> :
-                r.ok === false ? <div className="u-bar-loading u-bar-loading--error">{r.message}</div> :
-                  <div className="u-bars">
-                    {(r.bars ?? []).map((bar, i) => <Bar key={i} bar={bar} />)}
-                    {r.manualPercent !== undefined && (r.bars ?? []).length === 0
-                      ? <Bar bar={{ label: t('manual'), remainingPercent: clamp(r.manualPercent) }} /> : null}
-                  </div>}
-            </div>
-          )
-        })}
-      </div>
+      {/* ── stat card grid ── */}
+      {entries.length > 0 ? (
+        <div className="u-grid">
+          {entries.map((entry) => (
+            <StatCard
+              key={entry.id}
+              entry={entry}
+              result={results.get(entry.id)}
+              loadingLabel={t('loading')}
+              onEdit={() => setEditing({
+                id: entry.id, label: entry.label, provider: entry.provider,
+                apiKey: entry.apiKey ?? '', endpoint: entry.endpoint ?? '',
+                region: entry.region ?? 'bigmodel',
+              })}
+              onDelete={() => void remove(entry.id)}
+              editLabel={t('editEntry')}
+              deleteLabel={t('delete')}
+            />
+          ))}
+        </div>
+      ) : status === 'ready' ? (
+        <div className="u-empty"><span>{t('addEntry')}</span></div>
+      ) : null}
 
       {updatedAt !== undefined ? <p className="u-meta">{t('updatedAt')}: {new Date(updatedAt).toLocaleTimeString()}</p> : null}
 
@@ -172,7 +157,6 @@ export function UsageSection({ t, api }: UsageSectionProps): JSX.Element {
           <div className="u-modal" role="dialog" aria-label={editing.id === undefined ? t('addEntry') : t('editEntry')}>
             <div className="u-modalTitle">{editing.id === undefined ? t('addEntry') : t('editEntry')}</div>
 
-            {/* provider cards */}
             <div className="u-providerGrid">
               {PROVIDERS.map((p) => (
                 <button
@@ -193,15 +177,12 @@ export function UsageSection({ t, api }: UsageSectionProps): JSX.Element {
             </label>
 
             {editing.provider === 'glm' ? (
-              <div className="u-regionRow">
-                <label className="u-f u-f--row">
-                  <span>{t('entryRegion')}</span>
-                  <select value={editing.region} onChange={(e) => setEditing({ ...editing, region: e.target.value as 'bigmodel' | 'zai' })}>
-                    <option value="bigmodel">{t('entryRegionBigmodel')}</option>
-                    <option value="zai">{t('entryRegionZai')}</option>
-                  </select>
-                </label>
-              </div>
+              <label className="u-f">{t('entryRegion')}
+                <select value={editing.region} onChange={(e) => setEditing({ ...editing, region: e.target.value as 'bigmodel' | 'zai' })}>
+                  <option value="bigmodel">{t('entryRegionBigmodel')}</option>
+                  <option value="zai">{t('entryRegionZai')}</option>
+                </select>
+              </label>
             ) : null}
 
             <label className="u-f">{t('entryKey')}
@@ -225,6 +206,78 @@ export function UsageSection({ t, api }: UsageSectionProps): JSX.Element {
   )
 }
 
+/** One dashboard stat card: hero percent (the tightest window) + breakdown rows. */
+function StatCard({ entry, result, loadingLabel, onEdit, onDelete, editLabel, deleteLabel }: {
+  readonly entry: UsageEntry
+  readonly result: UsageQueryResult | undefined
+  readonly loadingLabel: string
+  readonly onEdit: () => void
+  readonly onDelete: () => void
+  readonly editLabel: string
+  readonly deleteLabel: string
+}): JSX.Element {
+  const pmeta = PROVIDERS.find((p) => p.id === entry.provider)
+  const accent = pmeta?.color ?? '#6ea8fe'
+  const bars = result?.ok === true ? result.bars ?? [] : []
+  const hero = bars.length > 0
+    ? bars.reduce((min, b) => Math.min(min, clamp(b.remainingPercent ?? 100)), 100)
+    : undefined
+
+  return (
+    <div className="u-stat" style={{ '--u-accent': accent } as React.CSSProperties}>
+      {/* card head: wordmark tile + name + quiet actions */}
+      <div className="u-statHead">
+        <span className="u-statTile">{pmeta?.initials ?? '—'}</span>
+        <div className="u-statInfo">
+          <span className="u-statName">{entry.label}</span>
+          <span className="u-statProvider">{providerLabelSafe(entry.provider)}{result?.level !== undefined ? ` · ${result.level}` : ''}</span>
+        </div>
+        <span className="u-statActions">
+          <button type="button" className="u-mini" onClick={onEdit}>{editLabel}</button>
+          <button type="button" className="u-mini u-mini--danger" onClick={onDelete}>{deleteLabel}</button>
+        </span>
+      </div>
+
+      {/* hero: the tightest remaining percent, big tabular digits */}
+      {hero !== undefined ? (
+        <div className="u-statHero" data-fill={fillState(hero)}>
+          <span className="u-statValue">{hero}<span className="u-statUnit">%</span></span>
+          <span className="u-statHeroTrack"><span className="u-statHeroFill" data-fill={fillState(hero)} style={{ width: `${hero}%` }} /></span>
+        </div>
+      ) : result === undefined ? (
+        <div className="u-statPending">{loadingLabel}</div>
+      ) : result.ok === false ? (
+        <div className="u-statError">{result.message}</div>
+      ) : (
+        <div className="u-statPending">—</div>
+      )}
+
+      {/* per-window breakdown */}
+      {bars.length > 0 ? (
+        <div className="u-statBars">
+          {bars.map((bar, i) => {
+            const pct = clamp(bar.remainingPercent ?? 0)
+            const tooltip = bar.remaining !== undefined && bar.total !== undefined
+              ? `${bar.remaining} / ${bar.total}${bar.unit !== undefined ? ' ' + bar.unit : ''}`
+              : `${pct}%`
+            return (
+              <div key={i} className="u-statBarRow" title={tooltip}>
+                <span className="u-statBarLabel">{bar.label}</span>
+                <span className="u-statBarTrack"><span className="u-statBarFill" data-fill={fillState(pct)} style={{ width: `${pct}%` }} /></span>
+                <span className="u-statBarVal">{pct}%</span>
+              </div>
+            )
+          })}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function providerLabelSafe(p: UsageProvider): string {
+  return p === 'glm' ? 'GLM' : p === 'minimax' ? 'MiniMax' : 'Opencode'
+}
+
 function providerLabel(t: (k: UsageLocaleKey) => string, p: UsageProvider): string {
   return p === 'glm' ? t('providerGlm') : p === 'minimax' ? t('providerMinimax') : t('providerOpencode')
 }
@@ -233,19 +286,6 @@ function clamp(n: number): number {
   return Math.max(0, Math.min(100, Number.isFinite(n) ? n : 0))
 }
 
-function Bar({ bar }: { readonly bar: UsageBar }): JSX.Element {
-  const pct = clamp(bar.remainingPercent ?? 0)
-  const fillState = pct > 50 ? 'safe' : pct > 20 ? 'warning' : 'critical'
-  const tooltip = bar.remaining !== undefined && bar.total !== undefined
-    ? `${bar.remaining} / ${bar.total}${bar.unit !== undefined ? ' ' + bar.unit : ''}`
-    : `${pct}%`
-  return (
-    <div className="u-bar" title={tooltip}>
-      <div className="u-barTop">
-        <span className="u-barLabel">{bar.label}</span>
-        <span className="u-barVal" data-fill={fillState}>{pct}%</span>
-      </div>
-      <div className="u-track"><div className="u-fill" data-fill={fillState} style={{ width: `${pct}%` }} /></div>
-    </div>
-  )
+function fillState(pct: number): 'safe' | 'warning' | 'critical' {
+  return pct > 50 ? 'safe' : pct > 20 ? 'warning' : 'critical'
 }

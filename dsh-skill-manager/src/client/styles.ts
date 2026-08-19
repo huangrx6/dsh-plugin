@@ -193,7 +193,7 @@ const CSS = `
 @keyframes dshm-modalFade { from { opacity: 0; } }
 @keyframes dshm-modalUp { from { opacity: 0; transform: translateY(10px); } }
 .dshm-modalOverlay { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 20px; background: rgba(0, 0, 0, 0.5); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); animation: dshm-modalFade 160ms var(--ds-ease-in-out, ease); }
-.dshm-modal { display: flex; flex-direction: column; width: min(640px, 100%); height: min(720px, 88vh); min-height: 0; background: var(--dsw-alias-bg-layer-1, #1c1c1f); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); overflow: hidden; outline: none; animation: dshm-modalUp 160ms var(--ds-ease-in-out, ease); }
+.dshm-modal { display: flex; flex-direction: column; width: min(1080px, 94vw); height: min(760px, 90vh); min-height: 0; background: var(--dsw-alias-bg-layer-1, #1c1c1f); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); overflow: hidden; outline: none; animation: dshm-modalUp 160ms var(--ds-ease-in-out, ease); }
 /* compact variant for the market item 详情 dialog: height hugs content */
 .dshm-modal.is-compact { height: auto; max-height: min(560px, 84vh); }
 
@@ -235,7 +235,7 @@ const CSS = `
 .dshm-heroDetails summary:hover { color: var(--dsw-alias-label-secondary, #b3b3b8); }
 .dshm-heroDetailsBody { display: grid; gap: 8px; padding: 6px 0 2px; }
 .dshm-heroDetailsBody h4 { margin: 0; font-size: 11px; font-weight: 500; color: var(--dsw-alias-label-tertiary, #8a8a8e); }
-.dshm-detailBody { flex: 1; min-height: 0; display: grid; grid-template-columns: 232px minmax(0, 1fr); }
+.dshm-detailBody { flex: 1; min-height: 0; display: grid; grid-template-columns: 264px minmax(0, 1fr); }
 .dshm-detailBody.is-single { grid-template-columns: minmax(0, 1fr); }
 .dshm-detailTree { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 6px; padding: 10px; border-right: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); overflow: hidden; }
 .dshm-detailTree .dshm-filePanel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
@@ -263,7 +263,7 @@ const CSS = `
    the root sizes to its widest row (max-content), so long file names
    push the panel sideways instead of truncating */
 .dshm-treeScroll { max-height: 380px; overflow: auto; overscroll-behavior: contain; border-radius: var(--dsh-layout-radius-user, 8px); }
-.dshm-treeScroll .rct-tree-root { padding: 0; margin: 0; width: max-content; min-width: 100%; box-sizing: border-box; font: inherit; color: var(--dsw-alias-label-primary, #f4f4f5); outline: none; }
+.dshm-treeScroll .rct-tree-root { padding: 0; margin: 0; width: 100%; box-sizing: border-box; font: inherit; color: var(--dsw-alias-label-primary, #f4f4f5); outline: none; }
 .dshm-treeScroll .rct-tree-root:focus-visible { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 35%, transparent); border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px); }
 .dshm-treeScroll .rct-tree-items-container { list-style: none; margin: 0; padding: 0; }
 .dshm-treeItem { margin: 0; }
@@ -282,7 +282,7 @@ const CSS = `
 .dshm-treeRow-folder .dshm-treeIcon { color: var(--dsw-alias-state-business-primary, #6ea8fe); }
 /* no ellipsis: the name keeps its natural width (white-space: nowrap) so
    the tree panel scrolls horizontally rather than clipping */
-.dshm-treeName { flex: none; white-space: nowrap; font-family: var(--ds-font-family-code); font-size: 12px; line-height: 17px; }
+.dshm-treeName { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--ds-font-family-code); font-size: 12px; line-height: 17px; }
 .dshm-treeRow-folder .dshm-treeName { font-weight: 500; }
 .dshm-treeSize { flex: none; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 11px; font-variant-numeric: tabular-nums; line-height: 16px; }
 .dshm-fileDot { width: 5px; height: 5px; border-radius: 999px; background: var(--dsw-alias-label-tertiary, #8a8a8e); display: inline-block; flex: none; }
