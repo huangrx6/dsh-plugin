@@ -162,9 +162,14 @@ export function UsageSection({ t, api }: UsageSectionProps): JSX.Element {
             ) : null}
             {editing.provider !== 'opencode' ? (
               <label className="u-f">{t('entryKey')}<input type="password" value={editing.apiKey} onChange={(e) => setEditing({ ...editing, apiKey: e.target.value })} /></label>
-            ) : null}
+            ) : (
+              <label className="u-f">{t('entryKey')}<input type="password" value={editing.apiKey} onChange={(e) => setEditing({ ...editing, apiKey: e.target.value })} placeholder="env:OPENCODE_API_KEY" /></label>
+            )}
             {editing.provider === 'minimax' ? (
               <label className="u-f">{t('entryEndpoint')}<input type="url" value={editing.endpoint} onChange={(e) => setEditing({ ...editing, endpoint: e.target.value })} placeholder="https://…" /></label>
+            ) : null}
+            {editing.provider === 'opencode' ? (
+              <label className="u-f">{t('entryEndpoint')}<input type="url" value={editing.endpoint} onChange={(e) => setEditing({ ...editing, endpoint: e.target.value })} placeholder="https://opencode.ai/zen/go/v1/usage" /></label>
             ) : null}
             <div className="u-modalFoot">
               <button type="button" className="u-btn" onClick={() => setEditing(undefined)}>{t('cancel')}</button>

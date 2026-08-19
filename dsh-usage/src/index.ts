@@ -190,6 +190,47 @@ async function queryMinimax(entry: UsageEntry): Promise<UsageQueryResult> {
   }
 }
 
+/**
+ * OpenCode Go quota — official JSON API (per cc-switch issue #6433):
+ *   GET https://opencode.ai/zen/go/v1/usage
+ *   Authorization: Bearer <Anthropic-compatible API key>
+ * usage.rolling = 5h / weekly / monthly, each { percent, resetsAt }.
+ */
+async function queryOpencode(entry: UsageEntry): Promise<UsageQueryResult> {
+  const token = resolveSecret(entry.apiKey)?.trim()
+  const endpoint = entry.endpoint?.trim() || 'https://opencode.ai/zen/go/v1/usage'
+  if (token === undefined || token === '') {
+    return { id: entry.id, label: entry.label, ok: false, message: '未配置 API key（可用 env:OPENCODE_API_KEY）' }
+  }
+  const response = await fetch(endpoint, {
+    headers: { Authorization: `Bearer ${token}`, 'User-Agent': 'dsh-usage/1.0' },
+    signal: AbortSignal.timeout(15000),
+  })
+  if (!response.ok) {
+    return { id: entry.id, label: entry.label, ok: false, message: `HTTP ${response.status}` }
+  }
+  const json = (await response.json()) as {
+    usage?: { rolling?: { percent?: number; status?: string }; weekly?: { percent?: number; status?: string }; monthly?: { percent?: number; status?: string } }
+  }
+  const usage = json.usage ?? {}
+  const bars: UsageBar[] = []
+  const windows: Array<[keyof typeof usage, string]> = [
+    ['rolling', '5 小时'],
+    ['weekly', '每周'],
+    ['monthly', '每月'],
+  ]
+  for (const [key, label] of windows) {
+    const window = usage[key]
+    const percent = window?.percent
+    if (window === undefined || typeof percent !== 'number') continue
+    bars.push(bar({ label, remainingPercent: Math.max(0, 100 - percent) }))
+  }
+  if (bars.length === 0) {
+    return { id: entry.id, label: entry.label, ok: false, message: '响应中无 usage 字段' }
+  }
+  return { id: entry.id, label: entry.label, ok: true, bars }
+}
+
 async function runQuery(entries: readonly UsageEntry[]): Promise<UsageQueryResult[]> {
   const results: UsageQueryResult[] = []
   for (const entry of entries) {
@@ -197,11 +238,7 @@ async function runQuery(entries: readonly UsageEntry[]): Promise<UsageQueryResul
     try {
       if (entry.provider === 'glm') outcome = await queryGlm(entry)
       else if (entry.provider === 'minimax') outcome = await queryMinimax(entry)
-      else {
-        outcome = { id: entry.id, label: entry.label, ok: true, bars: [] }
-        const manual = resolveSecret(entry.apiKey) === undefined ? undefined : Number(resolveSecret(entry.apiKey)!.trim())
-        if (manual !== undefined && Number.isFinite(manual)) outcome.manualPercent = manual
-      }
+      else outcome = await queryOpencode(entry)
     } catch (error) {
       outcome = { id: entry.id, label: entry.label, ok: false, message: error instanceof Error ? error.message : String(error) }
     }
