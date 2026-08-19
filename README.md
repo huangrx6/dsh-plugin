@@ -11,6 +11,8 @@
 | [`dsh-skill-manager`](./dsh-skill-manager) | Skill 导入（URL / GitHub / zip）与详情查看，连同 launcher 内的 Skill 市场（多源 / 模糊筛选 / 一键安装） | **[→ dsh-skill-manager/README.md](./dsh-skill-manager/README.md)** |
 | [`dsh-mcp-manager`](./dsh-mcp-manager) | MCP 服务器全生命周期管理：增删改、启停、测试连接、工具明细，连同 launcher 内的 MCP 市场 | **[→ dsh-mcp-manager/README.md](./dsh-mcp-manager/README.md)** |
 | [`dsh-remote-access`](./dsh-remote-access) | 远程访问：Tailscale Serve 把本机 dsh 暴露为 HTTPS 地址 + 切换官方 browse 目录选择器，手机扫码即用 | **[→ dsh-remote-access/README.md](./dsh-remote-access/README.md)** |
+| [`dsh-agent-rules`](./dsh-agent-rules) | 全局 Agent 指令：编辑 ~/.dsh/AGENTS.md，注入每个会话的持久基准规则（Code Mode、工具调用约束等） | **[→ dsh-agent-rules/README.md](./dsh-agent-rules/README.md)** |
+| [`dsh-usage`](./dsh-usage) | 订阅额度监控：GLM / MiniMax / Opencode 多账号额度剩余（5 小时 / 每周 / 每月），支持 env: 环境变量读取 API key | **[→ dsh-usage/README.md](./dsh-usage/README.md)** |
 | [`dsh-archive-manager`](./dsh-archive-manager) | 归档会话管理：列表、阅读消息、恢复工作区、导出 zip（官方 session.export）或 Markdown | **[→ dsh-archive-manager/README.md](./dsh-archive-manager/README.md)** |
 
 深入阅读：
@@ -30,6 +32,8 @@ dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/dow
 dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/v0.6.2/dsh-skill-manager-0.6.2.tgz
 dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/v0.6.2/dsh-mcp-manager-0.6.2.tgz
 dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/v0.6.2/dsh-remote-access-0.6.2.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/v0.6.2/dsh-agent-rules-0.6.2.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/v0.6.2/dsh-usage-0.6.2.tgz
 dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/v0.6.2/dsh-archive-manager-0.6.2.tgz
 ```
 
@@ -44,7 +48,7 @@ dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/dow
 ```bash
 git clone git@github.com:huangrx6/dsh-plugin.git
 cd dsh-plugin
-for pkg in dsh-launcher dsh-layout dsh-skill-manager dsh-mcp-manager dsh-remote-access; do
+for pkg in dsh-launcher dsh-layout dsh-skill-manager dsh-mcp-manager dsh-remote-access dsh-agent-rules dsh-usage dsh-archive-manager; do
   (cd "$pkg" && pnpm install && pnpm run build)
 done
 ```
@@ -60,7 +64,10 @@ done
     "dsh-layout": "link:/绝对路径/dsh-plugin/dsh-layout",
     "dsh-skill-manager": "link:/绝对路径/dsh-plugin/dsh-skill-manager",
     "dsh-mcp-manager": "link:/绝对路径/dsh-plugin/dsh-mcp-manager",
-    "dsh-remote-access": "link:/绝对路径/dsh-plugin/dsh-remote-access"
+    "dsh-remote-access": "link:/绝对路径/dsh-plugin/dsh-remote-access",
+    "dsh-agent-rules": "link:/绝对路径/dsh-plugin/dsh-agent-rules",
+    "dsh-usage": "link:/绝对路径/dsh-plugin/dsh-usage",
+    "dsh-archive-manager": "link:/绝对路径/dsh-plugin/dsh-archive-manager"
   },
   "dsh": {
     "profile": {
@@ -71,7 +78,10 @@ done
         "dsh-layout",
         "dsh-skill-manager",
         "dsh-mcp-manager",
-        "dsh-remote-access"
+        "dsh-remote-access",
+        "dsh-agent-rules",
+        "dsh-usage",
+        "dsh-archive-manager"
       ]
     }
   }
@@ -97,8 +107,10 @@ dsh-plugin/
 ├── dsh-skill-manager/   # Skill 导入 / 详情 / 文件预览 + Skill 市场（详见其 README）
 ├── dsh-mcp-manager/     # MCP 服务器管理 + MCP 市场（详见其 README）
 ├── dsh-remote-access/   # 远程访问：Tailscale Serve + browse picker（详见其 README）
+├── dsh-agent-rules/     # 全局 Agent 指令编辑器（~/.dsh/AGENTS.md）
+├── dsh-usage/           # 订阅额度监控（GLM / MiniMax / Opencode）
 ├── dsh-archive-manager/ # 归档会话：列表 / 阅读 / 恢复 / 导出（详见其 README）
-└── docs/                # 架构与源码解读
+└── docs/                # 架构、开发指南、设计规范
 ```
 
 仓库内每个包独立安装、独立构建（无根 workspace）；`pnpm run check` = 类型检查 + 单测 + 构建全流程。

@@ -1,5 +1,5 @@
 /** Wire contract for the subscription usage monitor. */
-export const DSH_USAGE_CHANNEL = 'dsh-usage'
+export const DSH_USAGE_CHANNEL = '/dsh-usage'
 
 /** A subscription entry the user manages from the panel. */
 export type UsageProvider = 'glm' | 'minimax' | 'opencode'

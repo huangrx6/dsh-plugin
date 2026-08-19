@@ -7,7 +7,7 @@
  * to drive the workspace menu ordering, grouping, and labels — replacing
  * the previous hardcoded DEFAULT_SECTIONS array.
  */
-export const LAUNCHER_SECTIONS_CHANNEL = 'dsh-launcher-sections'
+export const LAUNCHER_SECTIONS_CHANNEL = '/dsh-launcher-sections'
 
 /** Localized text for one language. */
 export interface LocalizedText {
