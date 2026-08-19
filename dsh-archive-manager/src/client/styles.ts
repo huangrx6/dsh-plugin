@@ -403,6 +403,10 @@ const CSS = `
 /* timeline rows — 24px role icon base + name/time + single-line excerpt.
    Rows share the group's hairline rhythm; each row (but the last) draws
    a 2px label-primary 10% thread from its icon down to the next icon. */
+/* Batched timeline: the sentinel + button below the rendered slice. */
+.dam-tl-more { display: flex; justify-content: center; padding: 10px 0 4px; }
+.dam-tl-more-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 26px; padding: 3px 14px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); border-radius: var(--dsh-layout-radius-user, 8px); background: transparent; color: var(--dsw-alias-label-secondary, #b3b3b8); font: inherit; font-size: 12px; cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
+.dam-tl-more-btn:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
 .dam-tl-row {
   position: relative;
   display: flex;

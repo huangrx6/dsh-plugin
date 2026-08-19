@@ -27,7 +27,7 @@
  *  - Delete   : no host API — the danger button discloses an inline note
  *               with the session directory path + a copy action.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import type { ArchiveManagerApi } from './api.ts'
 import type { ArchiveManagerLocaleKey } from './locales.ts'
 import type { ArchivedSummary, ArchiveInfoResult } from '../contracts.ts'
@@ -120,11 +120,18 @@ function relativeTime(value: number | string | undefined, now: number): string {
   return formatShort(t)
 }
 
-/** Human-readable size of the raw event payload (JSON byte estimate). */
+/** Human-readable size of the raw event payload (JSON byte estimate).
+ *  Big sessions never stringify in full — past ~400 events a sample of
+ *  the first 200 extrapolates, so the size row stays cheap at any scale. */
 function estimateSize(events: readonly unknown[]): string {
   let bytes = 0
   try {
-    bytes = JSON.stringify(events).length
+    if (events.length <= 400) {
+      bytes = JSON.stringify(events).length
+    } else {
+      const sample = JSON.stringify(events.slice(0, 200)).length - 2
+      bytes = Math.round((Math.max(sample, 0) / 200) * events.length)
+    }
   } catch {
     return '—'
   }
@@ -167,6 +174,41 @@ const ICON_MD = <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d=
 const ICON_ZIP = <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5 2.5h5l2.5 2.5V13a.5.5 0 0 1-.5.5H5a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/><path d="M10 2.5V5h2.5" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/></svg>
 const ICON_SEARCH = <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="4.2" stroke="currentColor" strokeWidth="1.3"/><path d="m10.4 10.4 3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
 const ICON_TRASH = <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.8 4.2h10.4M6.2 4V2.8h3.6V4M4.2 4.2l.6 9h6.4l.6-9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+
+/** One timeline row, memoized: a 30s clock tick or a toast must not
+ *  re-render thousands of rows — the entry objects come from a useMemo
+ *  so their identities are stable across unrelated state changes. */
+const TimelineRow = memo(function TimelineRow({
+  ev, idx, t,
+}: {
+  readonly ev: ReturnType<typeof describeEvent>
+  readonly idx: number
+  readonly t: (key: ArchiveManagerLocaleKey) => string
+}): JSX.Element {
+  const kind = ev.kind as Exclude<EventKind, 'other'>
+  const roleLabel = t(`role.${ev.kind}` as ArchiveManagerLocaleKey)
+  const name = ev.kind === 'toolCall' && ev.toolName !== '' ? ev.toolName : roleLabel
+  const excerpt = ev.kind === 'toolCall' ? ev.toolArgs : ev.text
+  const time = formatShort(ev.time)
+  return (
+    <div className={`dam-tl-row dam-tl-row--${kind}`}>
+      <span className="dam-tl-icon" aria-hidden="true">{GLYPHS[kind]}</span>
+      <div className="dam-tl-main">
+        <div className="dam-tl-head">
+          <span className="dam-tl-dot" aria-hidden="true" />
+          <span className="dam-tl-name">{name}</span>
+          {time !== '' ? <span className="dam-tl-time">{time}</span> : null}
+        </div>
+        <div className="dam-tl-text">{excerpt !== '' ? excerpt : '—'}</div>
+      </div>
+    </div>
+  )
+})
+
+/** Timeline renders in batches: huge sessions never mount thousands of
+ *  rows at once — the first TIMELINE_PAGE render, then an intersection
+ *  sentinel loads the next batch as the user scrolls (button fallback). */
+const TIMELINE_PAGE = 100
 
 export function ArchiveManagerSection({ api, t }: Props): JSX.Element {
   const [items, setItems] = useState<readonly ArchivedSummary[]>([])
@@ -275,6 +317,23 @@ export function ArchiveManagerSection({ api, t }: Props): JSX.Element {
       .map((raw, idx) => ({ raw, idx, ev: describeEvent(raw) }))
       .filter(entry => entry.ev.kind !== 'other')
   }, [detail?.info])
+
+  // Batched rendering state: resets per selection, grows one page at a time.
+  const [visibleCount, setVisibleCount] = useState(TIMELINE_PAGE)
+  useEffect(() => { setVisibleCount(TIMELINE_PAGE) }, [selectedId])
+  const hasMore = visibleCount < timeline.length
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    const node = sentinelRef.current
+    if (node === null || !hasMore || typeof IntersectionObserver !== 'function') return
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some(entry => entry.isIntersecting)) {
+        setVisibleCount(count => count + TIMELINE_PAGE)
+      }
+    }, { rootMargin: '300px' })
+    observer.observe(node)
+    return () => { observer.disconnect() }
+  }, [hasMore, visibleCount, timeline.length])
 
   const payloadSize = useMemo(
     () => (detail?.info === undefined ? '—' : estimateSize(detail.info.events)),
@@ -431,27 +490,20 @@ export function ArchiveManagerSection({ api, t }: Props): JSX.Element {
                   {detail?.loading !== true && detail?.error === undefined && timeline.length === 0 ? (
                     <div className="dam-tl-state">{t('eventsEmpty')}</div>
                   ) : null}
-                  {timeline.map((entry) => {
-                    const { ev, idx } = entry
-                    const kind = ev.kind as Exclude<EventKind, 'other'>
-                    const roleLabel = t(`role.${ev.kind}` as ArchiveManagerLocaleKey)
-                    const name = ev.kind === 'toolCall' && ev.toolName !== '' ? ev.toolName : roleLabel
-                    const excerpt = ev.kind === 'toolCall' ? ev.toolArgs : ev.text
-                    const time = formatShort(ev.time)
-                    return (
-                      <div key={idx} className={`dam-tl-row dam-tl-row--${kind}`}>
-                        <span className="dam-tl-icon" aria-hidden="true">{GLYPHS[kind]}</span>
-                        <div className="dam-tl-main">
-                          <div className="dam-tl-head">
-                            <span className="dam-tl-dot" aria-hidden="true" />
-                            <span className="dam-tl-name">{name}</span>
-                            {time !== '' ? <span className="dam-tl-time">{time}</span> : null}
-                          </div>
-                          <div className="dam-tl-text">{excerpt !== '' ? excerpt : '—'}</div>
-                        </div>
-                      </div>
-                    )
-                  })}
+                  {timeline.slice(0, visibleCount).map((entry) => (
+                    <TimelineRow key={entry.idx} ev={entry.ev} idx={entry.idx} t={t} />
+                  ))}
+                  {hasMore ? (
+                    <div ref={sentinelRef} className="dam-tl-more">
+                      <button
+                        type="button"
+                        className="dam-tl-more-btn"
+                        onClick={() => { setVisibleCount(count => count + TIMELINE_PAGE) }}
+                      >
+                        {t('showMore')} · {visibleCount}/{timeline.length}
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </>

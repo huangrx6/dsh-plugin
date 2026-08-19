@@ -35,6 +35,7 @@ export type ArchiveManagerLocaleKey =
   | 'copyPath'
   | 'pathCopied'
   | 'eventsEmpty'
+  | 'showMore'
   | 'role.user'
   | 'role.assistant'
   | 'role.toolCall'
@@ -72,6 +73,7 @@ export const zhCN: Record<ArchiveManagerLocaleKey, string> = {
   copyPath: '复制路径',
   pathCopied: '路径已复制。',
   eventsEmpty: '该会话没有可展示的消息记录。',
+  showMore: '加载更多',
   'role.user': '你',
   'role.assistant': '助手',
   'role.toolCall': '工具调用',
@@ -110,6 +112,7 @@ export const enUS: Record<ArchiveManagerLocaleKey, string> = {
   copyPath: 'Copy path',
   pathCopied: 'Path copied.',
   eventsEmpty: 'No displayable message events in this session.',
+  showMore: 'Load more',
   'role.user': 'You',
   'role.assistant': 'Assistant',
   'role.toolCall': 'Tool call',
