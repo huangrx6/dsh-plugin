@@ -5,7 +5,7 @@ const outputPath = new URL('../lib/client.js', import.meta.url)
 const temporaryPath = new URL('../lib/.client.js.tmp', import.meta.url)
 const body = (await readFile(rawPath, 'utf8')).replace(/\n?\/\/# sourceMappingURL=.*$/u, '')
 const wrapped = `window.__ModuleLoader__.load({
-  id: "dsh-remote-access",
+  id: "dsh-usage",
   factory: (require) => {
     var module = { exports: {} };
     var exports = module.exports;
