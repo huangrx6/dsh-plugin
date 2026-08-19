@@ -129,12 +129,15 @@ function formatResetIn(ts: number): string {
   return `${formatReset(ts)}（${formatDuration(delta)}后）`
 }
 
-/** Label a TOKENS_LIMIT window from its reset distance: ≤10 days reads as
-    每周, longer windows as 每月 (current GLM plans ship one of each). */
-function glmWindowLabel(nextResetTime: number | undefined): string {
-  if (nextResetTime === undefined) return '额度'
-  const days = (nextResetTime - Date.now()) / 86_400_000
-  return days <= 10 ? '每周' : '每月'
+/** Label a GLM window from its time-until-reset. TOKENS_LIMIT entries are
+ *  the rolling windows: a reset within a few hours is the 每 5 小时 window,
+ *  a few days is 每周, well past that is 每月. */
+function glmWindowLabel(resetInMs: number | undefined): string {
+  if (resetInMs === undefined) return '额度'
+  const hours = resetInMs / 3_600_000
+  if (hours <= 12) return '每 5 小时'
+  const days = resetInMs / 86_400_000
+  return days <= 15 ? '每周' : '每月'
 }
 
 /** GLM Coding Plan quota — GET /api/monitor/usage/quota/limit.
@@ -178,34 +181,39 @@ async function queryGlm(entry: UsageEntry): Promise<UsageQueryResult> {
   const limits = json.data?.limits ?? []
   const bars: UsageBar[] = []
   for (const limit of limits) {
-    if (limit.type === 'TOKENS_LIMIT') {
+    const resetNow = limit.nextResetTime !== undefined ? limit.nextResetTime - Date.now() : undefined
+    if (limit.type === 'TIME_LIMIT') {
+      // TIME_LIMIT is the MCP monthly call budget (e.g. 8000 次 / month),
+      // NOT the 5h window: usage = used calls, remaining = left, total =
+      // usage + remaining. percentage is used %, so remaining = 100 - %.
       const b = bar({
-        label: glmWindowLabel(limit.nextResetTime),
+        label: 'MCP 每月',
+        remainingPercent: Math.max(0, 100 - (limit.percentage ?? 0)),
+        remaining: limit.remaining,
+        total: limit.usage !== undefined && limit.remaining !== undefined ? limit.usage + limit.remaining : undefined,
+        unit: limit.usage !== undefined ? '次' : undefined,
+      })
+      if (limit.nextResetTime !== undefined) b.detail = `刷新于 ${formatResetIn(limit.nextResetTime)}`
+      if (limit.remaining !== undefined && limit.usage !== undefined) {
+        b.detail = b.detail === undefined
+          ? `剩余 ${limit.remaining} / ${limit.usage + limit.remaining} 次`
+          : `${b.detail} · 剩余 ${limit.remaining} / ${limit.usage + limit.remaining} 次`
+      }
+      bars.push(b)
+    } else if (limit.type === 'TOKENS_LIMIT') {
+      // TOKENS_LIMIT carries the rolling windows; label from reset distance
+      // (a reset hours away = 每 5 小时, days = 每周, past that = 每月).
+      const b = bar({
+        label: glmWindowLabel(resetNow),
         remainingPercent: Math.max(0, 100 - (limit.percentage ?? 0)),
       })
       if (limit.nextResetTime !== undefined) b.detail = `刷新于 ${formatResetIn(limit.nextResetTime)}`
       bars.push(b)
     }
   }
-  const time = limits.find((l) => l.type === 'TIME_LIMIT')
-  if (time !== undefined) {
-    const b = bar({
-      label: '5 小时',
-      remainingPercent: Math.max(0, 100 - (time.percentage ?? 0)),
-      remaining: time.remaining,
-      total: time.usage !== undefined && time.remaining !== undefined ? time.usage + time.remaining : undefined,
-      unit: time.usage !== undefined ? '次' : undefined,
-    })
-    if (time.nextResetTime !== undefined) {
-      b.detail = `刷新于 ${formatResetIn(time.nextResetTime)}`
-    }
-    if (time.remaining !== undefined && time.usage !== undefined) {
-      b.detail = b.detail === undefined
-        ? `剩余 ${time.remaining} / ${time.usage + time.remaining} 次`
-        : `${b.detail} · 剩余 ${time.remaining} / ${time.usage + time.remaining} 次`
-    }
-    bars.unshift(b)
-  }
+  // Order bars by window length (每 5 小时 → 每周 → 每月 → MCP 每月).
+  const windowOrder: Record<string, number> = { '每 5 小时': 0, '每周': 1, '每月': 2, 'MCP 每月': 3 }
+  bars.sort((a, b) => (windowOrder[a.label] ?? 9) - (windowOrder[b.label] ?? 9))
   const out: UsageQueryResult = { id: entry.id, label: entry.label, ok: true, bars }
   if (json.data?.level !== undefined) out.level = json.data.level
   return out
