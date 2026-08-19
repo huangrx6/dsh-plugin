@@ -216,10 +216,9 @@ export const LAUNCHER_STYLES = `
   z-index: 9998;
   display: grid;
   grid-template-columns: 240px 1fr;
-  grid-template-rows: 52px 1fr;
+  grid-template-rows: 1fr;
   grid-template-areas:
-    "topbar topbar"
-    "menu   content";
+    "menu content";
   color: var(--dsw-alias-label-primary, #f4f4f5);
   animation: dsh-launcher-canvas-in 340ms var(--dsh-launcher-ease, ease);
 }
@@ -227,41 +226,36 @@ export const LAUNCHER_STYLES = `
   animation: dsh-launcher-canvas-out 200ms cubic-bezier(0.4, 0, 1, 1) forwards;
   pointer-events: none;
 }
-.dsh-launcher-canvas-topbar {
-  grid-area: topbar;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 20px;
-  border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
-  background: var(--dsw-alias-bg-layer-1, #16161a);
-  animation: dsh-launcher-topbar-in 380ms var(--dsh-launcher-ease, ease) 50ms backwards;
-}
-.dsh-launcher-canvas-spacer { flex: 1; }
-.dsh-launcher-canvas-close {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--dsw-alias-interactive-bg-hover, rgba(255, 255, 255, 0.06));
-  border: 0;
-  color: var(--dsw-alias-label-primary, #f4f4f5);
-  padding: 6px 14px;
-  border-radius: var(--dsh-layout-radius-user, 8px);
-  cursor: pointer;
-  font: inherit;
-  font-size: 12px;
-}
-.dsh-launcher-canvas-close:hover { background: var(--dsw-alias-interactive-bg-active, rgba(255, 255, 255, 0.1)); }
-.dsh-launcher-canvas-close svg { width: 14px; height: 14px; }
 
 .dsh-launcher-canvas-menu {
   grid-area: menu;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   background: var(--dsw-alias-bg-layer-1, #16161a);
   border-right: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
-  padding: 12px 8px;
-  overflow-y: auto;
   animation: dsh-launcher-menu-in 380ms var(--dsh-launcher-ease, ease) 80ms backwards;
 }
+/* Identity + nav groups scroll; the exit action below stays pinned. */
+.dsh-launcher-menu-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px 8px;
+}
+/* Exit lives at the rail's bottom, full-bleed with a hairline above —
+   the sidebar's secondary action, like the reference layout. */
+.dsh-launcher-canvas-menu-item.is-exit {
+  flex: none;
+  margin: 0;
+  border-radius: 0;
+  border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent);
+  padding: 12px 16px;
+  color: var(--dsw-alias-label-secondary, #b3b3b8);
+  animation-delay: 260ms;
+}
+.dsh-launcher-canvas-menu-item.is-exit:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
 .dsh-launcher-canvas-menu-label {
   font-size: 11px;
   letter-spacing: 0.04em;
@@ -399,7 +393,6 @@ export const LAUNCHER_STYLES = `
 
 @keyframes dsh-launcher-canvas-in { from { opacity: 0; transform: scale(1.02) } to { opacity: 1; transform: scale(1) } }
 @keyframes dsh-launcher-canvas-out { to { opacity: 0; transform: scale(0.985) } }
-@keyframes dsh-launcher-topbar-in { from { opacity: 0; transform: translateY(-10px) } to { opacity: 1; transform: translateY(0) } }
 @keyframes dsh-launcher-menu-in { from { opacity: 0; transform: translateX(-12px) } to { opacity: 1; transform: translateX(0) } }
 @keyframes dsh-launcher-item-in { from { opacity: 0; transform: translateX(-8px) } to { opacity: 1; transform: translateX(0) } }
 @keyframes dsh-launcher-tab-item-in { from { opacity: 0; transform: translateY(-8px) } to { opacity: 1; transform: translateY(0) } }
@@ -424,10 +417,6 @@ html[data-dsh-layout-material='on'] .dsh-launcher-canvas {
   background: var(--dsh-layout-mat, var(--dsh-layout-glass-base, #0f0f12));
   -webkit-backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
   backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
-}
-html[data-dsh-layout-material='on'] .dsh-launcher-canvas-topbar {
-  background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 62%, transparent);
-  border-bottom-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 55%, transparent);
 }
 html[data-dsh-layout-material='on'] .dsh-launcher-canvas-menu {
   background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 46%, transparent);
@@ -470,7 +459,6 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
 @media (prefers-reduced-motion: reduce) {
   .dsh-launcher-canvas,
   .dsh-launcher-canvas.is-closing,
-  .dsh-launcher-canvas-topbar,
   .dsh-launcher-canvas-menu,
   .dsh-launcher-canvas-menu-label,
   .dsh-launcher-canvas-menu-item,
@@ -491,14 +479,10 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
 @media (max-width: 767px) {
   .dsh-launcher-canvas {
     grid-template-columns: 1fr;
-    grid-template-rows: 52px auto 1fr;
+    grid-template-rows: auto 1fr;
     grid-template-areas:
-      "topbar"
       "tabbar"
       "content";
-  }
-  .dsh-launcher-canvas-topbar {
-    padding: 0 12px;
   }
   /* The identity block and group headers collapse away on phones —
      the horizontal tab bar replaces the whole nav chrome. */
@@ -508,17 +492,31 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
 
   .dsh-launcher-canvas-menu {
     grid-area: tabbar;
+    flex-direction: row;
+    align-items: center;
     border-right: 0;
     border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
-    padding: 8px 8px;
-    overflow-x: auto;
-    overflow-y: hidden;
+  }
+  .dsh-launcher-menu-scroll {
     display: flex;
     gap: 4px;
+    padding: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
-  .dsh-launcher-canvas-menu::-webkit-scrollbar { display: none; }
+  .dsh-launcher-menu-scroll::-webkit-scrollbar { display: none; }
+  /* Exit joins the tab row as the last pill instead of a bottom bar. */
+  .dsh-launcher-canvas-menu-item.is-exit {
+    flex: 0 0 auto;
+    margin: 8px;
+    border-top: 0;
+    border-radius: 999px;
+    padding: 8px 14px;
+    white-space: nowrap;
+    animation-delay: 140ms;
+  }
   .dsh-launcher-canvas-menu-label { display: none; }
   .dsh-launcher-canvas-menu-item {
     flex: 0 0 auto;

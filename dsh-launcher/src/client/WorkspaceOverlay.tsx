@@ -289,57 +289,59 @@ export function WorkspaceView({
       aria-label={t("workspace")}
       onAnimationEnd={handleAnimationEnd}
     >
-      <header className="dsh-launcher-canvas-topbar">
-        {/* No title here: the sidebar carries the workspace identity and
-            each section renders its own header. The topbar is actions
-            only (exit right-aligned), like the reference layout. */}
-        <span className="dsh-launcher-canvas-spacer" />
+      <nav className="dsh-launcher-canvas-menu" aria-label={t("menuSection")}>
+        {/* Groups scroll; the exit stays pinned to the rail's bottom like
+            every modern sidebar's secondary action. */}
+        <div className="dsh-launcher-menu-scroll">
+          <div className="dsh-launcher-menu-identity">
+            <span className="dsh-launcher-menu-identity-icon">
+              <IconGrid size={16} />
+            </span>
+            <span className="dsh-launcher-menu-identity-body">
+              <span className="dsh-launcher-menu-identity-name">
+                {t("workspace")}
+              </span>
+              <span className="dsh-launcher-menu-identity-hint">
+                {t("workspaceIdentityHint")}
+              </span>
+            </span>
+          </div>
+          {groups.map((group) => (
+            <div key={group.key} className="dsh-launcher-menu-group">
+              <div className="dsh-launcher-canvas-menu-label">{t(group.key)}</div>
+              {group.sections.map((section) => (
+                <button
+                  key={section.id}
+                  type="button"
+                  className={`dsh-launcher-canvas-menu-item${section.id === active?.id ? " is-active" : ""}`}
+                  onClick={() => {
+                    setActiveId(section.id);
+                  }}
+                >
+                  <span className="dsh-launcher-canvas-menu-item-icon">
+                    {section.icon}
+                  </span>
+                  <span className="dsh-launcher-canvas-menu-item-label">
+                    {t(section.labelKey)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
         <button
           type="button"
-          className="dsh-launcher-canvas-close"
+          className="dsh-launcher-canvas-menu-item is-exit"
           onClick={beginClose}
           aria-label={t("workspaceClose")}
         >
-          <IconClose size={12} />
-          <span>{t("workspaceClose")}</span>
+          <span className="dsh-launcher-canvas-menu-item-icon">
+            <IconClose size={16} />
+          </span>
+          <span className="dsh-launcher-canvas-menu-item-label">
+            {t("workspaceClose")}
+          </span>
         </button>
-      </header>
-      <nav className="dsh-launcher-canvas-menu" aria-label={t("menuSection")}>
-        <div className="dsh-launcher-menu-identity">
-          <span className="dsh-launcher-menu-identity-icon">
-            <IconGrid size={16} />
-          </span>
-          <span className="dsh-launcher-menu-identity-body">
-            <span className="dsh-launcher-menu-identity-name">
-              {t("workspace")}
-            </span>
-            <span className="dsh-launcher-menu-identity-hint">
-              {t("workspaceIdentityHint")}
-            </span>
-          </span>
-        </div>
-        {groups.map((group) => (
-          <div key={group.key} className="dsh-launcher-menu-group">
-            <div className="dsh-launcher-canvas-menu-label">{t(group.key)}</div>
-            {group.sections.map((section) => (
-              <button
-                key={section.id}
-                type="button"
-                className={`dsh-launcher-canvas-menu-item${section.id === active?.id ? " is-active" : ""}`}
-                onClick={() => {
-                  setActiveId(section.id);
-                }}
-              >
-                <span className="dsh-launcher-canvas-menu-item-icon">
-                  {section.icon}
-                </span>
-                <span className="dsh-launcher-canvas-menu-item-label">
-                  {t(section.labelKey)}
-                </span>
-              </button>
-            ))}
-          </div>
-        ))}
       </nav>
       <main className="dsh-launcher-canvas-content" aria-busy={false}>
         <SectionContent section={active} translate={t} />
