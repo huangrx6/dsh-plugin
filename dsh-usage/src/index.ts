@@ -195,7 +195,10 @@ async function queryGlm(entry: UsageEntry): Promise<UsageQueryResult> {
       // NOT the 5h window: usage = used calls, remaining = left, total =
       // usage + remaining. percentage is used %, so remaining = 100 - %.
       const b = bar({
-        label: 'MCP 每月',
+        // TIME_LIMIT is the plan's weekly prompt-count budget (usage =
+        // used calls, remaining = left, total = usage + remaining; e.g. Max
+        // plan = 8000 次 / week). percentage is used-%, remaining = 100-%。
+        label: '每周（次）',
         remainingPercent: Math.max(0, 100 - (limit.percentage ?? 0)),
         remaining: limit.remaining,
         total: limit.usage !== undefined && limit.remaining !== undefined ? limit.usage + limit.remaining : undefined,
@@ -219,8 +222,8 @@ async function queryGlm(entry: UsageEntry): Promise<UsageQueryResult> {
       bars.push(b)
     }
   }
-  // Order bars by window length (每 5 小时 → 每周 → 每月 → MCP 每月).
-  const windowOrder: Record<string, number> = { '每 5 小时': 0, '每周': 1, '每月': 2, 'MCP 每月': 3 }
+  // Order bars by window length (每 5 小时 → 每周 / 每周（次）→ 每月).
+  const windowOrder: Record<string, number> = { '每 5 小时': 0, '每周': 1, '每周（次）': 1, '每月': 2 }
   bars.sort((a, b) => (windowOrder[a.label] ?? 9) - (windowOrder[b.label] ?? 9))
   const out: UsageQueryResult = { id: entry.id, label: entry.label, ok: true, bars }
   if (json.data?.level !== undefined) out.level = json.data.level
