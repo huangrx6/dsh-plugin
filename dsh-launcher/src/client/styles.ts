@@ -248,12 +248,14 @@ export const LAUNCHER_STYLES = `
    the sidebar's secondary action, like the reference layout. */
 .dsh-launcher-canvas-menu-item.is-exit {
   flex: none;
-  /* Full-bleed inside the scroll column (negative margins cancel the
-     wrapper padding) right after the last group — no stretched void. */
-  margin: 10px -8px -12px;
-  border-radius: 0;
-  border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent);
-  padding: 12px 16px;
+  /* Pinned to the rail's true bottom (margin-top auto), a centered
+     bordered pill with symmetric padding — reads as the rail's
+     secondary action without the full-bleed alignment quirks. */
+  margin: auto 8px 8px;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
+  border-radius: var(--dsh-layout-radius-user, 10px);
+  padding: 9px 10px;
   color: var(--dsw-alias-label-secondary, #b3b3b8);
   animation-delay: 260ms;
 }

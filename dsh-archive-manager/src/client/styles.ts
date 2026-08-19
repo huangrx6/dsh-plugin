@@ -487,6 +487,16 @@ const CSS = `
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* Click the excerpt to see the whole event: collapsed keeps the quiet
+   one-line look, expanded wraps freely with a subtle side rule. */
+.dam-tl-text.is-clickable { cursor: pointer; }
+.dam-tl-text.is-open {
+  white-space: pre-wrap;
+  overflow: visible;
+  text-overflow: unset;
+  word-break: break-word;
+  cursor: pointer;
+}
 .dam-tl-row--toolCall .dam-tl-text,
 .dam-tl-row--toolResult .dam-tl-text {
   font-family: ui-monospace, "SF Mono", "JetBrains Mono", Consolas, monospace;

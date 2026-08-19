@@ -177,7 +177,10 @@ const ICON_TRASH = <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path
 
 /** One timeline row, memoized: a 30s clock tick or a toast must not
  *  re-render thousands of rows — the entry objects come from a useMemo
- *  so their identities are stable across unrelated state changes. */
+ *  so their identities are stable across unrelated state changes.
+ *  Long excerpts are clamped to one line; clicking the text expands it
+ *  in place (click again to collapse) — truncated content stays
+ *  reachable without widening every row. */
 const TimelineRow = memo(function TimelineRow({
   ev, idx, t,
 }: {
@@ -185,11 +188,13 @@ const TimelineRow = memo(function TimelineRow({
   readonly idx: number
   readonly t: (key: ArchiveManagerLocaleKey) => string
 }): JSX.Element {
+  const [open, setOpen] = useState(false)
   const kind = ev.kind as Exclude<EventKind, 'other'>
   const roleLabel = t(`role.${ev.kind}` as ArchiveManagerLocaleKey)
   const name = ev.kind === 'toolCall' && ev.toolName !== '' ? ev.toolName : roleLabel
   const excerpt = ev.kind === 'toolCall' ? ev.toolArgs : ev.text
   const time = formatShort(ev.time)
+  const clickable = excerpt !== '' && excerpt.length > 80
   return (
     <div className={`dam-tl-row dam-tl-row--${kind}`}>
       <span className="dam-tl-icon" aria-hidden="true">{GLYPHS[kind]}</span>
@@ -199,7 +204,13 @@ const TimelineRow = memo(function TimelineRow({
           <span className="dam-tl-name">{name}</span>
           {time !== '' ? <span className="dam-tl-time">{time}</span> : null}
         </div>
-        <div className="dam-tl-text">{excerpt !== '' ? excerpt : '—'}</div>
+        <div
+          className={`dam-tl-text${clickable ? ' is-clickable' : ''}${open ? ' is-open' : ''}`}
+          title={clickable && !open ? excerpt : undefined}
+          onClick={clickable ? () => { setOpen(v => !v) } : undefined}
+        >
+          {excerpt !== '' ? excerpt : '—'}
+        </div>
       </div>
     </div>
   )

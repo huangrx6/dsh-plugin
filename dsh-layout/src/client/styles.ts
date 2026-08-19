@@ -434,27 +434,27 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
    + description left, control right, 44px min-height, 1px hairline between).
    Motion vocabulary is exactly background-color/color at 120ms; radius rides
    the --dsh-layout-radius-user bridge. */
-.dsh-layout-settings { display: grid; gap: 16px; max-width: 720px; color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dsh-layout-settings { display: grid; gap: 16px; max-width: 760px; color: var(--dsw-alias-label-primary, #f4f4f5); }
 .dsh-layout-settings * { box-sizing: border-box; }
 @media (max-width: 767px) {
   /* 隐藏 DSH 头部里的「打开配置文件」动作（桌面操作，手机端拥挤） */
   [role='dialog'][class*='_panel'] [class$='_action'] { display: none !important; }
 }
-.dsh-layout-toprow { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.dsh-layout-toprow { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
 .dsh-layout-settings h2 { margin: 0 0 4px; font-size: 17px; font-weight: 650; letter-spacing: .01em; line-height: 24px; }
 .dsh-layout-settings p { margin: 0; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 12px; line-height: 1.55; }
 .dsh-layout-settings__actions { display: flex; flex: none; align-items: center; gap: 8px; }
 /* Tab bar: one equal-width segmented control — quiet well, flat 10% active
    chip, hover stays at 4% background. */
 .dsh-layout-tabs { display: inline-flex; justify-self: start; gap: 2px; padding: 3px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); }
-.dsh-layout-tabs button { flex: 1 1 0; min-width: 76px; min-height: 28px; padding: 3px 20px; border: 0; border-radius: var(--dsh-layout-radius-user, 8px); background: transparent; color: var(--dsw-alias-label-secondary, #b3b3b8); font: inherit; font-size: 13px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
+.dsh-layout-tabs button { flex: 1 1 0; min-width: 84px; min-height: 30px; padding: 4px 24px; border: 0; border-radius: var(--dsh-layout-radius-user, 8px); background: transparent; color: var(--dsw-alias-label-secondary, #b3b3b8); font: inherit; font-size: 13px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
 .dsh-layout-tabs button:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
 .dsh-layout-tabs button[aria-selected='true'] { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
 /* Content column: section label over a group box, groups breathe one beat. */
-.dsh-layout-settings__body { display: grid; gap: 22px; }
-.dsh-layout-settings__section { display: grid; gap: 6px; }
+.dsh-layout-settings__body { display: grid; gap: 30px; }
+.dsh-layout-settings__section { display: grid; gap: 8px; }
 .dsh-layout-settings__group { margin: 0; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 11px; font-weight: 500; letter-spacing: .05em; }
-.dsh-layout-group { padding: 6px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 3%, transparent); }
+.dsh-layout-group { padding: 8px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 3%, transparent); }
 /* Neutral translucent tint instead of bg-layer-2: the theme's layer-2
    clashed with the workspace canvas behind the settings panel; the mix
    matches the other workspace sections' grouped surfaces. Under the
@@ -464,7 +464,7 @@ html[data-dsh-layout-material='on'] .dsh-layout-group { background: color-mix(in
    centered; 1px hairline between rows keeps the rhythm. Wide rows stack the
    control under the label at full width (editors, card grids, long segmented
    groups). */
-.dsh-layout-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 20px; min-height: 46px; padding: 9px 14px; }
+.dsh-layout-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 24px; min-height: 52px; padding: 12px 18px; }
 .dsh-layout-row + .dsh-layout-row { border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
 .dsh-layout-row__label { display: grid; gap: 2px; min-width: 0; }
 .dsh-layout-row__title { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
