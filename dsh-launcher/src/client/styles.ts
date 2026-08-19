@@ -21,7 +21,7 @@ export const LAUNCHER_STYLES = `
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 8px 12px;
+  padding: 8px;
   border: 0;
   background: transparent;
   color: var(--dsw-alias-label-primary, #f4f4f5);
@@ -98,8 +98,9 @@ export const LAUNCHER_STYLES = `
 }
 .dsh-launcher-panel-head {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
   padding: 12px 16px 10px;
   border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
 }
@@ -110,9 +111,9 @@ export const LAUNCHER_STYLES = `
   margin: 0;
 }
 .dsh-launcher-panel-hint {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--dsw-alias-label-tertiary, #8a8a8e);
-  margin-left: auto;
+  margin-left: 0;
 }
 .dsh-launcher-panel-body { padding: 6px; }
 .dsh-launcher-panel-item {
@@ -190,7 +191,7 @@ export const LAUNCHER_STYLES = `
   z-index: 9998;
   display: grid;
   grid-template-columns: 240px 1fr;
-  grid-template-rows: 56px 1fr;
+  grid-template-rows: 64px 1fr;
   grid-template-areas:
     "topbar topbar"
     "menu   content";
@@ -211,8 +212,16 @@ export const LAUNCHER_STYLES = `
   background: var(--dsw-alias-bg-layer-1, #16161a);
   animation: dsh-launcher-topbar-in 380ms var(--dsh-launcher-ease, ease) 50ms backwards;
 }
+/* Title + hint stack vertically: the hint reads as the title's
+   description line instead of a cramped side note. */
+.dsh-launcher-canvas-titlewrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
 .dsh-launcher-canvas-title { font-size: 14px; font-weight: 600; }
-.dsh-launcher-canvas-hint { font-size: 12px; color: var(--dsw-alias-label-tertiary, #8a8a8e); margin-left: 12px; }
+.dsh-launcher-canvas-hint { font-size: 11px; color: var(--dsw-alias-label-tertiary, #8a8a8e); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dsh-launcher-canvas-spacer { flex: 1; }
 .dsh-launcher-canvas-close {
   display: inline-flex;
@@ -427,7 +436,7 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
 @media (max-width: 767px) {
   .dsh-launcher-canvas {
     grid-template-columns: 1fr;
-    grid-template-rows: 56px auto 1fr;
+    grid-template-rows: 64px auto 1fr;
     grid-template-areas:
       "topbar"
       "tabbar"

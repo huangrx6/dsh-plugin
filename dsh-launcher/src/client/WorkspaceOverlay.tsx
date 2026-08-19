@@ -251,8 +251,10 @@ export function WorkspaceView({
       onAnimationEnd={handleAnimationEnd}
     >
       <header className="dsh-launcher-canvas-topbar">
-        <span className="dsh-launcher-canvas-title">{t("workspace")}</span>
-        <span className="dsh-launcher-canvas-hint">{t("workspaceHint")}</span>
+        <div className="dsh-launcher-canvas-titlewrap">
+          <span className="dsh-launcher-canvas-title">{t("workspace")}</span>
+          <span className="dsh-launcher-canvas-hint">{t("workspaceHint")}</span>
+        </div>
         <span className="dsh-launcher-canvas-spacer" />
         <button
           type="button"
