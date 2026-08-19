@@ -543,9 +543,14 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
   }
   .dsh-launcher-menu-scroll::-webkit-scrollbar { display: none; }
   /* Exit joins the tab row as the last pill instead of a bottom bar. */
+  /* Breathes on every side inside the tab row — the pill never touches
+     the row's edges (it previously sat flush right/bottom, reading as
+     an overflow), and never shrinks the scrolling tabs out of view. */
   .dsh-launcher-canvas-menu-item.is-exit {
-    margin: 0 0 0 4px;
+    flex: 0 0 auto;
+    margin: 8px;
     border-top: 0;
+    border-radius: 999px;
     padding: 8px 14px;
     white-space: nowrap;
     animation-delay: 140ms;
