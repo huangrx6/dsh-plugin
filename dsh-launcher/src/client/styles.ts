@@ -510,6 +510,16 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
   /* The identity block and group headers collapse away on phones —
      the horizontal tab bar replaces the whole nav chrome. */
   .dsh-launcher-menu-identity { display: none; }
+  /* On phones the corner X floats bottom-right — the top edge belongs to
+     the equal-width tab row, so a top-right close would fight it. */
+  .dsh-launcher-canvas-x {
+    top: auto;
+    bottom: 18px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    box-shadow: var(--dsw-shadow-lv2, 0 8px 24px rgba(0, 0, 0, 0.3));
+  }
   .dsh-launcher-canvas-close { padding: 6px 10px; }
   .dsh-launcher-canvas-close span { display: none; }
 
@@ -519,27 +529,27 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
     align-items: center;
     border-right: 0;
     border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
+    padding-bottom: 2px;
   }
+  /* One equal-width button per section — every tab the same size, like a
+     segmented row. More than five sections fall back to scroll. */
   .dsh-launcher-menu-scroll {
-    display: flex;
-    gap: 4px;
-    padding: 8px;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+    padding: 10px 10px 8px;
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
   .dsh-launcher-menu-scroll::-webkit-scrollbar { display: none; }
-  /* Exit joins the tab row as the last pill instead of a bottom bar. */
-  /* Breathes on every side inside the tab row — the pill never touches
-     the row's edges (it previously sat flush right/bottom, reading as
-     an overflow), and never shrinks the scrolling tabs out of view. */
   .dsh-launcher-canvas-menu-label { display: none; }
   .dsh-launcher-canvas-menu-item {
-    flex: 0 0 auto;
-    width: auto;
-    padding: 8px 14px;
-    margin: 0;
+    min-width: 0;
+    justify-content: center;
+    padding: 9px 8px;
     border-radius: 999px;
     background: transparent;
     border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
@@ -559,7 +569,7 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
   .dsh-launcher-canvas-menu-label { animation-name: dsh-launcher-tab-item-in; }
 
   .dsh-launcher-canvas-content {
-    padding: 16px 14px 80px;
+    padding: 20px 16px 80px;
   }
   .dsh-launcher-section-header { margin-bottom: 16px; padding-bottom: 12px; }
   .dsh-launcher-section-header-title { font-size: 15px; }
