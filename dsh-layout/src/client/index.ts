@@ -24,6 +24,16 @@ declare module "@deepseek-ai/dsh-client-ui-slots" {
   interface LocaleNamespaceMap {
     layout: LayoutLocaleKey;
   }
+  interface SlotMap {
+    /** Workspace sections contributed to the dsh-launcher full-screen
+        workspace; registering under id 'layout' replaces the launcher's
+        default placeholder for the 页面布局 entry. */
+    "dsh-launcher.workspace.section": {
+      kind: "list";
+      scope: "root";
+      owner: object;
+    };
+  }
 }
 
 export const inject = ["slots", "locale", "connection", "remote", "settingsScope"];
@@ -108,11 +118,17 @@ export function apply(ctx: ClientContext): void {
     ),
   );
 
-  ctx.slots.inject("settings.section", () =>
+  // Launcher workspace section: the dsh-launcher plugin renders our
+  // LayoutSettingsSection inside its full-screen workspace when the user
+  // picks the 页面布局 entry; the launcher's placeholder for id 'layout'
+  // is replaced by this registration. (The former settings.section nav
+  // entry moved here when the workspace became the home for all plugin
+  // sections.)
+  ctx.slots.inject("dsh-launcher.workspace.section", () =>
     ctx.slots.register(
       {
-        name: "settings.section",
-        id: "dsh-layout",
+        name: "dsh-launcher.workspace.section",
+        id: "layout",
         order: 46,
         label: () => t("section"),
         locale: LAYOUT_NS,

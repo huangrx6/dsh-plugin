@@ -41,27 +41,14 @@ export function apply(ctx: ClientContext): void {
 
   ctx.effect(() => installStyles(document), "dsh-skill-manager: styles");
 
-  // Independent settings nav entry (设置页左侧菜单独立入口) — no hub
-  // dependency: installing this plugin alone is enough.
-  ctx.slots.inject("settings.section", () =>
-    ctx.slots.register(
-      {
-        name: "settings.section",
-        id: "skills",
-        order: 50,
-        label: () => t("tab"),
-        locale: SKILL_MANAGER_NS,
-        inject: () => ({ api }),
-      },
-      SkillManagerSection,
-    ),
-  );
-
   // Launcher workspace section: the dsh-launcher plugin renders our
   // SkillMarketSection inside its full-screen workspace when the user
   // picks the "Skills" entry. The launcher registers the slot
   // `dsh-launcher.workspace.section`; we override the default placeholder
   // for `id: 'skills'` with the marketplace shelf wired to our API.
+  // (This is the plugin's only nav entry — the former settings.section
+  // registration moved here when the workspace became the home for all
+  // plugin sections.)
   const launcherT = ctx.locale.bind("dsh-launcher");
   ctx.slots.inject("dsh-launcher.workspace.section", () =>
     ctx.slots.register(

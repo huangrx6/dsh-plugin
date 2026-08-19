@@ -1,8 +1,9 @@
 /**
  * dsh-remote-access —— web client 侧入口。
  *
- * 职责单一：注册 zh/en 文案、注入样式、把「远程访问」作为独立分区挂进
- * 官方 settings.section 插槽（设置页左侧菜单独立入口，无 hub 依赖），
+ * 职责：注册 zh/en 文案、注入样式、把「远程访问」作为分区挂进
+ * dsh-launcher 工作区（功能 → 个人插件 → 远程访问，本插件唯一的导航
+ * 入口；原先的 settings.section 注册在工作区成为插件分区之家后移除），
  * 并把容器组件依赖的 api 实例通过 slots 的 inject 闭包传入。
  */
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
@@ -20,6 +21,16 @@ import { installStyles } from './styles.ts'
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
     'settings.remoteAccess': RemoteAccessLocaleKey
+  }
+  interface SlotMap {
+    /** Workspace sections contributed to the dsh-launcher full-screen
+        workspace; registering under id 'remote' replaces the launcher's
+        default placeholder for the 远程访问 entry. */
+    'dsh-launcher.workspace.section': {
+      kind: 'list'
+      scope: 'root'
+      owner: object
+    }
   }
 }
 
@@ -40,13 +51,17 @@ export function apply(ctx: ClientContext): void {
 
   ctx.effect(() => installStyles(document), 'dsh-remote-access: styles')
 
-  ctx.slots.inject('settings.section', () => ctx.slots.register({
-    name: 'settings.section',
-    id: 'remote-access',
+  // Launcher workspace section: the dsh-launcher plugin renders our
+  // RemoteAccessSection inside its full-screen workspace when the user
+  // picks the 远程访问 entry; the launcher's placeholder for
+  // id 'remote' is replaced by this registration.
+  ctx.slots.inject('dsh-launcher.workspace.section', () => ctx.slots.register({
+    name: 'dsh-launcher.workspace.section',
+    id: 'remote',
     order: 52,
     label: () => t('tab'),
     locale: REMOTE_ACCESS_NS,
-    inject: () => ({ api }),
+    inject: () => ({ api, t }),
   }, RemoteAccessSection))
 }
 
