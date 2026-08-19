@@ -454,11 +454,11 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
 .dsh-layout-settings__body { display: grid; gap: 30px; }
 .dsh-layout-settings__section { display: grid; gap: 8px; }
 .dsh-layout-settings__group { margin: 0; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 11px; font-weight: 500; letter-spacing: .05em; }
-.dsh-layout-group { padding: 8px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 3%, transparent); }
-/* Neutral translucent tint instead of bg-layer-2: the theme's layer-2
-   clashed with the workspace canvas behind the settings panel; the mix
-   matches the other workspace sections' grouped surfaces. Under the
-   page material the groups frost like every other surface. */
+.dsh-layout-group { padding: 8px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); }
+/* Unified card/group surface recipe across all workspace plugins:
+   bg-layer-2 + 8% border + 12px radius — same as the usage stat cards
+   and skill/mcp cards. Under the page material the groups frost like
+   every other surface. */
 html[data-dsh-layout-material='on'] .dsh-layout-group { background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 34%, transparent); border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 45%, transparent); }
 /* Setting row: label rail on the left, control right-aligned and vertically
    centered; 1px hairline between rows keeps the rhythm. Wide rows stack the

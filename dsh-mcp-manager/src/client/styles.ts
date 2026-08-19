@@ -178,21 +178,20 @@ const CSS = `
 /* --dsh-group-padding (6px), --dsh-card-grid-min (300px), --dsh-card-grid-gap (8px),
    --dsh-group-bg, --dsh-group-border (8%), --dsh-group-radius (12px) */
 .dshmcp-instCards {
-  margin: 0; padding: 6px; list-style: none;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px;
-  background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03));
-  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
-  border-radius: var(--dsh-layout-radius-user-lg, 12px);
+  margin: 0; padding: 0; list-style: none;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px;
+  background: transparent;
+  border: 0;
 }
 /* --dsh-card-min-height (160px), --dsh-card-gap (13px), --dsh-card-padding (18px),
-   --dsh-card-border (6%), --dsh-card-radius (8px), --dsh-card-bg (gradient 5%->2%),
-   --dsh-card-shadow */
+   --dsh-card-border (8%), --dsh-card-radius (12px), --dsh-card-bg (bg-layer-2)
+   Unified card surface: same recipe as usage stat cards and dsh-layout-group. */
 .dshmcp-instCard {
   min-width: 0; min-height: 160px; box-sizing: border-box;
   display: flex; flex-direction: column; gap: 13px; padding: 16px;
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
   border-radius: var(--dsh-layout-radius-user-lg, 12px);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 2%, transparent), transparent);
+  background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03));
   transition: border-color 120ms var(--ds-ease-in-out, ease), transform 120ms var(--ds-ease-in-out, ease);
 }
 /* --dsh-card-border-hover (14%) */
@@ -1053,7 +1052,7 @@ html[data-dsh-layout-scrollbar='hidden'] .dshmcp-textarea::-webkit-scrollbar { d
   padding: 16px;
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
   border-radius: var(--dsh-layout-radius-user-lg, 12px);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 2%, transparent), transparent);
+  background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03));
   transition: border-color 120ms var(--ds-ease-in-out, ease), transform 120ms var(--ds-ease-in-out, ease);
 }
 /* --dsh-card-border-hover (14%) */
