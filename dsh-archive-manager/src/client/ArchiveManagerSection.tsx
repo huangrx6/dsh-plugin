@@ -1,30 +1,35 @@
 /**
- * Archive manager workspace section — master-detail list form
- * (macOS Settings / Linear style, "quiet structure").
+ * Archive manager workspace section — Finder / Linear master-detail.
  *
  * Structure:
- *   .dam-shell  grid 300px | 1fr (single column under 768px)
- *     .dam-list    sticky group container: 34px search field on top,
- *                  compact 44px rows below — title 13px/600 over an
- *                  11px meta line (message count + relative time), with
- *                  an inline 24px restore icon button on the trailing
- *                  edge (revealed on hover / selection).
- *     .dam-detail  action bar (restore = primary, exports = secondary,
- *                  delete = danger), then a "session summary" group of
- *                  label-left / value-right rows (ID / updated / payload
- *                  size / messages), then a "timeline" group where each
- *                  event is one row: 24px role icon base, event name
- *                  12px/600 + 11px time, single-line 12px excerpt, rows
- *                  separated by hairlines and stitched by a 2px
- *                  label-primary 10% vertical thread.
+ *   .dam-section  column: topbar, then shell (or the full blank state)
+ *     .dam-topbar  34px search field (flex) + "export all zip" secondary
+ *                  button pinned right; no chrome of its own — the panes
+ *                  below are the containers, the bar is whitespace.
+ *     .dam-shell   height-bounded flex row, independent scrolling panes
+ *       .dam-list  300px fixed column: rows grouped by 今天 / 昨天 / 更早
+ *                  (10px uppercase group heads). Each row is title 13px/600
+ *                  over an 11px meta line (relative time · message count).
+ *                  Selection = accent 2px inset bar + 4% fill; hover 3%.
+ *       .dam-detail flex 1 column: header (title 16px/600 + meta row),
+ *                  scrollable message timeline (user left-aligned,
+ *                  assistant/tool indented, monospace text, 2-line clamp
+ *                  with click-to-expand), and a bottom action bar that
+ *                  always sits at the panel's foot: restore (solid
+ *                  primary) + export MD + export zip, delete as a quiet
+ *                  icon-only danger toggle at the far end.
+ *     .dam-blank   no archives at all: full-area dashed frame, title +
+ *                  explanation + how archives get created.
  *
  * Data flow (props contract unchanged — host injects `api` and `t`):
  *  - List     : host `archive.list`   → summaries (id, title, updatedAt, messageCount)
  *  - Detail   : host `archive.info`   → raw events for the selected session
  *  - Restore  : host `archive.restore` → workspaceRegistry.setState
  *  - Export md: host `archive.export-md` → Blob download
- *  - Export zip: client `fetch('/api/session.export?sessionId=…')` (trusted-host)
- *  - Delete   : no host API — the danger button discloses an inline note
+ *  - Export zip (one): client `window.open('/api/session.export?…')`
+ *  - Export zip (all): sequential client fetches of the same trusted-host
+ *               endpoint, one Blob download per archive (api.ts untouched)
+ *  - Delete   : no host API — the danger toggle discloses an inline note
  *               with the session directory path + a copy action.
  */
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
@@ -49,6 +54,11 @@ interface DetailState {
 interface ToastState {
   readonly text: string
   readonly kind: 'ok' | 'error'
+}
+
+interface ListGroup {
+  readonly key: 'today' | 'yesterday' | 'earlier'
+  readonly items: readonly ArchivedSummary[]
 }
 
 interface UserMessageLike { role?: string; content?: readonly { type?: string; text?: string }[] }
@@ -108,21 +118,23 @@ function formatShort(value: number | string | undefined): string {
   return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-function relativeTime(value: number | string | undefined, now: number): string {
+/** Localized relative time for the list meta line ("5 分钟前"). Beyond a
+ *  week it degrades to the absolute `MM-DD HH:mm` form. */
+function relativeTime(value: number | string | undefined, now: number, t: Translate): string {
   if (value === undefined) return ''
-  const t = typeof value === 'number' ? value : Date.parse(value)
-  if (Number.isNaN(t)) return ''
-  const diff = (now - t) / 1000
-  if (diff < 60) return 'just now'
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
-  if (diff < 86400 * 7) return `${Math.floor(diff / 86400)}d ago`
-  return formatShort(t)
+  const ts = typeof value === 'number' ? value : Date.parse(value)
+  if (Number.isNaN(ts)) return ''
+  const diff = (now - ts) / 1000
+  if (diff < 60) return t('relNow')
+  if (diff < 3600) return t('relMin').replace('{n}', String(Math.floor(diff / 60)))
+  if (diff < 86400) return t('relHour').replace('{n}', String(Math.floor(diff / 3600)))
+  if (diff < 86400 * 7) return t('relDay').replace('{n}', String(Math.floor(diff / 86400)))
+  return formatShort(ts)
 }
 
 /** Human-readable size of the raw event payload (JSON byte estimate).
  *  Big sessions never stringify in full — past ~400 events a sample of
- *  the first 200 extrapolates, so the size row stays cheap at any scale. */
+ *  the first 200 extrapolates, so the size value stays cheap at any scale. */
 function estimateSize(events: readonly unknown[]): string {
   let bytes = 0
   try {
@@ -162,30 +174,23 @@ function displayTitle(raw: string): string {
   return raw
 }
 
-const GLYPHS: Readonly<Record<Exclude<EventKind, 'other'>, string>> = {
-  user: 'U',
-  assistant: 'A',
-  toolCall: 'T',
-  toolResult: 'R',
-}
-
 const ICON_RESTORE = <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 7.5a4.5 4.5 0 1 1 1.318 3.182M3.5 11V7.5H7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
 const ICON_MD = <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 2.5h10A.5.5 0 0 1 13.5 3v10a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5Z" stroke="currentColor" strokeWidth="1.2"/><path d="M5 11.5V5l2.2 3 2.3-3v6.5M10.5 5.5v5h.5M11.5 8h-1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
 const ICON_ZIP = <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5 2.5h5l2.5 2.5V13a.5.5 0 0 1-.5.5H5a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/><path d="M10 2.5V5h2.5" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/></svg>
 const ICON_SEARCH = <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="4.2" stroke="currentColor" strokeWidth="1.3"/><path d="m10.4 10.4 3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
 const ICON_TRASH = <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.8 4.2h10.4M6.2 4V2.8h3.6V4M4.2 4.2l.6 9h6.4l.6-9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+const ICON_INBOX = <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 8.5 6 4h12l2 4.5M4 8.5v10A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-10M4 8.5h4l1.5 3h5L16 8.5h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
 
-/** One timeline row, memoized: a 30s clock tick or a toast must not
+/** One timeline message, memoized: a 30s clock tick or a toast must not
  *  re-render thousands of rows — the entry objects come from a useMemo
  *  so their identities are stable across unrelated state changes.
- *  Long excerpts are clamped to one line; clicking the text expands it
- *  in place (click again to collapse) — truncated content stays
- *  reachable without widening every row. */
+ *  The text clamps to two lines; clicking it expands in place (click
+ *  again to collapse) — truncated content stays reachable without
+ *  widening every row. */
 const TimelineRow = memo(function TimelineRow({
-  ev, idx, t,
+  ev, t,
 }: {
   readonly ev: ReturnType<typeof describeEvent>
-  readonly idx: number
   readonly t: (key: ArchiveManagerLocaleKey) => string
 }): JSX.Element {
   const [open, setOpen] = useState(false)
@@ -194,23 +199,19 @@ const TimelineRow = memo(function TimelineRow({
   const name = ev.kind === 'toolCall' && ev.toolName !== '' ? ev.toolName : roleLabel
   const excerpt = ev.kind === 'toolCall' ? ev.toolArgs : ev.text
   const time = formatShort(ev.time)
-  const clickable = excerpt !== '' && excerpt.length > 80
+  const clickable = excerpt !== '' && excerpt.length > 160
   return (
-    <div className={`dam-tl-row dam-tl-row--${kind}`}>
-      <span className="dam-tl-icon" aria-hidden="true">{GLYPHS[kind]}</span>
-      <div className="dam-tl-main">
-        <div className="dam-tl-head">
-          <span className="dam-tl-dot" aria-hidden="true" />
-          <span className="dam-tl-name">{name}</span>
-          {time !== '' ? <span className="dam-tl-time">{time}</span> : null}
-        </div>
-        <div
-          className={`dam-tl-text${clickable ? ' is-clickable' : ''}${open ? ' is-open' : ''}`}
-          title={clickable && !open ? excerpt : undefined}
-          onClick={clickable ? () => { setOpen(v => !v) } : undefined}
-        >
-          {excerpt !== '' ? excerpt : '—'}
-        </div>
+    <div className={`dam-msg dam-msg--${kind}`}>
+      <div className="dam-msg-head">
+        <span className="dam-msg-role">{name}</span>
+        {time !== '' ? <span className="dam-msg-time">{time}</span> : null}
+      </div>
+      <div
+        className={`dam-msg-text${clickable ? ' is-clickable' : ''}${open ? ' is-open' : ''}`}
+        title={clickable && !open ? excerpt : undefined}
+        onClick={clickable ? () => { setOpen(v => !v) } : undefined}
+      >
+        {excerpt !== '' ? excerpt : '—'}
       </div>
     </div>
   )
@@ -229,6 +230,7 @@ export function ArchiveManagerSection({ api, t }: Props): JSX.Element {
   const [toast, setToast] = useState<ToastState | undefined>()
   const [query, setQuery] = useState('')
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [exportingAll, setExportingAll] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -257,6 +259,10 @@ export function ArchiveManagerSection({ api, t }: Props): JSX.Element {
     return () => window.clearInterval(id)
   }, [])
 
+  // Switching sessions rewinds the timeline to the top.
+  const timelineRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => { timelineRef.current?.scrollTo({ top: 0 }) }, [selectedId])
+
   function showToast(text: string, kind: 'ok' | 'error' = 'ok'): void {
     setToast({ text, kind })
     window.setTimeout(() => setToast(undefined), 3200)
@@ -264,7 +270,7 @@ export function ArchiveManagerSection({ api, t }: Props): JSX.Element {
 
   function select(id: string): void {
     setDeleteOpen(false)
-    setSelectedId(cur => (cur === id ? undefined : id))
+    setSelectedId(id)
   }
 
   async function onRestore(id: string): Promise<void> {
@@ -286,7 +292,7 @@ export function ArchiveManagerSection({ api, t }: Props): JSX.Element {
     try {
       const result = await api.exportMd(selectedId)
       downloadBlob(new Blob([result.markdown], { type: 'text/markdown;charset=utf-8' }), `${selectedId}.md`)
-      showToast(t('exportMd') + ' ✓')
+      showToast(t('exportMdDone'))
     } catch (err) {
       showToast(t('exportFailed') + ' ' + (err instanceof Error ? err.message : String(err)), 'error')
     }
@@ -296,6 +302,31 @@ export function ArchiveManagerSection({ api, t }: Props): JSX.Element {
     if (selectedId === undefined) return
     const url = `${window.location.origin}/api/session.export?sessionId=${encodeURIComponent(selectedId)}`
     window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
+  /** Export every archived session as its own zip via the trusted-host
+   *  endpoint. Sequential fetch → Blob downloads (spaced so the browser
+   *  registers each one); api.ts stays untouched. */
+  async function onExportAll(): Promise<void> {
+    if (exportingAll || items.length === 0) return
+    setExportingAll(true)
+    let done = 0
+    let failed = 0
+    for (const item of items) {
+      try {
+        const res = await fetch(`/api/session.export?sessionId=${encodeURIComponent(item.id)}`)
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        downloadBlob(await res.blob(), `${item.id}.zip`)
+        done++
+      } catch {
+        failed++
+      }
+      await new Promise(resolve => setTimeout(resolve, 120))
+    }
+    setExportingAll(false)
+    if (failed === 0) showToast(`${done} ${t('exportAllDone')}`)
+    else if (done === 0) showToast(`${t('exportAllFailed')} 0/${items.length}`, 'error')
+    else showToast(`${t('exportAllFailed')} ${done}/${items.length}`, 'error')
   }
 
   async function onCopyPath(id: string): Promise<void> {
@@ -320,6 +351,28 @@ export function ArchiveManagerSection({ api, t }: Props): JSX.Element {
       return hay.includes(q)
     })
   }, [items, query])
+
+  // Rows grouped by recency (今天 / 昨天 / 更早), newest first inside each.
+  const groups = useMemo<ListGroup[]>(() => {
+    const dayStart = new Date(now)
+    dayStart.setHours(0, 0, 0, 0)
+    const todayStart = dayStart.getTime()
+    const yesterdayStart = todayStart - 86_400_000
+    const today: ArchivedSummary[] = []
+    const yesterday: ArchivedSummary[] = []
+    const earlier: ArchivedSummary[] = []
+    for (const item of [...visibleItems].sort((a, b) => b.updatedAt - a.updatedAt)) {
+      if (item.updatedAt >= todayStart) today.push(item)
+      else if (item.updatedAt >= yesterdayStart) yesterday.push(item)
+      else earlier.push(item)
+    }
+    const out: ListGroup[] = [
+      { key: 'today', items: today },
+      { key: 'yesterday', items: yesterday },
+      { key: 'earlier', items: earlier },
+    ]
+    return out.filter(group => group.items.length > 0)
+  }, [visibleItems, now])
 
   // Timeline entries: pre-process the raw events so render is a single map.
   const timeline = useMemo(() => {
@@ -351,7 +404,10 @@ export function ArchiveManagerSection({ api, t }: Props): JSX.Element {
     [detail?.info],
   )
 
+  const noArchives = items.length === 0 && loadError === undefined
   const emptyListText = query.trim() === '' ? t('empty') : t('noResults')
+  const groupLabel = (key: ListGroup['key']): string =>
+    key === 'today' ? t('groupToday') : key === 'yesterday' ? t('groupYesterday') : t('groupEarlier')
 
   return (
     <div className="dam-section">
@@ -359,168 +415,177 @@ export function ArchiveManagerSection({ api, t }: Props): JSX.Element {
         <p className="dam-note dam-note--error" role="alert">{t('loadFailed')} {loadError}</p>
       ) : null}
 
-      <div className="dam-shell">
-        {/* ── master: session list ── */}
-        <aside className="dam-list">
-          <div className="dam-search">
-            {ICON_SEARCH}
-            <input
-              className="dam-search-input"
-              type="search"
-              value={query}
-              placeholder={t('searchPlaceholder')}
-              aria-label={t('searchPlaceholder')}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-            <span className="dam-search-count" aria-hidden="true">{visibleItems.length}</span>
-          </div>
-          <div className="dam-list-scroll" role="listbox" aria-label={t('listHeader')}>
-            {visibleItems.length === 0 && loadError === undefined ? (
-              <div className="dam-empty">{emptyListText}</div>
-            ) : null}
-            {visibleItems.map((item) => {
-              const active = item.id === selectedId
-              return (
-                <div
-                  key={item.id}
-                  role="option"
-                  aria-selected={active}
-                  tabIndex={0}
-                  className={`dam-row${active ? ' dam-row--active' : ''}`}
-                  onClick={() => select(item.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      select(item.id)
-                    }
-                  }}
-                >
-                  <span className="dam-row-main">
-                    <span className="dam-row-title">{displayTitle(item.title || item.id)}</span>
-                    <span className="dam-row-meta">
-                      <span>{item.messageCount} {t('messageCount')}</span>
-                      <span className="dam-row-meta-dot" aria-hidden="true">·</span>
-                      <span>{relativeTime(item.updatedAt, now)}</span>
-                    </span>
-                  </span>
-                  <button
-                    type="button"
-                    className="dam-icon-btn"
-                    title={t('restore')}
-                    aria-label={t('restore')}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      void onRestore(item.id)
-                    }}
-                  >
-                    {ICON_RESTORE}
-                  </button>
-                </div>
-              )
-            })}
-          </div>
-        </aside>
-
-        {/* ── detail ── */}
-        <section className="dam-detail">
-          {selectedInfo === undefined ? (
-            <div className="dam-detail-empty">
-              <div>{t('noSelection')}</div>
-              <div className="dam-detail-empty-hint">{t('selectPrompt')}</div>
+      {noArchives ? (
+        /* ── blank state: no archives at all ── */
+        <div className="dam-blank">
+          <span className="dam-blank-icon" aria-hidden="true">{ICON_INBOX}</span>
+          <div className="dam-blank-title">{t('emptyTitle')}</div>
+          <p className="dam-blank-text">{t('empty')}</p>
+          <p className="dam-blank-hint">{t('selectPrompt')}</p>
+        </div>
+      ) : (
+        <>
+          {/* ── topbar: search + export all ── */}
+          <div className="dam-topbar">
+            <div className="dam-search">
+              {ICON_SEARCH}
+              <input
+                className="dam-search-input"
+                type="search"
+                value={query}
+                placeholder={t('searchPlaceholder')}
+                aria-label={t('searchPlaceholder')}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+              <span className="dam-search-count" aria-hidden="true">{visibleItems.length}</span>
             </div>
-          ) : (
-            <>
-              {/* action bar */}
-              <div className="dam-toolbar">
-                <span className="dam-toolbar-name">{displayTitle(selectedInfo.title || selectedInfo.id)}</span>
-                <div className="dam-toolbar-actions">
-                  <button type="button" className="dam-btn dam-btn--primary" onClick={() => void onRestore(selectedInfo.id)}>
-                    {ICON_RESTORE}<span>{t('restore')}</span>
-                  </button>
-                  <button type="button" className="dam-btn" onClick={() => void onExportMd()}>
-                    {ICON_MD}<span>{t('exportMd')}</span>
-                  </button>
-                  <button type="button" className="dam-btn" onClick={onExportZip}>
-                    {ICON_ZIP}<span>{t('exportZip')}</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="dam-btn dam-btn--danger"
-                    aria-expanded={deleteOpen}
-                    onClick={() => setDeleteOpen(cur => !cur)}
-                  >
-                    {ICON_TRASH}<span>{t('delete')}</span>
-                  </button>
-                </div>
+            <div className="dam-topbar-actions">
+              <button
+                type="button"
+                className="dam-btn"
+                disabled={exportingAll || items.length === 0}
+                onClick={() => { void onExportAll() }}
+              >
+                {ICON_ZIP}<span>{exportingAll ? t('exportAllRunning') : t('exportAllZip')}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* ── master-detail shell ── */}
+          <div className="dam-shell">
+            {/* master: session list */}
+            <aside className="dam-list">
+              <div className="dam-list-scroll" role="listbox" aria-label={t('listHeader')}>
+                {visibleItems.length === 0 ? (
+                  <div className="dam-empty">{emptyListText}</div>
+                ) : null}
+                {groups.map((group) => (
+                  <div key={group.key} role="group" aria-label={groupLabel(group.key)}>
+                    <div className="dam-lgroup-head" aria-hidden="true">{groupLabel(group.key)}</div>
+                    {group.items.map((item) => {
+                      const active = item.id === selectedId
+                      const title = displayTitle(item.title || item.id)
+                      return (
+                        <div
+                          key={item.id}
+                          role="option"
+                          aria-selected={active}
+                          tabIndex={0}
+                          className={`dam-row${active ? ' dam-row--active' : ''}`}
+                          title={title}
+                          onClick={() => select(item.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault()
+                              select(item.id)
+                            }
+                          }}
+                        >
+                          <span className="dam-row-title">{title}</span>
+                          <span className="dam-row-meta">
+                            <span>{relativeTime(item.updatedAt, now, t)}</span>
+                            <span className="dam-dot" aria-hidden="true">·</span>
+                            <span>{item.messageCount} {t('messageCount')}</span>
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ))}
               </div>
+            </aside>
 
-              {deleteOpen ? (
-                <div className="dam-delete" role="note">
-                  <span className="dam-delete-text">{t('deleteNote')}</span>
-                  <code className="dam-delete-path">~/.dsh/sessions/{selectedInfo.id}/</code>
-                  <button type="button" className="dam-btn dam-btn--sm" onClick={() => void onCopyPath(selectedInfo.id)}>
-                    {t('copyPath')}
-                  </button>
+            {/* detail: header / timeline / action bar */}
+            <section className="dam-detail">
+              {selectedInfo === undefined ? (
+                <div className="dam-detail-empty">
+                  <span className="dam-detail-empty-icon" aria-hidden="true">{ICON_INBOX}</span>
+                  <div className="dam-detail-empty-title">{t('noSelection')}</div>
+                  <div className="dam-detail-empty-hint">{t('selectPrompt')}</div>
                 </div>
-              ) : null}
+              ) : (
+                <>
+                  <header className="dam-detail-head">
+                    <h2 className="dam-detail-title" title={displayTitle(selectedInfo.title || selectedInfo.id)}>
+                      {displayTitle(selectedInfo.title || selectedInfo.id)}
+                    </h2>
+                    <div className="dam-detail-meta">
+                      <span>{formatFull(selectedInfo.updatedAt)}</span>
+                      <span className="dam-dot" aria-hidden="true">·</span>
+                      <span>{selectedInfo.messageCount} {t('messageCount')}</span>
+                      <span className="dam-dot" aria-hidden="true">·</span>
+                      <span>{payloadSize}</span>
+                      <span className="dam-dot" aria-hidden="true">·</span>
+                      <span className="dam-detail-meta-id">
+                        {t('sessionId')} <code title={selectedInfo.id}>{selectedInfo.id}</code>
+                      </span>
+                    </div>
+                  </header>
 
-              {/* session summary group */}
-              <div className="dam-group">
-                <div className="dam-group-label">{t('sessionInfo')}</div>
-                <div className="dam-kv">
-                  <span className="dam-kv-key">{t('sessionId')}</span>
-                  <code className="dam-kv-val dam-kv-val--code">{selectedInfo.id}</code>
-                </div>
-                <div className="dam-kv">
-                  <span className="dam-kv-key">{t('updatedAtLabel')}</span>
-                  <span className="dam-kv-val">{formatFull(selectedInfo.updatedAt)}</span>
-                </div>
-                <div className="dam-kv">
-                  <span className="dam-kv-key">{t('sizeLabel')}</span>
-                  <span className="dam-kv-val">{payloadSize}</span>
-                </div>
-                <div className="dam-kv">
-                  <span className="dam-kv-key">{t('messagesLabel')}</span>
-                  <span className="dam-kv-val">{selectedInfo.messageCount} {t('messageCount')}</span>
-                </div>
-              </div>
+                  <div className="dam-timeline" ref={timelineRef}>
+                    {detail?.loading === true ? (
+                      <div className="dam-timeline-state">{t('loading')}</div>
+                    ) : null}
+                    {detail?.error !== undefined ? (
+                      <div className="dam-timeline-state dam-timeline-state--error" role="alert">{detail.error}</div>
+                    ) : null}
+                    {detail?.loading !== true && detail?.error === undefined && timeline.length === 0 ? (
+                      <div className="dam-timeline-state">{t('eventsEmpty')}</div>
+                    ) : null}
+                    {timeline.slice(0, visibleCount).map((entry) => (
+                      <TimelineRow key={entry.idx} ev={entry.ev} t={t} />
+                    ))}
+                    {hasMore ? (
+                      <div ref={sentinelRef} className="dam-loadmore">
+                        <button
+                          type="button"
+                          className="dam-loadmore-btn"
+                          onClick={() => { setVisibleCount(count => count + TIMELINE_PAGE) }}
+                        >
+                          {t('showMore')} · {visibleCount}/{timeline.length}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
 
-              {/* timeline group */}
-              <div className="dam-group">
-                <div className="dam-group-label">
-                  <span>{t('timelineLabel')}</span>
-                  <span className="dam-group-count">{timeline.length} {t('eventCount')}</span>
-                </div>
-                <div className="dam-tl">
-                  {detail?.loading === true ? (
-                    <div className="dam-tl-state">{t('loading')}</div>
-                  ) : null}
-                  {detail?.error !== undefined ? (
-                    <div className="dam-tl-state dam-tl-state--error" role="alert">{detail.error}</div>
-                  ) : null}
-                  {detail?.loading !== true && detail?.error === undefined && timeline.length === 0 ? (
-                    <div className="dam-tl-state">{t('eventsEmpty')}</div>
-                  ) : null}
-                  {timeline.slice(0, visibleCount).map((entry) => (
-                    <TimelineRow key={entry.idx} ev={entry.ev} idx={entry.idx} t={t} />
-                  ))}
-                  {hasMore ? (
-                    <div ref={sentinelRef} className="dam-tl-more">
-                      <button
-                        type="button"
-                        className="dam-tl-more-btn"
-                        onClick={() => { setVisibleCount(count => count + TIMELINE_PAGE) }}
-                      >
-                        {t('showMore')} · {visibleCount}/{timeline.length}
+                  {deleteOpen ? (
+                    <div className="dam-delete" role="note">
+                      <span className="dam-delete-text">{t('deleteNote')}</span>
+                      <code className="dam-delete-path">~/.dsh/sessions/{selectedInfo.id}/</code>
+                      <button type="button" className="dam-btn dam-btn--sm" onClick={() => { void onCopyPath(selectedInfo.id) }}>
+                        {t('copyPath')}
                       </button>
                     </div>
                   ) : null}
-                </div>
-              </div>
-            </>
-          )}
-        </section>
-      </div>
+
+                  <footer className="dam-detail-actions">
+                    <button type="button" className="dam-btn dam-btn--primary" onClick={() => { void onRestore(selectedInfo.id) }}>
+                      {ICON_RESTORE}<span>{t('restore')}</span>
+                    </button>
+                    <button type="button" className="dam-btn" onClick={() => { void onExportMd() }}>
+                      {ICON_MD}<span>{t('exportMd')}</span>
+                    </button>
+                    <button type="button" className="dam-btn" onClick={onExportZip}>
+                      {ICON_ZIP}<span>{t('exportZip')}</span>
+                    </button>
+                    <span className="dam-detail-actions-gap" aria-hidden="true" />
+                    <button
+                      type="button"
+                      className="dam-btn dam-btn--danger dam-btn--icon"
+                      title={t('delete')}
+                      aria-label={t('delete')}
+                      aria-expanded={deleteOpen}
+                      onClick={() => setDeleteOpen(cur => !cur)}
+                    >
+                      {ICON_TRASH}
+                    </button>
+                  </footer>
+                </>
+              )}
+            </section>
+          </div>
+        </>
+      )}
 
       {toast !== undefined ? (
         <div className={`dam-toast${toast.kind === 'error' ? ' dam-toast--error' : ''}`}>{toast.text}</div>

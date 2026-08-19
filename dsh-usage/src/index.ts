@@ -153,15 +153,20 @@ async function queryGlm(entry: UsageEntry): Promise<UsageQueryResult> {
   return out
 }
 
-/** MiniMax Token Plan usage: one unified usage bar from a configurable endpoint. */
+/**
+ * MiniMax Token Plan usage — GET /v1/token_plan/remains.
+ *
+ * Response shape (unlike GLM, no data.limits[]): model_remains[] buckets,
+ * one per plan quota. The shared chat quota is model_name 'general'; each
+ * bucket carries a rolling 5h window (current_interval_*) and a weekly
+ * window (current_weekly_*). MiniMax answers HTTP 200 even for rejected
+ * credentials, so base_resp.status_code is the real success signal.
+ */
 async function queryMinimax(entry: UsageEntry): Promise<UsageQueryResult> {
   const key = resolveSecret(entry.apiKey)?.trim()
-  const endpoint = entry.endpoint?.trim() ?? ''
+  const endpoint = entry.endpoint?.trim() || 'https://www.minimaxi.com/v1/token_plan/remains'
   if (key === undefined || key === '') {
     return { id: entry.id, label: entry.label, ok: false, message: '未配置 API key' }
-  }
-  if (endpoint === '') {
-    return { id: entry.id, label: entry.label, ok: false, message: 'MiniMax 用量端点未配置（官方文档未公开此 URL，请在面板里填写）' }
   }
   const response = await fetch(endpoint, {
     headers: { Authorization: `Bearer ${key}` },
@@ -171,24 +176,34 @@ async function queryMinimax(entry: UsageEntry): Promise<UsageQueryResult> {
     return { id: entry.id, label: entry.label, ok: false, message: `HTTP ${response.status}` }
   }
   const json = (await response.json()) as {
-    data?: { limits?: Array<{ type?: string; percentage?: number; currentValue?: number; remaining?: number }> }
+    model_remains?: Array<{
+      model_name?: string
+      current_interval_remaining_percent?: number
+      current_weekly_remaining_percent?: number
+    }>
+    base_resp?: { status_code?: number; status_msg?: string }
   }
-  const limits = json.data?.limits ?? []
-  const first = limits[0]
-  if (first === undefined) {
-    return { id: entry.id, label: entry.label, ok: false, message: '响应中无 limits' }
+  if (json.base_resp?.status_code !== 0) {
+    return { id: entry.id, label: entry.label, ok: false, message: json.base_resp?.status_msg || '接口返回错误' }
   }
-  return {
-    id: entry.id,
-    label: entry.label,
-    ok: true,
-    bars: [bar({
-      label: '套餐用量',
-      remainingPercent: Math.max(0, 100 - (first.percentage ?? 0)),
-      remaining: first.remaining,
-      total: first.currentValue !== undefined && first.remaining !== undefined ? first.currentValue + first.remaining : undefined,
-    })],
+  const buckets = json.model_remains ?? []
+  const bucket =
+    buckets.find((b) => b.model_name === 'general') ??
+    buckets.find((b) => b.current_interval_remaining_percent !== undefined || b.current_weekly_remaining_percent !== undefined)
+  if (bucket === undefined) {
+    return { id: entry.id, label: entry.label, ok: false, message: '响应中无用量数据' }
   }
+  const bars: UsageBar[] = []
+  if (bucket.current_interval_remaining_percent !== undefined) {
+    bars.push(bar({ label: '5 小时', remainingPercent: bucket.current_interval_remaining_percent }))
+  }
+  if (bucket.current_weekly_remaining_percent !== undefined) {
+    bars.push(bar({ label: '每周', remainingPercent: bucket.current_weekly_remaining_percent }))
+  }
+  if (bars.length === 0) {
+    return { id: entry.id, label: entry.label, ok: false, message: '响应中无剩余百分比' }
+  }
+  return { id: entry.id, label: entry.label, ok: true, bars }
 }
 
 /**
