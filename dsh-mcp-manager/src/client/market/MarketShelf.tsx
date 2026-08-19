@@ -53,6 +53,7 @@ import {
 } from "./discover.ts";
 import type { MarketItem, MarketItemKind, MarketSource } from "./types.ts";
 import { loadMarketView, saveMarketView, type MarketView } from "../preferences.ts";
+import { slicePage, useProgressiveReveal } from "../pagination.ts";
 import { versionsDiffer } from "./version.ts";
 import { hueStyle } from "../hue.ts";
 
@@ -151,7 +152,8 @@ export type MarketUiLocaleKey =
   | "discoverRateLimited"
   | "discoverInvalidJson"
   | "discoverInvalid"
-  | "discoverInvalidUrl";
+  | "discoverInvalidUrl"
+  | "showMore";
 
 /** Fill a "{placeholder}" template from the locale dictionary. */
 function fill(template: string, params: Record<string, string>): string {
@@ -426,6 +428,18 @@ export function MarketShelf({
     .map((item) => renderItem(item))
     .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 
+  /**
+   * Progressive rendering for the rows / cards: first PAGE_SIZE items
+   * mount, the sentinel below the grid grows the window, and any search /
+   * source / view change rewinds to the first batch. The empty state and
+   * per-item filtering above still see the full list.
+   */
+  const reveal = useProgressiveReveal(
+    rowsData.length,
+    `${view}:${activeSourceId}:${query}`,
+  );
+  const pagedRows = slicePage(rowsData, reveal.visibleCount);
+
   return (
     <div className="dshmcp-mkt">
       <div className="dshmcp-mkt-bar">
@@ -559,7 +573,7 @@ export function MarketShelf({
         </div>
       ) : view === "card" ? (
         <ul className="dshmcp-mkt-cards">
-          {rowsData.map((entry) => (
+          {pagedRows.map((entry) => (
             <MarketCard
               key={entry.key}
               item={entry.item}
@@ -589,7 +603,7 @@ export function MarketShelf({
         </ul>
       ) : (
         <ul className="dshmcp-mkt-list">
-          {rowsData.map((entry) => (
+          {pagedRows.map((entry) => (
             <li key={entry.key} className="dshmcp-mkt-row">
               <MarketRow
                 item={entry.item}
@@ -619,6 +633,13 @@ export function MarketShelf({
           ))}
         </ul>
       )}
+      {reveal.hasMore ? (
+        <div ref={reveal.sentinelRef} className="dshmcp-more">
+          <button type="button" className="dshmcp-moreBtn" onClick={reveal.showMore}>
+            {t("showMore")} · {pagedRows.length}/{rowsData.length}
+          </button>
+        </div>
+      ) : null}
       {confirmSource === undefined ? null : (
         <ModalShell
           open

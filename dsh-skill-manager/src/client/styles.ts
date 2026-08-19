@@ -462,6 +462,9 @@ button.dshm-mkt-rowMain:focus-visible { outline: 2px solid var(--dsw-alias-state
 .dshm-mkt-badgeDot { width: 6px; height: 6px; border-radius: 999px; background: var(--dsw-alias-state-success-primary, #4caf50); }
 
 /* empty / error (grouped quiet surfaces, MCP grammar) */
+.dshm-more { display: flex; justify-content: center; padding: 10px 0 4px; }
+.dshm-moreBtn { display: inline-flex; align-items: center; gap: 6px; min-height: 26px; padding: 3px 14px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); border-radius: var(--dsh-layout-radius-user, 8px); background: transparent; color: var(--dsw-alias-label-secondary, #b3b3b8); font: inherit; font-size: 12px; cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
+.dshm-moreBtn:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
 .dshm-mkt-empty { text-align: center; padding: 40px 16px; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 12px; line-height: 18px; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
 .dshm-mkt-error { color: var(--dsw-alias-state-error-primary, #ef5350); font-size: 12px; line-height: 18px; padding: 8px 12px; background: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 6%, transparent); border: 1px solid color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 18%, transparent); border-radius: var(--dsh-layout-radius-user, 8px); }
 
@@ -643,14 +646,21 @@ html[data-dsh-layout-scrollbar='hidden'] .dshm-tableWrap::-webkit-scrollbar { di
   .dshm-instToolbar { flex-wrap: wrap; }
   .dshm-instToolbar .dshm-search { min-width: 0; }
   /* segmented controls (mode tabs, import mode, preview switch) scroll
-     inside their track instead of overflowing it */
+     inside their track instead of overflowing it — buttons stay one-line
+     so the track scrolls rather than re-wrapping the label */
   .dshm-seg { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
   .dshm-seg::-webkit-scrollbar { display: none; }
+  .dshm-seg button { white-space: nowrap; }
   .dshm-wsHead { flex-wrap: wrap; }
   /* card grids: the minimum track can never exceed the container */
   .dshm-mkt-cards { grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr)); }
   .dshm-instCards { grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr)); }
   .dshm-mkt-card, .dshm-instCard { padding: 14px; gap: 10px; }
+  /* narrow cards: the action cluster (badge + 详情 / 更新 / 移除) wraps
+     under the meta instead of pushing past the card edge, and a long
+     semver capsule caps inside the head row */
+  .dshm-mkt-cardBar, .dshm-instCardBar { flex-wrap: wrap; }
+  .dshm-instCardVer, .dshm-mkt-cardVer { max-width: 60%; overflow: hidden; }
   /* row sides wrap their 详情 / badge / action cluster on narrow rails */
   .dshm-mkt-rowSide { flex-wrap: wrap; justify-content: flex-end; }
   .dshm-instRowSide { flex-wrap: wrap; justify-content: flex-end; }
@@ -670,9 +680,22 @@ html[data-dsh-layout-scrollbar='hidden'] .dshm-tableWrap::-webkit-scrollbar { di
   .dshm-heroDetailsBody { min-width: 0; overflow-x: auto; }
   /* long inline content: break or scroll locally, never push the page */
   .dshm-previewPath { max-width: 100%; }
+  .dshm-previewMeta { min-width: min(160px, 100%); }
   .dshm-md :is(table, pre) { display: block; max-width: 100%; overflow-x: auto; }
+  .dshm-md :is(img, video) { max-width: 100%; height: auto; }
+  .dshm-callout { overflow-wrap: anywhere; }
   .dshm-mkt-error { overflow-wrap: anywhere; }
   .dshm-failure { flex-wrap: wrap; }
+  /* breathing room on phones: rows and button clusters stop hugging */
+  .dshm-mkt-toolbar > * + * { margin-top: 10px; }
+  .dshm-mkt-tools { gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+  .dshm-instToolbar { gap: 10px; }
+  .dshm-mkt-seg, .dshm-seg { min-height: 38px; }
+  .dshm-mkt-search, .dshm-search { min-height: 38px; }
+  .dshm-mkt-iconBtn, .dshm-iconBtn { width: 36px; height: 36px; }
+  .dshm-instList, .dshm-mkt-list { padding: 8px; }
+  .dshm-instCards, .dshm-mkt-cards { padding: 8px; gap: 10px; }
+
   .dshm-failure p { min-width: 0; overflow-wrap: anywhere; }
   .dshm-resultHead { flex-wrap: wrap; }
   .dshm-resultHead strong { overflow-wrap: anywhere; }

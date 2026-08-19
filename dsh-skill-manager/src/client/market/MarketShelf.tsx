@@ -57,6 +57,7 @@ import {
   saveMarketView,
   type MarketViewMode,
 } from "./view-preference.ts";
+import { LIST_PAGE, slicePage } from "../paging.ts";
 
 export interface MarketShelfProps {
   /** localStorage slot. The launcher owns one; other plugins can pass their own. */
@@ -136,7 +137,8 @@ export type MarketplaceLocaleKey =
   | "discoverRateLimited"
   | "discoverInvalidJson"
   | "discoverInvalid"
-  | "discoverInvalidUrl";
+  | "discoverInvalidUrl"
+  | "showMore";
 
 /** Fill a "{placeholder}" template from the locale dictionary. */
 function fill(template: string, params: Record<string, string>): string {
@@ -361,6 +363,40 @@ export function MarketShelf({
     );
   }, [snapshots, activeSourceId, kinds, query]);
 
+  // Batched rendering state: huge manifests never mount thousands of rows
+  // / cards at once — the first LIST_PAGE render, then an intersection
+  // sentinel loads the next batch as the user scrolls (button fallback).
+  // Search / source switch / refresh / view switch reset to the first page.
+  const [visibleCount, setVisibleCount] = useState(LIST_PAGE);
+  useEffect(() => {
+    setVisibleCount(LIST_PAGE);
+  }, [activeItems, view]);
+  const visibleItems = useMemo(
+    () => slicePage(activeItems, visibleCount),
+    [activeItems, visibleCount],
+  );
+  const hasMore = visibleCount < activeItems.length;
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (node === null || !hasMore || typeof IntersectionObserver !== "function")
+      return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setVisibleCount((count) => count + LIST_PAGE);
+        }
+      },
+      // The lists ride the page scroll (no capped container), so the
+      // sentinel watches the viewport itself, pre-loading 300px early.
+      { root: null, rootMargin: "300px" },
+    );
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+    };
+  }, [hasMore, visibleCount, activeItems.length]);
+
   const handleInstall = useCallback(
     async (item: MarketItem, source: MarketSource) => {
       if (busyId !== undefined) return;
@@ -442,7 +478,7 @@ export function MarketShelf({
         </div>
       );
     }
-    const shared = activeItems.map((item) => {
+    const shared = visibleItems.map((item) => {
       const source = snapshots.find((snapshot) =>
         (snapshot.items ?? []).includes(item),
       )?.source;
@@ -453,12 +489,64 @@ export function MarketShelf({
       const busy = busyId === key;
       return { item, source, key, installed, updatable, busy };
     });
+    // "Load more" fallback button doubles as the intersection sentinel
+    // target: reaching it (or scrolling within 300px of it) grows the
+    // window by one page.
+    const pager = hasMore ? (
+      <div ref={sentinelRef} className="dshm-more">
+        <button
+          type="button"
+          className="dshm-moreBtn"
+          onClick={() => {
+            setVisibleCount((count) => count + LIST_PAGE);
+          }}
+        >
+          {translate("showMore")} · {visibleCount}/{activeItems.length}
+        </button>
+      </div>
+    ) : null;
     if (view === "cards") {
       return (
-        <ul className="dshm-mkt-cards">
+        <>
+          <ul className="dshm-mkt-cards">
+            {shared.map((entry) =>
+              entry === null ? null : (
+                <MarketCard
+                  key={entry.key}
+                  item={entry.item}
+                  source={entry.source}
+                  installed={entry.installed}
+                  updatable={entry.updatable}
+                  busy={entry.busy}
+                  removeEnabled={onRemove !== undefined}
+                  translate={translate}
+                  {...(onItemOpen === undefined
+                    ? {}
+                    : {
+                        onOpen: () => {
+                          onItemOpen(entry.item, entry.source);
+                        },
+                      })}
+                  onInstall={() => {
+                    void handleInstall(entry.item, entry.source);
+                  }}
+                  onRemove={() => {
+                    void handleRemoveClick(entry.item, entry.source);
+                  }}
+                />
+              ),
+            )}
+          </ul>
+          {pager}
+        </>
+      );
+    }
+    return (
+      <>
+        <ul className="dshm-mkt-list">
           {shared.map((entry) =>
             entry === null ? null : (
-              <MarketCard
+              <MarketRow
                 key={entry.key}
                 item={entry.item}
                 source={entry.source}
@@ -484,38 +572,8 @@ export function MarketShelf({
             ),
           )}
         </ul>
-      );
-    }
-    return (
-      <ul className="dshm-mkt-list">
-        {shared.map((entry) =>
-          entry === null ? null : (
-            <MarketRow
-              key={entry.key}
-              item={entry.item}
-              source={entry.source}
-              installed={entry.installed}
-              updatable={entry.updatable}
-              busy={entry.busy}
-              removeEnabled={onRemove !== undefined}
-              translate={translate}
-              {...(onItemOpen === undefined
-                ? {}
-                : {
-                    onOpen: () => {
-                      onItemOpen(entry.item, entry.source);
-                    },
-                  })}
-              onInstall={() => {
-                void handleInstall(entry.item, entry.source);
-              }}
-              onRemove={() => {
-                void handleRemoveClick(entry.item, entry.source);
-              }}
-            />
-          ),
-        )}
-      </ul>
+        {pager}
+      </>
     );
   };
 

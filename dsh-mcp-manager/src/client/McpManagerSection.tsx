@@ -9,6 +9,7 @@ import { ModalShell } from './ModalShell.tsx'
 import { cachedToolsToRows, paramRows, paramsHint, type ToolRow } from './ToolList.tsx'
 import { clearCachedTest, loadCachedTest, saveCachedTest } from './tool-cache.ts'
 import { loadInstalledView, saveInstalledView, type InstalledView } from './preferences.ts'
+import { slicePage, useProgressiveReveal } from './pagination.ts'
 import { IconGrid, IconList, IconMcp, IconRemote } from './market/icons.tsx'
 import { hueStyle } from './hue.ts'
 
@@ -92,6 +93,15 @@ export function McpManagerSection({ t, api }: McpManagerSectionProps) {
    * race on every page load).
    */
   const servers = state.status === 'ready' && state.data !== undefined ? state.data.servers : []
+
+  /**
+   * Progressive rendering for the rows / cards: first PAGE_SIZE servers
+   * mount, the sentinel below the list grows the window, and switching
+   * the view (list ⇄ card) rewinds to the first batch. The count badge
+   * above stays the full total.
+   */
+  const reveal = useProgressiveReveal(servers.length, view)
+  const visibleServers = slicePage(servers, reveal.visibleCount)
   useEffect(() => {
     const candidate = servers.find(server =>
       !server.disabled && server.config !== undefined
@@ -240,7 +250,7 @@ export function McpManagerSection({ t, api }: McpManagerSectionProps) {
               : view === 'card'
                 ? (
                   <ul className="dshmcp-instCards">
-                    {servers.map(server => (
+                    {visibleServers.map(server => (
                       <InstalledCard
                         key={server.entryId}
                         t={t}
@@ -258,7 +268,7 @@ export function McpManagerSection({ t, api }: McpManagerSectionProps) {
                 )
                 : (
                   <ul className="dshmcp-list">
-                    {servers.map(server => (
+                    {visibleServers.map(server => (
                       <InstalledRow
                         key={server.entryId}
                         t={t}
@@ -274,6 +284,13 @@ export function McpManagerSection({ t, api }: McpManagerSectionProps) {
                     ))}
                   </ul>
                 )}
+              {reveal.hasMore ? (
+                <div ref={reveal.sentinelRef} className="dshmcp-more">
+                  <button type="button" className="dshmcp-moreBtn" onClick={reveal.showMore}>
+                    {t('showMore')} · {visibleServers.length}/{servers.length}
+                  </button>
+                </div>
+              ) : null}
           </>
         )
         : null}

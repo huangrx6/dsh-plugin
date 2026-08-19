@@ -142,6 +142,7 @@ export const zhCN = {
   marketDetailTags: "标签",
   marketDetailInstallConfig: "安装配置",
   marketDetailNoConfig: "该条目未携带可识别的安装配置。",
+  showMore: "加载更多",
 } as const;
 
 export const enUS: Record<keyof typeof zhCN, string> = {
@@ -289,7 +290,8 @@ export const enUS: Record<keyof typeof zhCN, string> = {
   marketDetailAuthor: "Author",
   marketDetailTags: "Tags",
   marketDetailInstallConfig: "Install config",
-  marketDetailNoConfig: "This entry carries no recognizable install config.",
+  marketDetailNoConfig: "This item carries no recognizable install config.",
+  showMore: "Load more",
 };
 
 export type McpManagerLocaleKey = keyof typeof zhCN;

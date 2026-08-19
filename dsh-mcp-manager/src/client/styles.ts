@@ -938,6 +938,27 @@ html[data-dsh-layout-scrollbar='hidden'] .dshmcp-textarea::-webkit-scrollbar { d
 
 @keyframes dshmcp-mkt-spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
 
+/* ── progressive reveal tail: sentinel row under every long list ────────── */
+/* The row hosts the IntersectionObserver sentinel (the page scrolls, not
+   the list) and the quiet 加载更多 · X/Y fallback button. */
+.dshmcp-more { display: flex; justify-content: center; padding: 10px 0 2px; }
+.dshmcp-moreBtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 5px 14px;
+  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent);
+  color: var(--dsw-alias-label-tertiary, #8a8a8e);
+  font: inherit;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease);
+}
+.dshmcp-moreBtn:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dshmcp-moreBtn:active { transform: scale(0.97); }
+.dshmcp-moreBtn:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #ffb74d); outline-offset: -2px; }
+
 /* ── material linkage (dsh-layout frosted glass) ────────────────────────── */
 /* Groups pour 34% glass, panels 46%, modal dialogs 88% — dialogs stay
    near-opaque so their content never smears through — with
@@ -994,6 +1015,7 @@ html[data-dsh-layout-material='on'] .dshmcp-toolModalBody > :first-child { backg
   .dshmcp-mkt-srcBtn,
   .dshmcp-mkt-viewseg button,
   .dshmcp-mkt-card,
+  .dshmcp-moreBtn,
   .dshmcp-switch,
   .dshmcp-switchKnob { transition: none !important; }
 }
@@ -1024,6 +1046,14 @@ html[data-dsh-layout-material='on'] .dshmcp-toolModalBody > :first-child { backg
   .dshmcp-mkt-cards { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); }
   .dshmcp-instCards { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); }
   .dshmcp-instCard, .dshmcp-mkt-card { padding: 12px; gap: 10px; }
+  /* breathing room on phones: rows and button clusters stop hugging */
+  .dshmcp-mkt-bar { gap: 10px; }
+  .dshmcp-mkt-bar > * { min-height: 38px; }
+  .dshmcp-mkt-viewseg { min-height: 36px; flex-wrap: wrap; }
+  .dshmcp-mkt-iconbtn, .dshmcp-iconBtn { width: 36px; height: 36px; }
+  .dshmcp-mkt-list, .dshmcp-instList { padding: 8px; }
+  .dshmcp-mkt-cards, .dshmcp-instCards { padding: 8px; gap: 10px; }
+
   .dshmcp-mkt-cardDesc { overflow-wrap: anywhere; }
 
   /* long unbreakable content wraps inside its box instead of pushing wide:

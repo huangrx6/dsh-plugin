@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { IconPlusOutline16, IconRefreshOutline16, IconSearchOutline16, IconSkillOutline16, IconTrashOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { SkillListItem } from '../contracts.ts'
 import type { SkillManagerApi } from './api.ts'
@@ -8,6 +8,7 @@ import { SkillImportView } from './SkillImportView.tsx'
 import { IconGrid, IconList } from './market/icons.tsx'
 import { hueStyle } from './market/hue.ts'
 import { loadInstalledView, saveInstalledView, type InstalledViewMode } from './installed-view.ts'
+import { LIST_PAGE, slicePage } from './paging.ts'
 
 export interface SkillManagerSectionProps {
   readonly t: (key: SkillManagerLocaleKey) => string
@@ -91,6 +92,28 @@ export function SkillManagerSection({ t, api }: SkillManagerSectionProps) {
       skill.name.toLocaleLowerCase().includes(normalizedQuery)
       || skill.description.toLocaleLowerCase().includes(normalizedQuery))
   }, [normalizedQuery, skills])
+
+  // Batched rendering state: huge catalogs never mount thousands of rows
+  // / cards at once — the first LIST_PAGE render, then an intersection
+  // sentinel loads the next batch as the user scrolls (button fallback).
+  // Search / reload / view switch reset to the first page (the installed ⇄
+  // market mode switch unmounts this section, resetting it naturally).
+  const [visibleCount, setVisibleCount] = useState(LIST_PAGE)
+  useEffect(() => { setVisibleCount(LIST_PAGE) }, [filtered, viewMode])
+  const visible = slicePage(filtered, visibleCount)
+  const hasMore = visibleCount < filtered.length
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    const node = sentinelRef.current
+    if (node === null || !hasMore || typeof IntersectionObserver !== 'function') return
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some(entry => entry.isIntersecting)) {
+        setVisibleCount(count => count + LIST_PAGE)
+      }
+    }, { root: null, rootMargin: '300px' })
+    observer.observe(node)
+    return () => { observer.disconnect() }
+  }, [hasMore, visibleCount, filtered.length])
 
   return (
     <div className="dshm-tab dshm-inst" aria-busy={state.status === 'loading'}>
@@ -197,7 +220,7 @@ export function SkillManagerSection({ t, api }: SkillManagerSectionProps) {
                   {filtered.length > 0 && viewMode === 'list'
                     ? (
                       <ul className="dshm-instList">
-                        {filtered.map(skill => (
+                        {visible.map(skill => (
                           <InstalledRow
                             key={`${skill.source}:${skill.name}`}
                             t={t}
@@ -213,7 +236,7 @@ export function SkillManagerSection({ t, api }: SkillManagerSectionProps) {
                   {filtered.length > 0 && viewMode === 'cards'
                     ? (
                       <ul className="dshm-instCards">
-                        {filtered.map(skill => (
+                        {visible.map(skill => (
                           <InstalledCard
                             key={`${skill.source}:${skill.name}`}
                             t={t}
@@ -224,6 +247,19 @@ export function SkillManagerSection({ t, api }: SkillManagerSectionProps) {
                           />
                         ))}
                       </ul>
+                    )
+                    : null}
+                  {hasMore
+                    ? (
+                      <div ref={sentinelRef} className="dshm-more">
+                        <button
+                          type="button"
+                          className="dshm-moreBtn"
+                          onClick={() => { setVisibleCount(count => count + LIST_PAGE) }}
+                        >
+                          {t('showMore')} · {visibleCount}/{filtered.length}
+                        </button>
+                      </div>
                     )
                     : null}
                 </>
