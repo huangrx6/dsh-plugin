@@ -44,7 +44,7 @@ export function AgentRulesSection({ t, api }: AgentRulesSectionProps): JSX.Eleme
     }
   }, [api])
 
-  const bytes = useMemo(() => Buffer.byteLength(text, 'utf8'), [text])
+  const bytes = useMemo(() => new TextEncoder().encode(text).byteLength, [text])
 
   const save = useCallback(async () => {
     setStatus('saving')

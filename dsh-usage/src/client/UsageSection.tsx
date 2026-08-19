@@ -27,6 +27,13 @@ interface EditState {
 
 const EMPTY: EditState = { label: '', provider: 'glm', apiKey: '', endpoint: '', region: 'bigmodel' }
 
+/** Provider card metadata for the selector. */
+const PROVIDERS: { id: UsageProvider; color: string; icon: string }[] = [
+  { id: 'glm', color: '#4285f4', icon: '🧠' },
+  { id: 'minimax', color: '#8b5cf6', icon: '⚡' },
+  { id: 'opencode', color: '#10b981', icon: '🔑' },
+]
+
 export function UsageSection({ t, api }: UsageSectionProps): JSX.Element {
   const [entries, setEntries] = useState<readonly UsageEntry[]>([])
   const [results, setResults] = useState<ReadonlyMap<string, UsageQueryResult>>(new Map())
@@ -64,8 +71,8 @@ export function UsageSection({ t, api }: UsageSectionProps): JSX.Element {
     void loadConfig()
   }, [loadConfig])
 
-  // Auto-refresh once a minute while the section is visible.
   useEffect(() => {
+    void refresh()
     const id = window.setInterval(() => { void refresh() }, 60_000)
     return () => window.clearInterval(id)
   }, [refresh])
@@ -77,7 +84,7 @@ export function UsageSection({ t, api }: UsageSectionProps): JSX.Element {
       id: editing.id ?? `u-${Date.now().toString(36)}`,
       label: editing.label.trim() || editing.provider,
       provider: editing.provider,
-      apiKey: editing.provider === 'opencode' ? editing.apiKey : editing.apiKey,
+      apiKey: editing.apiKey,
       endpoint: editing.endpoint.trim() || undefined,
       region: editing.region,
     }
@@ -102,33 +109,52 @@ export function UsageSection({ t, api }: UsageSectionProps): JSX.Element {
 
   return (
     <div className="u-card">
+      {/* ── toolbar ── */}
       <div className="u-top">
         <span className="u-hint">{t('sectionHint')}</span>
-        <button type="button" className="u-btn" onClick={() => setEditing(EMPTY)}>{t('addEntry')}</button>
-        <button type="button" className="u-btn u-btn--primary" onClick={() => void refresh()} disabled={busy}>
+        <button type="button" className="u-btn u-btn--accent" onClick={() => setEditing(EMPTY)}>
+          <svg viewBox="0 0 16 16" fill="none" width="14" height="14" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
+          {t('addEntry')}
+        </button>
+        <button type="button" className="u-btn" onClick={() => void refresh()} disabled={busy}>
+          <svg className={busy ? 'u-spin' : ''} viewBox="0 0 16 16" fill="none" width="13" height="13" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" /></svg>
           {busy ? t('refreshing') : t('refresh')}
         </button>
       </div>
-      {status === 'loading' ? <p className="u-note">{t('loading')}</p> : null}
-      {status === 'error' ? <p className="u-note u-note--error" role="alert">{message}</p> : null}
-      {entries.length === 0 && status === 'ready' ? <p className="u-note">{t('addEntry')}…</p> : null}
+
+      {status === 'loading' ? <div className="u-empty"><span className="u-empty-icon">⏳</span>{t('loading')}</div> : null}
+      {status === 'error' ? <div className="u-empty u-empty--error" role="alert"><span className="u-empty-icon">⚠️</span>{message}</div> : null}
+      {entries.length === 0 && status === 'ready' ? (
+        <div className="u-empty">
+          <span className="u-empty-icon">📊</span>
+          <span>{t('addEntry')}…</span>
+        </div>
+      ) : null}
+
+      {/* ── subscription cards ── */}
       <div className="u-list">
         {entries.map((entry) => {
           const r = results.get(entry.id)
+          const pmeta = PROVIDERS.find((p) => p.id === entry.provider)
           return (
-            <div key={entry.id} className="u-row">
+            <div key={entry.id} className="u-row" style={{ '--u-accent': pmeta?.color ?? '#6ea8fe' } as React.CSSProperties}>
               <div className="u-rowHead">
-                <span className="u-provider">{providerLabel(t, entry.provider)}</span>
-                <span className="u-label">{entry.label}</span>
-                {r?.level !== undefined ? <span className="u-level">{t('level')}: {r.level}</span> : null}
+                <span className="u-provider-icon">{pmeta?.icon ?? '📦'}</span>
+                <div className="u-rowInfo">
+                  <span className="u-label">{entry.label}</span>
+                  <span className="u-provider">{providerLabel(t, entry.provider)}{r?.level !== undefined ? ` · ${r.level}` : ''}</span>
+                </div>
                 <span className="u-actions">
-                  <button type="button" className="u-mini"
-                    onClick={() => setEditing({ id: entry.id, label: entry.label, provider: entry.provider, apiKey: entry.apiKey ?? '', endpoint: entry.endpoint ?? '', region: entry.region ?? 'bigmodel' })}>{t('editEntry')}</button>
+                  <button type="button" className="u-mini" onClick={() => setEditing({
+                    id: entry.id, label: entry.label, provider: entry.provider,
+                    apiKey: entry.apiKey ?? '', endpoint: entry.endpoint ?? '',
+                    region: entry.region ?? 'bigmodel',
+                  })}>{t('editEntry')}</button>
                   <button type="button" className="u-mini u-mini--danger" onClick={() => void remove(entry.id)}>{t('delete')}</button>
                 </span>
               </div>
-              {r === undefined ? <p className="u-note">{t('loading')}…</p> :
-                r.ok === false ? <p className="u-note u-note--error">{r.message}</p> :
+              {r === undefined ? <div className="u-bar-loading">{t('loading')}…</div> :
+                r.ok === false ? <div className="u-bar-loading u-bar-loading--error">{r.message}</div> :
                   <div className="u-bars">
                     {(r.bars ?? []).map((bar, i) => <Bar key={i} bar={bar} />)}
                     {r.manualPercent !== undefined && (r.bars ?? []).length === 0
@@ -138,39 +164,57 @@ export function UsageSection({ t, api }: UsageSectionProps): JSX.Element {
           )
         })}
       </div>
-      {updatedAt !== undefined ? <p className="u-note u-meta">{t('updatedAt')}: {new Date(updatedAt).toLocaleTimeString()}</p> : null}
 
+      {updatedAt !== undefined ? <p className="u-meta">{t('updatedAt')}: {new Date(updatedAt).toLocaleTimeString()}</p> : null}
+
+      {/* ── edit modal ── */}
       {editing !== undefined ? (
         <div className="u-mask" role="presentation" onClick={(e) => { if (e.target === e.currentTarget) setEditing(undefined) }}>
-          <div className="u-modal" role="dialog" aria-label={t('editEntry')}>
+          <div className="u-modal" role="dialog" aria-label={editing.id === undefined ? t('addEntry') : t('editEntry')}>
             <div className="u-modalTitle">{editing.id === undefined ? t('addEntry') : t('editEntry')}</div>
-            <label className="u-f">{t('entryLabel')}<input value={editing.label} onChange={(e) => setEditing({ ...editing, label: e.target.value })} /></label>
-            <label className="u-f">{t('entryProvider')}
-              <select value={editing.provider} onChange={(e) => setEditing({ ...editing, provider: e.target.value as UsageProvider })}>
-                <option value="glm">{t('entryProviderGlm')}</option>
-                <option value="minimax">{t('entryProviderMinimax')}</option>
-                <option value="opencode">{t('entryProviderOpencode')}</option>
-              </select>
+
+            {/* provider cards */}
+            <div className="u-providerGrid">
+              {PROVIDERS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`u-providerCard${editing.provider === p.id ? ' is-selected' : ''}`}
+                  style={{ '--u-accent': p.color } as React.CSSProperties}
+                  onClick={() => setEditing({ ...editing, provider: p.id, apiKey: '', endpoint: '', region: 'bigmodel' })}
+                >
+                  <span className="u-providerCard-icon">{p.icon}</span>
+                  <span className="u-providerCard-name">{providerLabel(t, p.id)}</span>
+                </button>
+              ))}
+            </div>
+
+            <label className="u-f">{t('entryLabel')}
+              <input value={editing.label} placeholder={providerLabel(t, editing.provider)} onChange={(e) => setEditing({ ...editing, label: e.target.value })} />
             </label>
+
             {editing.provider === 'glm' ? (
-              <label className="u-f">{t('entryRegion')}
-                <select value={editing.region} onChange={(e) => setEditing({ ...editing, region: e.target.value as 'bigmodel' | 'zai' })}>
-                  <option value="bigmodel">{t('entryRegionBigmodel')}</option>
-                  <option value="zai">{t('entryRegionZai')}</option>
-                </select>
+              <div className="u-regionRow">
+                <label className="u-f u-f--row">
+                  <span>{t('entryRegion')}</span>
+                  <select value={editing.region} onChange={(e) => setEditing({ ...editing, region: e.target.value as 'bigmodel' | 'zai' })}>
+                    <option value="bigmodel">{t('entryRegionBigmodel')}</option>
+                    <option value="zai">{t('entryRegionZai')}</option>
+                  </select>
+                </label>
+              </div>
+            ) : null}
+
+            <label className="u-f">{t('entryKey')}
+              <input type="password" value={editing.apiKey} placeholder={editing.provider === 'opencode' ? 'env:OPENCODE_API_KEY' : 'sk-…'} onChange={(e) => setEditing({ ...editing, apiKey: e.target.value })} />
+            </label>
+
+            {editing.provider === 'minimax' || editing.provider === 'opencode' ? (
+              <label className="u-f">{t('entryEndpoint')}
+                <input type="url" value={editing.endpoint} placeholder={editing.provider === 'opencode' ? 'https://opencode.ai/zen/go/v1/usage' : 'https://…'} onChange={(e) => setEditing({ ...editing, endpoint: e.target.value })} />
               </label>
             ) : null}
-            {editing.provider !== 'opencode' ? (
-              <label className="u-f">{t('entryKey')}<input type="password" value={editing.apiKey} onChange={(e) => setEditing({ ...editing, apiKey: e.target.value })} /></label>
-            ) : (
-              <label className="u-f">{t('entryKey')}<input type="password" value={editing.apiKey} onChange={(e) => setEditing({ ...editing, apiKey: e.target.value })} placeholder="env:OPENCODE_API_KEY" /></label>
-            )}
-            {editing.provider === 'minimax' ? (
-              <label className="u-f">{t('entryEndpoint')}<input type="url" value={editing.endpoint} onChange={(e) => setEditing({ ...editing, endpoint: e.target.value })} placeholder="https://…" /></label>
-            ) : null}
-            {editing.provider === 'opencode' ? (
-              <label className="u-f">{t('entryEndpoint')}<input type="url" value={editing.endpoint} onChange={(e) => setEditing({ ...editing, endpoint: e.target.value })} placeholder="https://opencode.ai/zen/go/v1/usage" /></label>
-            ) : null}
+
             <div className="u-modalFoot">
               <button type="button" className="u-btn" onClick={() => setEditing(undefined)}>{t('cancel')}</button>
               <button type="button" className="u-btn u-btn--primary" onClick={() => void save()}>{t('save')}</button>
@@ -200,7 +244,7 @@ function Bar({ bar }: { readonly bar: UsageBar }): JSX.Element {
     <div className="u-bar" title={tooltip}>
       <div className="u-barTop">
         <span className="u-barLabel">{bar.label}</span>
-        <span className="u-barVal">{pct}%</span>
+        <span className="u-barVal" data-fill={fillState}>{pct}%</span>
       </div>
       <div className="u-track"><div className="u-fill" data-fill={fillState} style={{ width: `${pct}%` }} /></div>
     </div>
