@@ -70,10 +70,26 @@ function SettingsBody({
   return (
     <section className="dsh-layout-settings">
       <StoreContext.Provider value={store}>
-        <header className="dsh-layout-settings__header">
-          <div className="dsh-layout-settings__intro">
-            <h2>页面布局</h2>
-            <p>材质、宽度与信息密度；每项默认保持 DSH 原生样式，只做对应的事。</p>
+        {/* No panel-level heading: the workspace shell already renders
+            this section's title + subtitle. The tabs row carries the
+            dirty badge and reset so the functional bits survive. */}
+        <div className="dsh-layout-toprow">
+          <div
+            className="dsh-layout-tabs"
+            role="tablist"
+            aria-label="布局设置分区"
+          >
+            {TABS.map((entry) => (
+              <button
+                key={entry.id}
+                type="button"
+                role="tab"
+                aria-selected={tab === entry.id}
+                onClick={() => setTab(entry.id)}
+              >
+                {entry.label}
+              </button>
+            ))}
           </div>
           {overrides > 0 && (
             <div className="dsh-layout-settings__actions">
@@ -89,24 +105,6 @@ function SettingsBody({
               </button>
             </div>
           )}
-        </header>
-
-        <div
-          className="dsh-layout-tabs"
-          role="tablist"
-          aria-label="布局设置分区"
-        >
-          {TABS.map((entry) => (
-            <button
-              key={entry.id}
-              type="button"
-              role="tab"
-              aria-selected={tab === entry.id}
-              onClick={() => setTab(entry.id)}
-            >
-              {entry.label}
-            </button>
-          ))}
         </div>
 
         <div className="dsh-layout-settings__body">

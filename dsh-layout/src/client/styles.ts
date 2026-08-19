@@ -440,10 +440,10 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
   /* 隐藏 DSH 头部里的「打开配置文件」动作（桌面操作，手机端拥挤） */
   [role='dialog'][class*='_panel'] [class$='_action'] { display: none !important; }
 }
-.dsh-layout-settings__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px 24px; padding: 2px 2px 0; }
+.dsh-layout-toprow { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
 .dsh-layout-settings h2 { margin: 0 0 4px; font-size: 17px; font-weight: 650; letter-spacing: .01em; line-height: 24px; }
 .dsh-layout-settings p { margin: 0; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 12px; line-height: 1.55; }
-.dsh-layout-settings__actions { display: flex; flex: none; align-items: center; gap: 8px; margin-top: 2px; }
+.dsh-layout-settings__actions { display: flex; flex: none; align-items: center; gap: 8px; }
 /* Tab bar: one equal-width segmented control — quiet well, flat 10% active
    chip, hover stays at 4% background. */
 .dsh-layout-tabs { display: inline-flex; justify-self: start; gap: 2px; padding: 3px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); }
@@ -464,7 +464,7 @@ html[data-dsh-layout-material='on'] .dsh-layout-group { background: color-mix(in
    centered; 1px hairline between rows keeps the rhythm. Wide rows stack the
    control under the label at full width (editors, card grids, long segmented
    groups). */
-.dsh-layout-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 16px; min-height: 44px; padding: 8px 12px; }
+.dsh-layout-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 20px; min-height: 46px; padding: 9px 14px; }
 .dsh-layout-row + .dsh-layout-row { border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
 .dsh-layout-row__label { display: grid; gap: 2px; min-width: 0; }
 .dsh-layout-row__title { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
@@ -558,8 +558,8 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
 /* ── 窄屏（< 768px）─────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
   /* 窄屏：标题行纵排、tab 铺满、设置行改为上下堆叠、档位卡 2 列。 */
-  .dsh-layout-settings__header { flex-direction: column; align-items: flex-start; }
-  .dsh-layout-settings__actions { margin-top: 2px; }
+  .dsh-layout-toprow { align-items: stretch; flex-direction: column; }
+  .dsh-layout-settings__actions { margin-top: 0; justify-content: flex-start; }
   .dsh-layout-tabs { display: flex; width: 100%; }
   .dsh-layout-row { grid-template-columns: minmax(0, 1fr); }
   .dsh-layout-row__control { justify-content: flex-start; margin-top: 6px; }
