@@ -191,24 +191,20 @@ async function queryGlm(entry: UsageEntry): Promise<UsageQueryResult> {
   for (const limit of limits) {
     const resetNow = limit.nextResetTime !== undefined ? limit.nextResetTime - Date.now() : undefined
     if (limit.type === 'TIME_LIMIT') {
-      // TIME_LIMIT is the MCP monthly call budget (e.g. 8000 次 / month),
-      // NOT the 5h window: usage = used calls, remaining = left, total =
-      // usage + remaining. percentage is used %, so remaining = 100 - %.
+      // TIME_LIMIT: a separate quota dimension with a hard remaining count
+      // (e.g. remaining 4000) plus usage-detail breakdown. The API does NOT
+      // return a total, so we only surface what it gives us — remaining as a
+      // bare count (no fabricated total/unit) and the reset time.
       const b = bar({
-        // TIME_LIMIT is the plan's weekly prompt-count budget (usage =
-        // used calls, remaining = left, total = usage + remaining; e.g. Max
-        // plan = 8000 次 / week). percentage is used-%, remaining = 100-%。
-        label: '每周（次）',
+        label: '每周额度',
         remainingPercent: Math.max(0, 100 - (limit.percentage ?? 0)),
         remaining: limit.remaining,
-        total: limit.usage !== undefined && limit.remaining !== undefined ? limit.usage + limit.remaining : undefined,
-        unit: limit.usage !== undefined ? '次' : undefined,
       })
       if (limit.nextResetTime !== undefined) b.detail = `刷新于 ${formatResetIn(limit.nextResetTime)}`
-      if (limit.remaining !== undefined && limit.usage !== undefined) {
+      if (limit.remaining !== undefined) {
         b.detail = b.detail === undefined
-          ? `剩余 ${limit.remaining} / ${limit.usage + limit.remaining} 次`
-          : `${b.detail} · 剩余 ${limit.remaining} / ${limit.usage + limit.remaining} 次`
+          ? `剩余 ${limit.remaining}`
+          : `${b.detail} · 剩余 ${limit.remaining}`
       }
       bars.push(b)
     } else if (limit.type === 'TOKENS_LIMIT') {
@@ -223,7 +219,7 @@ async function queryGlm(entry: UsageEntry): Promise<UsageQueryResult> {
     }
   }
   // Order bars by window length (每 5 小时 → 每周 / 每周（次）→ 每月).
-  const windowOrder: Record<string, number> = { '每 5 小时': 0, '每周': 1, '每周（次）': 1, '每月': 2 }
+  const windowOrder: Record<string, number> = { '每 5 小时': 0, '每周': 1, '每周额度': 1, '每月': 2 }
   bars.sort((a, b) => (windowOrder[a.label] ?? 9) - (windowOrder[b.label] ?? 9))
   const out: UsageQueryResult = { id: entry.id, label: entry.label, ok: true, bars }
   if (json.data?.level !== undefined) out.level = json.data.level
