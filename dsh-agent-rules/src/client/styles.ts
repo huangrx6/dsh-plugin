@@ -10,10 +10,20 @@
  */
 export const AGENT_RULES_STYLES = `
 /* ── section ── */
-.agr-section { max-width: 760px; }
+.agr-section {
+  max-width: 760px;
+  display: flex;
+  flex-direction: column;
+  /* Fill the workspace content pane so the editor occupies the viewport
+     instead of collapsing to content height with dead space below. */
+  min-height: calc(100dvh - 220px);
+}
 
 /* ── group container ── */
 .agr-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03));
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
   border-radius: var(--dsh-layout-radius-user-lg, 12px);
@@ -42,14 +52,15 @@ export const AGENT_RULES_STYLES = `
 
 /* ── textarea editor ── */
 .agr-editor {
+  flex: 1;
   width: 100%;
-  min-height: 200px;
-  resize: vertical;
+  min-height: 260px;
+  resize: none;
   box-sizing: border-box;
-  padding: 10px;
+  padding: 12px;
   font-family: var(--ds-font-family-code, ui-monospace, "SF Mono", "JetBrains Mono", Consolas, monospace);
   font-size: 12px;
-  line-height: 1.55;
+  line-height: 1.6;
   color: var(--dsw-alias-label-primary, #f4f4f5);
   background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 3%, transparent);
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
@@ -150,10 +161,10 @@ export const AGENT_RULES_STYLES = `
 
 /* ── H5 overrides (<=767px) ── */
 @media (max-width: 767px) {
-  .agr-section { max-width: 100%; }
+  .agr-section { max-width: 100%; min-height: calc(100dvh - 260px); }
   .agr-group { padding: 8px; }
   .agr-toolbar { padding: 4px 8px 6px; }
-  .agr-editor { min-height: 160px; }
+  .agr-editor { min-height: 180px; }
   .agr-actions { padding: 8px; }
   .agr-btn { height: 36px; padding: 0 12px; }
   .agr-note { margin: 4px 8px; }
