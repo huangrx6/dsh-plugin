@@ -1,60 +1,26 @@
 {
-  "name": "DSH 内置",
-  "description": "huangrx6/dsh-plugin 自带的默认 marketplace 清单 —— 内置一个 Skill 卡片 + 一个 MCP 卡片做了形态示范。改成你自己的内容后发到 GitHub 即可。",
+  "name": "MCP 官方参考",
+  "description": "modelcontextprotocol 官方参考服务器（stdio / npx 启动）。",
   "version": 1,
   "items": [
-    {
-      "id": "skill-write-doc",
-      "name": "Write Doc",
-      "description": "帮助用户起草结构化文档（README / 技术方案 / 复盘）。",
-      "tags": ["writing", "docs"],
-      "author": "huangrx6",
-      "version": "0.1.0",
-      "kind": "skill",
-      "payload": {
-        "url": "https://github.com/huangrx6/dsh-write-doc-skill",
-        "destination": "user-dsh"
-      }
-    },
-    {
-      "id": "skill-review-pr",
-      "name": "Review PR",
-      "description": "协助审阅 PR，给出修改建议。",
-      "tags": ["review", "code"],
-      "author": "huangrx6",
-      "version": "0.1.0",
-      "kind": "skill",
-      "payload": {
-        "url": "https://github.com/huangrx6/dsh-review-pr-skill",
-        "destination": "user-dsh"
-      }
-    },
-    {
-      "id": "mcp-foo",
-      "name": "Foo MCP",
-      "description": "示例 MCP:stdio 服务（npx foo-mcp）。",
-      "tags": ["example", "stdio"],
-      "author": "huangrx6",
-      "version": "0.1.0",
-      "kind": "mcp",
-      "payload": {
-        "transport": "stdio",
-        "command": "npx",
-        "args": ["-y", "foo-mcp"]
-      }
-    },
     {
       "id": "mcp-filesystem",
       "name": "Filesystem MCP",
       "description": "Smithery / modelcontextprotocol 官方 Filesystem MCP。",
-      "tags": ["official", "stdio"],
+      "tags": [
+        "official",
+        "stdio"
+      ],
       "author": "modelcontextprotocol",
       "version": "0.6.0",
       "kind": "mcp",
       "payload": {
         "transport": "stdio",
         "command": "npx",
-        "args": ["-y", "@modelcontextprotocol/server-filesystem"]
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-filesystem"
+        ]
       }
     }
   ]

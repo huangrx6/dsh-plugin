@@ -19,6 +19,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
   type ReactNode,
@@ -27,6 +28,7 @@ import type { PropsRenderSlots } from "@deepseek-ai/dsh-client-ui-slots";
 import {
   IconArchive,
   IconClose,
+  IconGrid,
   IconLayout,
   IconMcp,
   IconRemote,
@@ -42,6 +44,8 @@ export interface WorkspaceSection {
   readonly labelKey: LauncherLocaleKey;
   /** Short subtitle shown under the title in the section header. */
   readonly subtitleKey?: LauncherLocaleKey;
+  /** Localized key of the nav group this section lives under. */
+  readonly groupKey: LauncherLocaleKey;
   /** Inline icon (a ReactElement). */
   readonly icon: JSX.Element;
   /** Section renderer. Defaults to the placeholder; replaced by slot
@@ -74,6 +78,7 @@ export const DEFAULT_SECTIONS: readonly WorkspaceSection[] = [
     id: "skills",
     labelKey: "menuSkills",
     subtitleKey: "menuSkillsSubtitle",
+    groupKey: "menuGroupManage",
     icon: <IconSkills size={20} />,
     render: () => <SectionPlaceholder id="skills" />,
   },
@@ -81,6 +86,7 @@ export const DEFAULT_SECTIONS: readonly WorkspaceSection[] = [
     id: "mcp",
     labelKey: "menuMcp",
     subtitleKey: "menuMcpSubtitle",
+    groupKey: "menuGroupManage",
     icon: <IconMcp size={20} />,
     render: () => <SectionPlaceholder id="mcp" />,
   },
@@ -88,6 +94,7 @@ export const DEFAULT_SECTIONS: readonly WorkspaceSection[] = [
     id: "remote",
     labelKey: "menuRemote",
     subtitleKey: "menuRemoteSubtitle",
+    groupKey: "menuGroupTools",
     icon: <IconRemote size={20} />,
     render: () => <SectionPlaceholder id="remote" />,
   },
@@ -95,6 +102,7 @@ export const DEFAULT_SECTIONS: readonly WorkspaceSection[] = [
     id: "archive",
     labelKey: "menuArchive",
     subtitleKey: "menuArchiveSubtitle",
+    groupKey: "menuGroupTools",
     icon: <IconArchive size={20} />,
     render: () => <SectionPlaceholder id="archive" />,
   },
@@ -102,6 +110,7 @@ export const DEFAULT_SECTIONS: readonly WorkspaceSection[] = [
     id: "layout",
     labelKey: "menuLayout",
     subtitleKey: "menuLayoutSubtitle",
+    groupKey: "menuGroupAppearance",
     icon: <IconLayout size={20} />,
     render: () => <SectionPlaceholder id="layout" />,
   },
@@ -138,6 +147,7 @@ export function WorkspaceView({
   // prefers-reduced-motion skips the wait — the stylesheet drops the
   // animation entirely there, so waiting would hang the surface open.
   const [closing, setClosing] = useState(false);
+  const canvasRef = useRef<HTMLDivElement | null>(null);
 
   const beginClose = useCallback(() => {
     setClosing((already) => {
@@ -168,7 +178,19 @@ export function WorkspaceView({
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent): void => {
-      if (event.key === "Escape") beginClose();
+      if (event.key !== "Escape") return;
+      // Modals render through portals at body level and trap focus, so
+      // an Escape typed with a modal open originates INSIDE that modal,
+      // not inside the canvas. Let the modal's own Escape handling win
+      // — exiting the workspace here would skip a layer (one press must
+      // close the modal, the next the canvas).
+      const target = event.target;
+      const dialog =
+        target instanceof Element
+          ? target.closest('[role="dialog"]')
+          : null;
+      if (dialog !== null && dialog !== canvasRef.current) return;
+      beginClose();
     };
     document.addEventListener("keydown", handleKey);
     return () => {
@@ -215,6 +237,22 @@ export function WorkspaceView({
   const active =
     sections.find((section) => section.id === activeId) ?? sections[0];
 
+  // Nav groups preserve DEFAULT_SECTIONS order: 管理 (skills/mcp),
+  // 工具 (remote/archive), 外观 (layout) — like the reference layout,
+  // grouped with small caps headers instead of one flat list.
+  const groups = useMemo(() => {
+    const out: { key: LauncherLocaleKey; sections: readonly WorkspaceSection[] }[] = [];
+    for (const section of sections) {
+      const last = out[out.length - 1];
+      if (last !== undefined && last.key === section.groupKey) {
+        last.sections = [...last.sections, section];
+      } else {
+        out.push({ key: section.groupKey, sections: [section] });
+      }
+    }
+    return out;
+  }, [sections]);
+
   const renderSectionBody = useCallback((): ReactNode => {
     if (active === undefined) {
       return (
@@ -245,16 +283,16 @@ export function WorkspaceView({
 
   return (
     <div
+      ref={canvasRef}
       className={`dsh-launcher-canvas${closing ? " is-closing" : ""}`}
       role="dialog"
       aria-label={t("workspace")}
       onAnimationEnd={handleAnimationEnd}
     >
       <header className="dsh-launcher-canvas-topbar">
-        <div className="dsh-launcher-canvas-titlewrap">
-          <span className="dsh-launcher-canvas-title">{t("workspace")}</span>
-          <span className="dsh-launcher-canvas-hint">{t("workspaceHint")}</span>
-        </div>
+        {/* No title here: the sidebar carries the workspace identity and
+            each section renders its own header. The topbar is actions
+            only (exit right-aligned), like the reference layout. */}
         <span className="dsh-launcher-canvas-spacer" />
         <button
           type="button"
@@ -267,23 +305,40 @@ export function WorkspaceView({
         </button>
       </header>
       <nav className="dsh-launcher-canvas-menu" aria-label={t("menuSection")}>
-        <div className="dsh-launcher-canvas-menu-label">{t("menuSection")}</div>
-        {sections.map((section) => (
-          <button
-            key={section.id}
-            type="button"
-            className={`dsh-launcher-canvas-menu-item${section.id === active?.id ? " is-active" : ""}`}
-            onClick={() => {
-              setActiveId(section.id);
-            }}
-          >
-            <span className="dsh-launcher-canvas-menu-item-icon">
-              {section.icon}
+        <div className="dsh-launcher-menu-identity">
+          <span className="dsh-launcher-menu-identity-icon">
+            <IconGrid size={16} />
+          </span>
+          <span className="dsh-launcher-menu-identity-body">
+            <span className="dsh-launcher-menu-identity-name">
+              {t("workspace")}
             </span>
-            <span className="dsh-launcher-canvas-menu-item-label">
-              {t(section.labelKey)}
+            <span className="dsh-launcher-menu-identity-hint">
+              {t("workspaceIdentityHint")}
             </span>
-          </button>
+          </span>
+        </div>
+        {groups.map((group) => (
+          <div key={group.key} className="dsh-launcher-menu-group">
+            <div className="dsh-launcher-canvas-menu-label">{t(group.key)}</div>
+            {group.sections.map((section) => (
+              <button
+                key={section.id}
+                type="button"
+                className={`dsh-launcher-canvas-menu-item${section.id === active?.id ? " is-active" : ""}`}
+                onClick={() => {
+                  setActiveId(section.id);
+                }}
+              >
+                <span className="dsh-launcher-canvas-menu-item-icon">
+                  {section.icon}
+                </span>
+                <span className="dsh-launcher-canvas-menu-item-label">
+                  {t(section.labelKey)}
+                </span>
+              </button>
+            ))}
+          </div>
         ))}
       </nav>
       <main className="dsh-launcher-canvas-content" aria-busy={false}>

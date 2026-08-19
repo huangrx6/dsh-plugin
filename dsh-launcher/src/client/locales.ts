@@ -21,6 +21,10 @@ export type LauncherLocaleKey =
  | "workspaceHint"
  | "workspaceClose"
  | "menuSection"
+ | "menuGroupManage"
+ | "menuGroupTools"
+ | "menuGroupAppearance"
+ | "workspaceIdentityHint"
  | "menuSkills"
  | "menuSkillsSubtitle"
  | "menuMcp"
@@ -69,6 +73,10 @@ export const zhCN: Record<LauncherLocaleKey, string> = {
  workspaceHint: "点击左侧菜单切换视图",
  workspaceClose: "退出空间",
  menuSection: "菜单",
+ menuGroupManage: "管理",
+ menuGroupTools: "工具",
+ menuGroupAppearance: "外观",
+ workspaceIdentityHint: "插件与工作区",
  menuSkills: "Skill 管理",
  menuSkillsSubtitle:
   "Skill 列表 + Skill 市场，支持多源数据源、名称模糊筛选与一键安装/卸载。",
@@ -120,6 +128,10 @@ export const enUS: Record<LauncherLocaleKey, string> = {
  workspaceHint: "Pick a section on the left to dive in",
  workspaceClose: "Leave workspace",
  menuSection: "Sections",
+ menuGroupManage: "Manage",
+ menuGroupTools: "Tools",
+ menuGroupAppearance: "Appearance",
+ workspaceIdentityHint: "Plugins & workspace",
  menuSkills: "Skills",
  menuSkillsSubtitle:
   "Skill list + Skill marketplace: multi-source feeds, fuzzy name filter, one-click install/remove.",

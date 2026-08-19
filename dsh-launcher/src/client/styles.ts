@@ -216,7 +216,7 @@ export const LAUNCHER_STYLES = `
   z-index: 9998;
   display: grid;
   grid-template-columns: 240px 1fr;
-  grid-template-rows: 64px 1fr;
+  grid-template-rows: 52px 1fr;
   grid-template-areas:
     "topbar topbar"
     "menu   content";
@@ -237,16 +237,6 @@ export const LAUNCHER_STYLES = `
   background: var(--dsw-alias-bg-layer-1, #16161a);
   animation: dsh-launcher-topbar-in 380ms var(--dsh-launcher-ease, ease) 50ms backwards;
 }
-/* Title + hint stack vertically: the hint reads as the title's
-   description line instead of a cramped side note. */
-.dsh-launcher-canvas-titlewrap {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.dsh-launcher-canvas-title { font-size: 14px; font-weight: 600; }
-.dsh-launcher-canvas-hint { font-size: 11px; color: var(--dsw-alias-label-tertiary, #8a8a8e); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dsh-launcher-canvas-spacer { flex: 1; }
 .dsh-launcher-canvas-close {
   display: inline-flex;
@@ -280,6 +270,39 @@ export const LAUNCHER_STYLES = `
   padding: 10px 12px 8px;
   animation: dsh-launcher-item-in 320ms var(--dsh-launcher-ease, ease) 120ms backwards;
 }
+.dsh-launcher-menu-group { padding-top: 6px; }
+.dsh-launcher-menu-group .dsh-launcher-canvas-menu-label { padding: 6px 10px 4px; }
+/* Identity block: the workspace's "user area" — icon tile, name and a
+   quiet hint, hairline-separated from the nav groups below. */
+.dsh-launcher-menu-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent);
+  animation: dsh-launcher-item-in 320ms var(--dsh-launcher-ease, ease) 60ms backwards;
+}
+.dsh-launcher-menu-identity-icon {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--dsh-layout-radius-user, 10px);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 11%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 9%, transparent);
+  color: var(--dsw-alias-label-primary, #f4f4f5);
+  flex: 0 0 30px;
+}
+.dsh-launcher-menu-identity-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.dsh-launcher-menu-identity-name { font-size: 13px; font-weight: 600; line-height: 1.2; }
+.dsh-launcher-menu-identity-hint { font-size: 11px; line-height: 1.2; color: var(--dsw-alias-label-tertiary, #8a8a8e); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dsh-launcher-canvas-menu-item {
   display: flex;
   align-items: center;
@@ -308,7 +331,17 @@ export const LAUNCHER_STYLES = `
 .dsh-launcher-canvas-menu-item:nth-child(6) { animation-delay: 260ms; }
 .dsh-launcher-canvas-menu-item:nth-child(n + 7) { animation-delay: 290ms; }
 .dsh-launcher-canvas-menu-item:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(255, 255, 255, 0.06)); color: var(--dsw-alias-label-primary, #f4f4f5); }
-.dsh-launcher-canvas-menu-item.is-active { background: var(--dsw-alias-bg-module-platform, rgba(255, 255, 255, 0.08)); color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dsh-launcher-canvas-menu-item.is-active { position: relative; background: var(--dsw-alias-bg-module-platform, rgba(255, 255, 255, 0.08)); color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dsh-launcher-canvas-menu-item.is-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 9px;
+  bottom: 9px;
+  width: 3px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 55%, transparent);
+}
 .dsh-launcher-canvas-menu-item-icon { display: inline-flex; width: 18px; height: 18px; align-items: center; justify-content: center; flex: 0 0 18px; }
 .dsh-launcher-canvas-menu-item-icon svg { width: 16px; height: 16px; }
 .dsh-launcher-canvas-menu-item-label { flex: 1; }
@@ -458,7 +491,7 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
 @media (max-width: 767px) {
   .dsh-launcher-canvas {
     grid-template-columns: 1fr;
-    grid-template-rows: 64px auto 1fr;
+    grid-template-rows: 52px auto 1fr;
     grid-template-areas:
       "topbar"
       "tabbar"
@@ -467,8 +500,9 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
   .dsh-launcher-canvas-topbar {
     padding: 0 12px;
   }
-  .dsh-launcher-canvas-title { font-size: 13px; }
-  .dsh-launcher-canvas-hint { display: none; }
+  /* The identity block and group headers collapse away on phones —
+     the horizontal tab bar replaces the whole nav chrome. */
+  .dsh-launcher-menu-identity { display: none; }
   .dsh-launcher-canvas-close { padding: 6px 10px; }
   .dsh-launcher-canvas-close span { display: none; }
 
