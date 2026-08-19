@@ -58,8 +58,8 @@ export type LauncherLocaleKey =
  | "marketBuiltInReserve";
 
 export const zhCN: Record<LauncherLocaleKey, string> = {
- launcher: "个人插件",
- launcherHint: "个人空间 · 设置入口",
+ launcher: "功能",
+ launcherHint: "个人插件 · 系统设置",
  personalEntry: "个人插件",
  personalEntryHint: "个人工作空间（覆盖整个视图）",
  systemEntry: "系统设置",
@@ -109,8 +109,8 @@ export const zhCN: Record<LauncherLocaleKey, string> = {
 };
 
 export const enUS: Record<LauncherLocaleKey, string> = {
- launcher: "Personal",
- launcherHint: "Personal workspace · settings entry",
+ launcher: "Features",
+ launcherHint: "Personal plugins · System settings",
  personalEntry: "Personal workspace",
  personalEntryHint: "Full-screen workspace over the page",
  systemEntry: "System settings",

@@ -70,11 +70,41 @@ export const WORKSPACE_SECTION_SLOT = "dsh-launcher.workspace.section";
 /** Sections the launcher itself ships. Slot contributions override these
     by id (a plugin registering id 'skills' replaces the placeholder). */
 export const DEFAULT_SECTIONS: readonly WorkspaceSection[] = [
-  { id: "skills", labelKey: "menuSkills", subtitleKey: "menuSkillsSubtitle", icon: <IconSkills size={20} />, render: () => <SectionPlaceholder id="skills" /> },
-  { id: "mcp", labelKey: "menuMcp", subtitleKey: "menuMcpSubtitle", icon: <IconMcp size={20} />, render: () => <SectionPlaceholder id="mcp" /> },
-  { id: "remote", labelKey: "menuRemote", subtitleKey: "menuRemoteSubtitle", icon: <IconRemote size={20} />, render: () => <SectionPlaceholder id="remote" /> },
-  { id: "archive", labelKey: "menuArchive", subtitleKey: "menuArchiveSubtitle", icon: <IconArchive size={20} />, render: () => <SectionPlaceholder id="archive" /> },
-  { id: "layout", labelKey: "menuLayout", subtitleKey: "menuLayoutSubtitle", icon: <IconLayout size={20} />, render: () => <SectionPlaceholder id="layout" /> },
+  {
+    id: "skills",
+    labelKey: "menuSkills",
+    subtitleKey: "menuSkillsSubtitle",
+    icon: <IconSkills size={20} />,
+    render: () => <SectionPlaceholder id="skills" />,
+  },
+  {
+    id: "mcp",
+    labelKey: "menuMcp",
+    subtitleKey: "menuMcpSubtitle",
+    icon: <IconMcp size={20} />,
+    render: () => <SectionPlaceholder id="mcp" />,
+  },
+  {
+    id: "remote",
+    labelKey: "menuRemote",
+    subtitleKey: "menuRemoteSubtitle",
+    icon: <IconRemote size={20} />,
+    render: () => <SectionPlaceholder id="remote" />,
+  },
+  {
+    id: "archive",
+    labelKey: "menuArchive",
+    subtitleKey: "menuArchiveSubtitle",
+    icon: <IconArchive size={20} />,
+    render: () => <SectionPlaceholder id="archive" />,
+  },
+  {
+    id: "layout",
+    labelKey: "menuLayout",
+    subtitleKey: "menuLayoutSubtitle",
+    icon: <IconLayout size={20} />,
+    render: () => <SectionPlaceholder id="layout" />,
+  },
 ];
 
 export interface WorkspaceViewProps {
@@ -103,6 +133,48 @@ export function WorkspaceView({
   const [activeId, setActiveId] = useState<string>(
     DEFAULT_SECTIONS[0]?.id ?? "",
   );
+  // Exit choreography: closing first plays the canvas-out animation and
+  // only then unmounts (animationend on the root's own animation).
+  // prefers-reduced-motion skips the wait — the stylesheet drops the
+  // animation entirely there, so waiting would hang the surface open.
+  const [closing, setClosing] = useState(false);
+
+  const beginClose = useCallback(() => {
+    setClosing((already) => {
+      if (already) return already;
+      if (
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ) {
+        onClose();
+        return already;
+      }
+      return true;
+    });
+  }, [onClose]);
+
+  const handleAnimationEnd = useCallback(
+    (event: React.AnimationEvent<HTMLDivElement>): void => {
+      if (
+        closing &&
+        event.target === event.currentTarget &&
+        event.animationName === "dsh-launcher-canvas-out"
+      ) {
+        onClose();
+      }
+    },
+    [closing, onClose],
+  );
+
+  useEffect(() => {
+    const handleKey = (event: KeyboardEvent): void => {
+      if (event.key === "Escape") beginClose();
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [beginClose, document]);
 
   const slotEntries = useSyncExternalStore(
     (callback) => slotsView.subscribe(WORKSPACE_SECTION_SLOT, callback),
@@ -159,16 +231,25 @@ export function WorkspaceView({
     // composed props — injected api, locale seat, error boundary). The
     // `only` opt narrows the list to the active section's id.
     if (renderSlot !== undefined) {
-      return renderSlot(WORKSPACE_SECTION_SLOT, {}, {
-        only: active.id,
-        fallback: active.render(),
-      });
+      return renderSlot(
+        WORKSPACE_SECTION_SLOT,
+        {},
+        {
+          only: active.id,
+          fallback: active.render(),
+        },
+      );
     }
     return active.render();
   }, [active, renderSlot, t]);
 
   return (
-    <div className="dsh-launcher-canvas" role="dialog" aria-label={t("workspace")}>
+    <div
+      className={`dsh-launcher-canvas${closing ? " is-closing" : ""}`}
+      role="dialog"
+      aria-label={t("workspace")}
+      onAnimationEnd={handleAnimationEnd}
+    >
       <header className="dsh-launcher-canvas-topbar">
         <span className="dsh-launcher-canvas-title">{t("workspace")}</span>
         <span className="dsh-launcher-canvas-hint">{t("workspaceHint")}</span>
@@ -176,7 +257,7 @@ export function WorkspaceView({
         <button
           type="button"
           className="dsh-launcher-canvas-close"
-          onClick={onClose}
+          onClick={beginClose}
           aria-label={t("workspaceClose")}
         >
           <IconClose size={12} />

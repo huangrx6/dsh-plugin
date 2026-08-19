@@ -17,18 +17,18 @@
 import { useCallback, useEffect, useState } from "react";
 import type { PropsRenderSlots } from "@deepseek-ai/dsh-client-ui-slots";
 import { LauncherPanelView } from "./LauncherPanel.tsx";
-import {
-  WorkspaceView,
-  type SlotRegistryLike,
-} from "./WorkspaceOverlay.tsx";
+import { WorkspaceView, type SlotRegistryLike } from "./WorkspaceOverlay.tsx";
 import { on, LauncherEvents } from "./events.ts";
 import { findNativeSettingsTrigger } from "./dom-watcher.ts";
-import { IconLauncher } from "./icons.tsx";
+import { IconGrid } from "./icons.tsx";
 import type { LauncherLocaleKey } from "./locales.ts";
 
 export interface LauncherHostProps {
   /** Framework-injected translator (locale: 'dsh-launcher' on register). */
-  readonly t: (key: LauncherLocaleKey, params?: Record<string, unknown>) => string;
+  readonly t: (
+    key: LauncherLocaleKey,
+    params?: Record<string, unknown>,
+  ) => string;
   /** Narrow view over the slot registry, handed in via register's inject
       factory — the workspace menu reads live section entries from it. */
   readonly slotsView: SlotRegistryLike;
@@ -76,17 +76,10 @@ export function LauncherHost({
     });
   }, []);
 
-  useEffect(() => {
-    const handleKey = (event: KeyboardEvent): void => {
-      if (event.key !== "Escape") return;
-      setPanelOpen(false);
-      setWorkspaceOpen(false);
-    };
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("keydown", handleKey);
-    };
-  }, []);
+  // Escape is handled INSIDE each view (panel / workspace) so the close
+  // runs through the view's exit animation instead of unmounting
+  // instantly. The *Close DOM events above stay as programmatic
+  // escape hatches — instant by design.
 
   const openPanel = useCallback(() => {
     setPanelOpen(true);
@@ -129,7 +122,7 @@ export function LauncherHost({
         aria-label={t("launcher")}
         title={t("launcherHint")}
       >
-        <IconLauncher size={22} />
+        <IconGrid size={22} />
       </button>
       {panelOpen ? (
         <LauncherPanelView

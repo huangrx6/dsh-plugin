@@ -52,6 +52,11 @@ export function findNativeSettingsTrigger(
  // aria-label/hearing-empty <button> with the gear glyph lives there.
  const buttons = Array.from(
   sidebar.querySelectorAll<HTMLButtonElement>("button"),
+ ).filter(
+  // Never hand back our own injected rail button (rail-button.ts) —
+  // once it mounts inside the footer, an unfiltered scan could pick it
+  // as "the last button" and the replacement logic would target itself.
+  (button) => button.closest(".dsh-launcher-rail") === null,
  );
  if (buttons.length === 0) return undefined;
  // Prefer the bottom-most button that looks like a settings trigger

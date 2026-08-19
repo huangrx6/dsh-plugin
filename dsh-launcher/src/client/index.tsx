@@ -19,12 +19,7 @@
 import type { ClientContext } from "@deepseek-ai/dsh-client-runtime/client";
 import "@deepseek-ai/dsh-client-locale/client";
 import { installStyles } from "./styles.ts";
-import {
-  enUS,
-  LAUNCHER_NS,
-  zhCN,
-  type LauncherLocaleKey,
-} from "./locales.ts";
+import { enUS, LAUNCHER_NS, zhCN, type LauncherLocaleKey } from "./locales.ts";
 import { LauncherHost } from "./LauncherHost.tsx";
 import type { SlotRegistryLike } from "./WorkspaceOverlay.tsx";
 import { installRailButton } from "./rail-button.ts";
@@ -60,10 +55,7 @@ declare module "@deepseek-ai/dsh-client-ui-slots" {
 export const inject = ["slots", "locale"] as const;
 
 export function apply(ctx: ClientContext): void {
-  ctx.effect(
-    () => installStyles(document),
-    "dsh-launcher: styles",
-  );
+  ctx.effect(() => installStyles(document), "dsh-launcher: styles");
   ctx.effect(
     () => ctx.locale.register(LAUNCHER_NS, { zh: zhCN, en: enUS }),
     "dsh-launcher: dictionaries",
@@ -74,10 +66,7 @@ export function apply(ctx: ClientContext): void {
   // Best-effort side-rail button: plain DOM, no React. Silent when the
   // rail / native trigger can't be found — the FAB is the guaranteed
   // entry point.
-  ctx.effect(
-    () => installRailButton(document),
-    "dsh-launcher: rail button",
-  );
+  ctx.effect(() => installRailButton(document), "dsh-launcher: rail button");
 
   // The one render entry. `children` declares (and thereby authorizes)
   // 'dsh-launcher.workspace.section' for the duration of this

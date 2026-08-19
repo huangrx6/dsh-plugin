@@ -30,6 +30,17 @@ export function IconLauncher({ size = 16, className, title }: IconProps): ReactE
   )
 }
 
+/** Four rounded squares — the "Features" affordance used by the FAB and
+    the rail trigger. Reads as an app/features grid at 14–22px. */
+export function IconGrid({ size = 16, className, title }: IconProps): ReactElement {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden={title === undefined ? 'true' : undefined} className={className} width={size} height={size} role={title === undefined ? undefined : 'img'}>
+      {title === undefined ? null : <title>{title}</title>}
+      {svgInner('M3 3h4v4H3ZM9 3h4v4H9ZM3 9h4v4H3ZM9 9h4v4H9Z')}
+    </svg>
+  )
+}
+
 export function IconSparkle({ size = 16, className, title }: IconProps): ReactElement {
   return (
     <svg viewBox="0 0 16 16" fill="none" aria-hidden={title === undefined ? 'true' : undefined} className={className} width={size} height={size} role={title === undefined ? undefined : 'img'}>

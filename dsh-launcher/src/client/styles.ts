@@ -30,7 +30,7 @@ export const LAUNCHER_STYLES = `
   font-size: 13px;
   text-align: left;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: var(--dsh-layout-radius-user, 8px);
   transition: background 120ms var(--ds-ease-in-out, ease);
   margin: 2px 0;
 }
@@ -54,6 +54,7 @@ export const LAUNCHER_STYLES = `
 
 /* ─── Launcher panel (floating launcher) ─── */
 .dsh-launcher-panel-mask {
+  --dsh-launcher-ease: cubic-bezier(0.22, 1, 0.36, 1);
   position: fixed;
   inset: 0;
   background: color-mix(in srgb, var(--dsw-alias-label-primary, #000) 18%, transparent);
@@ -63,18 +64,28 @@ export const LAUNCHER_STYLES = `
   align-items: flex-end;
   justify-content: flex-start;
   padding: 80px 24px 24px 88px;
-  animation: dsh-launcher-fade-in 160ms var(--ds-ease-in-out, ease);
+  animation: dsh-launcher-fade-in 180ms var(--dsh-launcher-ease, ease);
+}
+/* Exit choreography (is-closing is set by LauncherPanel before the
+   unmount): mask fades while the panel settles down, then the view
+   unmounts on the panel's animationend. */
+.dsh-launcher-panel-mask.is-closing {
+  animation: dsh-launcher-fade-out 160ms var(--dsh-launcher-ease, ease) forwards;
+  pointer-events: none;
+}
+.dsh-launcher-panel-mask.is-closing .dsh-launcher-panel {
+  animation: dsh-launcher-panel-out 200ms cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 .dsh-launcher-panel {
   width: min(420px, 92vw);
   background: var(--dsw-alias-bg-layer-1, #1c1c1f);
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent);
-  border-radius: 16px;
+  border-radius: var(--dsh-layout-radius-user-lg, 16px);
   box-shadow: var(--dsw-shadow-lv2, 0 20px 60px rgba(0, 0, 0, 0.45));
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  animation: dsh-launcher-slide-up 220ms var(--ds-ease-in-out, ease);
+  animation: dsh-launcher-slide-up 260ms var(--dsh-launcher-ease, ease);
 }
 .dsh-launcher-panel-head {
   display: flex;
@@ -106,7 +117,7 @@ export const LAUNCHER_STYLES = `
   color: var(--dsw-alias-label-primary, #f4f4f5);
   font: inherit;
   text-align: left;
-  border-radius: 12px;
+  border-radius: var(--dsh-layout-radius-user-lg, 12px);
   cursor: pointer;
   transition: background 120ms var(--ds-ease-in-out, ease);
 }
@@ -117,7 +128,7 @@ export const LAUNCHER_STYLES = `
   height: 36px;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: var(--dsh-layout-radius-user, 10px);
   background: var(--dsw-alias-bg-module-platform, rgba(255, 255, 255, 0.04));
   color: var(--dsw-alias-label-primary, #f4f4f5);
   flex: 0 0 36px;
@@ -142,16 +153,28 @@ export const LAUNCHER_STYLES = `
   font: inherit;
   font-size: 12px;
   padding: 6px 10px;
-  border-radius: 8px;
+  border-radius: var(--dsh-layout-radius-user, 8px);
 }
 .dsh-launcher-panel-close:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(255, 255, 255, 0.06)); color: var(--dsw-alias-label-primary, #f4f4f5); }
 
 @keyframes dsh-launcher-fade-in { from { opacity: 0 } to { opacity: 1 } }
+@keyframes dsh-launcher-fade-out { to { opacity: 0 } }
 @keyframes dsh-launcher-slide-up { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes dsh-launcher-panel-out { to { opacity: 0; transform: translateY(10px) } }
 
 /* ─── Workspace overlay: desktop (default) ───
-   Two-column grid: topbar / menu / content. */
+   Two-column grid: topbar / menu / content.
+
+   Entrance choreography: the canvas settles from a hair above 1:1 while
+   its chrome arrives in staggered layers (topbar drops in, menu slides
+   from the rail, items cascade, content rises). All layers share one
+   easeOutQuint-ish curve (--dsh-launcher-ease) — same family, slightly
+   offset delays, is what reads as "silky" rather than "animated".
+   Exit: is-closing (set by WorkspaceOverlay before unmount) reverses
+   into a fast settle-down; children freeze at their final state while
+   the root fades. */
 .dsh-launcher-canvas {
+  --dsh-launcher-ease: cubic-bezier(0.22, 1, 0.36, 1);
   position: fixed;
   inset: 0;
   background: var(--dsw-alias-bg-module-platform, #0f0f12);
@@ -163,7 +186,11 @@ export const LAUNCHER_STYLES = `
     "topbar topbar"
     "menu   content";
   color: var(--dsw-alias-label-primary, #f4f4f5);
-  animation: dsh-launcher-canvas-in 240ms var(--ds-ease-in-out, ease);
+  animation: dsh-launcher-canvas-in 340ms var(--dsh-launcher-ease, ease);
+}
+.dsh-launcher-canvas.is-closing {
+  animation: dsh-launcher-canvas-out 200ms cubic-bezier(0.4, 0, 1, 1) forwards;
+  pointer-events: none;
 }
 .dsh-launcher-canvas-topbar {
   grid-area: topbar;
@@ -173,6 +200,7 @@ export const LAUNCHER_STYLES = `
   padding: 0 20px;
   border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
   background: var(--dsw-alias-bg-layer-1, #16161a);
+  animation: dsh-launcher-topbar-in 380ms var(--dsh-launcher-ease, ease) 50ms backwards;
 }
 .dsh-launcher-canvas-title { font-size: 14px; font-weight: 600; }
 .dsh-launcher-canvas-hint { font-size: 12px; color: var(--dsw-alias-label-tertiary, #8a8a8e); margin-left: 12px; }
@@ -185,7 +213,7 @@ export const LAUNCHER_STYLES = `
   border: 0;
   color: var(--dsw-alias-label-primary, #f4f4f5);
   padding: 6px 14px;
-  border-radius: 8px;
+  border-radius: var(--dsh-layout-radius-user, 8px);
   cursor: pointer;
   font: inherit;
   font-size: 12px;
@@ -199,6 +227,7 @@ export const LAUNCHER_STYLES = `
   border-right: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
   padding: 12px 8px;
   overflow-y: auto;
+  animation: dsh-launcher-menu-in 380ms var(--dsh-launcher-ease, ease) 80ms backwards;
 }
 .dsh-launcher-canvas-menu-label {
   font-size: 11px;
@@ -206,6 +235,7 @@ export const LAUNCHER_STYLES = `
   text-transform: uppercase;
   color: var(--dsw-alias-label-tertiary, #8a8a8e);
   padding: 10px 12px 8px;
+  animation: dsh-launcher-item-in 320ms var(--dsh-launcher-ease, ease) 120ms backwards;
 }
 .dsh-launcher-canvas-menu-item {
   display: flex;
@@ -219,11 +249,21 @@ export const LAUNCHER_STYLES = `
   font: inherit;
   font-size: 13px;
   text-align: left;
-  border-radius: 10px;
+  border-radius: var(--dsh-layout-radius-user, 10px);
   cursor: pointer;
   margin: 2px 0;
   transition: background 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease);
+  animation: dsh-launcher-item-in 340ms var(--dsh-launcher-ease, ease) backwards;
 }
+/* The cascade: each menu entry starts a touch later than the one above
+   it (the label is child 1, items follow). Extra children past #8 share
+   the last delay — plugin contributions still enter, just together. */
+.dsh-launcher-canvas-menu-item:nth-child(2) { animation-delay: 140ms; }
+.dsh-launcher-canvas-menu-item:nth-child(3) { animation-delay: 170ms; }
+.dsh-launcher-canvas-menu-item:nth-child(4) { animation-delay: 200ms; }
+.dsh-launcher-canvas-menu-item:nth-child(5) { animation-delay: 230ms; }
+.dsh-launcher-canvas-menu-item:nth-child(6) { animation-delay: 260ms; }
+.dsh-launcher-canvas-menu-item:nth-child(n + 7) { animation-delay: 290ms; }
 .dsh-launcher-canvas-menu-item:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(255, 255, 255, 0.06)); color: var(--dsw-alias-label-primary, #f4f4f5); }
 .dsh-launcher-canvas-menu-item.is-active { background: var(--dsw-alias-bg-module-platform, rgba(255, 255, 255, 0.08)); color: var(--dsw-alias-label-primary, #f4f4f5); }
 .dsh-launcher-canvas-menu-item-icon { display: inline-flex; width: 18px; height: 18px; align-items: center; justify-content: center; flex: 0 0 18px; }
@@ -235,6 +275,7 @@ export const LAUNCHER_STYLES = `
   overflow-y: auto;
   padding: 24px 28px 64px;
   -webkit-overflow-scrolling: touch;
+  animation: dsh-launcher-content-in 460ms var(--dsh-launcher-ease, ease) 110ms backwards;
 }
 .dsh-launcher-canvas-content-h1 {
   font-size: 18px;
@@ -269,7 +310,7 @@ export const LAUNCHER_STYLES = `
   height: 44px;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: var(--dsh-layout-radius-user-lg, 12px);
   background: var(--dsw-alias-bg-module-platform, rgba(255, 255, 255, 0.06));
   color: var(--dsw-alias-label-primary, #f4f4f5);
   flex: 0 0 44px;
@@ -290,7 +331,13 @@ export const LAUNCHER_STYLES = `
   line-height: 1.5;
 }
 
-@keyframes dsh-launcher-canvas-in { from { opacity: 0; transform: scale(0.98) } to { opacity: 1; transform: scale(1) } }
+@keyframes dsh-launcher-canvas-in { from { opacity: 0; transform: scale(1.02) } to { opacity: 1; transform: scale(1) } }
+@keyframes dsh-launcher-canvas-out { to { opacity: 0; transform: scale(0.985) } }
+@keyframes dsh-launcher-topbar-in { from { opacity: 0; transform: translateY(-10px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes dsh-launcher-menu-in { from { opacity: 0; transform: translateX(-12px) } to { opacity: 1; transform: translateX(0) } }
+@keyframes dsh-launcher-item-in { from { opacity: 0; transform: translateX(-8px) } to { opacity: 1; transform: translateX(0) } }
+@keyframes dsh-launcher-tab-item-in { from { opacity: 0; transform: translateY(-8px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes dsh-launcher-content-in { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: translateY(0) } }
 
 /* ─── Marketplace shared — also imported by dsh-skill-manager / dsh-mcp-manager ─── */
 .dsh-launcher-mkt-sources {
@@ -362,7 +409,7 @@ export const LAUNCHER_STYLES = `
   gap: 8px;
   padding: 8px 12px;
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
-  border-radius: 10px;
+  border-radius: var(--dsh-layout-radius-user, 10px);
   background: var(--dsw-alias-bg-layer-3, rgba(255, 255, 255, 0.04));
   color: var(--dsw-alias-label-primary, #f4f4f5);
 }
@@ -384,7 +431,7 @@ export const LAUNCHER_STYLES = `
   gap: 6px;
   padding: 8px 14px;
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
-  border-radius: 10px;
+  border-radius: var(--dsh-layout-radius-user, 10px);
   background: transparent;
   color: var(--dsw-alias-label-primary, #f4f4f5);
   font: inherit;
@@ -405,7 +452,7 @@ export const LAUNCHER_STYLES = `
   flex-direction: column;
   background: var(--dsw-alias-bg-layer-3, rgba(255, 255, 255, 0.04));
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
-  border-radius: 14px;
+  border-radius: var(--dsh-layout-radius-user-lg, 14px);
   padding: 16px;
   transition: border-color 120ms var(--ds-ease-in-out, ease), transform 120ms var(--ds-ease-in-out, ease);
   position: relative;
@@ -419,7 +466,7 @@ export const LAUNCHER_STYLES = `
   height: 36px;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: var(--dsh-layout-radius-user, 10px);
   background: var(--dsw-alias-bg-module-platform, rgba(255, 255, 255, 0.06));
   color: var(--dsw-alias-label-primary, #f4f4f5);
   flex: 0 0 36px;
@@ -463,7 +510,7 @@ export const LAUNCHER_STYLES = `
   gap: 4px;
   padding: 6px 12px;
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent);
-  border-radius: 8px;
+  border-radius: var(--dsh-layout-radius-user, 8px);
   background: transparent;
   color: var(--dsw-alias-label-primary, #f4f4f5);
   font: inherit;
@@ -490,7 +537,7 @@ export const LAUNCHER_STYLES = `
   font-size: 12px;
   padding: 8px 12px;
   background: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 10%, transparent);
-  border-radius: 8px;
+  border-radius: var(--dsh-layout-radius-user, 8px);
   margin-bottom: 12px;
 }
 
@@ -505,7 +552,7 @@ export const LAUNCHER_STYLES = `
   flex: 1 1 220px;
   min-width: 0;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: var(--dsh-layout-radius-user, 8px);
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
   background: var(--dsw-alias-bg-layer-3, rgba(255, 255, 255, 0.04));
   color: var(--dsw-alias-label-primary, #f4f4f5);
@@ -516,6 +563,92 @@ export const LAUNCHER_STYLES = `
 .dsh-launcher-mkt-addrow input::placeholder { color: var(--dsw-alias-label-tertiary, #8a8a8e); }
 
 @keyframes dsh-launcher-spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
+
+/* ─── dsh-layout material + radius bridge ───
+   The dsh-layout plugin publishes its frosted-material state on <html>:
+   data-dsh-layout-material='on' plus --dsh-layout-mat (translucent tint),
+   -mat-solid, -mat-blur, -mat-sat, and the user corner radii as
+   --dsh-layout-radius-user[-lg] (the radius vars are already bridged
+   inline above with launcher fallbacks, so they apply whether or not
+   the material is on). When the material is on, every launcher surface
+   follows it; when dsh-layout isn't installed nothing below matches and
+   the launcher keeps its own solid look.
+
+   One blur layer per surface root (canvas, panel, FAB) — inner surfaces
+   (topbar, menu, cards) take translucent tints only. Nested
+   backdrop-filters would double-blur the same backdrop and cost another
+   compositing pass for no visual gain. */
+html[data-dsh-layout-material='on'] .dsh-launcher-canvas {
+  background: var(--dsh-layout-mat, var(--dsh-layout-glass-base, #0f0f12));
+  -webkit-backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
+  backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
+}
+html[data-dsh-layout-material='on'] .dsh-launcher-canvas-topbar {
+  background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 62%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 55%, transparent);
+}
+html[data-dsh-layout-material='on'] .dsh-launcher-canvas-menu {
+  background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 46%, transparent);
+  border-right-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 55%, transparent);
+}
+html[data-dsh-layout-material='on'] .dsh-launcher-mkt-card,
+html[data-dsh-layout-material='on'] .dsh-launcher-mkt-search {
+  background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 34%, transparent);
+  border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 45%, transparent);
+}
+html[data-dsh-layout-material='on'] .dsh-launcher-mkt-card-tile,
+html[data-dsh-layout-material='on'] .dsh-launcher-panel-item-icon {
+  background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 52%, transparent);
+}
+html[data-dsh-layout-material='on'] .dsh-launcher-panel {
+  background: var(--dsh-layout-mat, var(--dsh-layout-glass-base, #1c1c1f));
+  border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 55%, transparent);
+  -webkit-backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
+  backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
+}
+html[data-dsh-layout-material='on'] .dsh-launcher-fab {
+  background: var(--dsh-layout-mat, var(--dsh-layout-glass-base, #16161a));
+  -webkit-backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
+  backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
+}
+/* Accessibility + capability fallbacks mirror dsh-layout's own: keep the
+   tint at full opacity, drop the blur entirely. */
+@media (prefers-reduced-transparency: reduce) {
+  html[data-dsh-layout-material='on'] .dsh-launcher-canvas,
+  html[data-dsh-layout-material='on'] .dsh-launcher-panel,
+  html[data-dsh-layout-material='on'] .dsh-launcher-fab {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: var(--dsh-layout-mat-solid, var(--dsh-layout-glass-base)) !important;
+  }
+}
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  html[data-dsh-layout-material='on'] .dsh-launcher-canvas,
+  html[data-dsh-layout-material='on'] .dsh-launcher-panel,
+  html[data-dsh-layout-material='on'] .dsh-launcher-fab {
+    background: var(--dsh-layout-mat-solid, var(--dsh-layout-glass-base)) !important;
+  }
+}
+
+/* ─── Motion safety ───
+   The views skip the animationend wait under reduced motion (they
+   unmount immediately), and every entrance/exit animation drops out
+   here so nothing is left mid-flight. */
+@media (prefers-reduced-motion: reduce) {
+  .dsh-launcher-canvas,
+  .dsh-launcher-canvas.is-closing,
+  .dsh-launcher-canvas-topbar,
+  .dsh-launcher-canvas-menu,
+  .dsh-launcher-canvas-menu-label,
+  .dsh-launcher-canvas-menu-item,
+  .dsh-launcher-canvas-content,
+  .dsh-launcher-panel-mask,
+  .dsh-launcher-panel-mask.is-closing,
+  .dsh-launcher-panel,
+  .dsh-launcher-panel-mask.is-closing .dsh-launcher-panel {
+    animation: none !important;
+  }
+}
 
 /* ─── H5 adaptation (≤ 767px) ───
    Phone layout: the side rail collapses into a horizontal tab bar at the
@@ -571,6 +704,10 @@ export const LAUNCHER_STYLES = `
   }
   .dsh-launcher-canvas-menu-item-icon { width: 16px; height: 16px; flex: 0 0 16px; }
   .dsh-launcher-canvas-menu-item-icon svg { width: 14px; height: 14px; }
+  /* On the horizontal tab bar the desktop left-slide reads wrong — tabs
+     drop in from the top edge instead; delays keep the cascade. */
+  .dsh-launcher-canvas-menu-item,
+  .dsh-launcher-canvas-menu-label { animation-name: dsh-launcher-tab-item-in; }
 
   .dsh-launcher-canvas-content {
     padding: 16px 14px 80px;
@@ -590,7 +727,7 @@ export const LAUNCHER_STYLES = `
     grid-template-columns: 1fr;
     gap: 12px;
   }
-  .dsh-launcher-mkt-card { padding: 14px; border-radius: 12px; }
+  .dsh-launcher-mkt-card { padding: 14px; border-radius: var(--dsh-layout-radius-user-lg, 12px); }
   .dsh-launcher-mkt-card-tile { width: 32px; height: 32px; flex: 0 0 32px; }
   .dsh-launcher-mkt-card-tile svg { width: 16px; height: 16px; }
   .dsh-launcher-mkt-card-title { font-size: 13px; }
@@ -660,6 +797,15 @@ export const LAUNCHER_STYLES = `
   box-sizing: border-box;
   padding: 0 8px;
   margin: 2px 0;
+}
+/* The launcher button REPLACES the native rail settings trigger
+   (rail-button.ts flags it with data-dsh-launcher-replaced). Hidden via
+   stylesheet — same pattern as dsh-layout's stats suppressor — so the
+   React-owned node is never mutated inline and teardown is just
+   removing the body attribute. The panel's "system settings" item still
+   drives the native modal via trigger.click() on the hidden node. */
+body[data-dsh-launcher-rail] [data-dsh-launcher-replaced] {
+  display: none !important;
 }
 .dsh-launcher-fab {
   position: fixed;
