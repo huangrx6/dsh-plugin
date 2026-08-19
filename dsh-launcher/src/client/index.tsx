@@ -17,11 +17,13 @@
  *      them. It only emits a DOM event; all rendering lives in (1).
  */
 import type { ClientContext } from "@deepseek-ai/dsh-client-runtime/client";
+import type { ConnectionHandle } from "@deepseek-ai/dsh-client-connection/client";
 import "@deepseek-ai/dsh-client-locale/client";
+import { LAUNCHER_SECTIONS_CHANNEL } from "../contracts.ts";
 import { installStyles } from "./styles.ts";
 import { enUS, LAUNCHER_NS, zhCN, type LauncherLocaleKey } from "./locales.ts";
 import { LauncherHost } from "./LauncherHost.tsx";
-import type { SlotRegistryLike } from "./WorkspaceOverlay.tsx";
+import type { SlotRegistryLike, LauncherSectionsApi } from "./WorkspaceOverlay.tsx";
 import { installRailButton } from "./rail-button.ts";
 
 declare module "@deepseek-ai/dsh-client-ui-slots" {
@@ -63,6 +65,27 @@ export function apply(ctx: ClientContext): void {
 
   const slotsView = ctx.slots as unknown as SlotRegistryLike;
 
+  const connection = (ctx as unknown as { connection: ConnectionHandle })
+    .connection;
+  const sectionsApi: LauncherSectionsApi = {
+    callSectionsRpc: async () => {
+      try {
+        const raw = await connection.rpc.call(
+          LAUNCHER_SECTIONS_CHANNEL,
+          "dsh-launcher",
+          {},
+        );
+        return raw as {
+          readonly ok: boolean;
+          readonly value?: { readonly sections: readonly import("../contracts.ts").SectionMetadata[] };
+          readonly error?: { readonly code: string; readonly message: string };
+        };
+      } catch {
+        return { ok: false, error: { code: "internal", message: "RPC unavailable" } };
+      }
+    },
+  };
+
   // Best-effort side-rail button: plain DOM, no React. Silent when the
   // rail / native trigger can't be found — the FAB is the guaranteed
   // entry point.
@@ -85,7 +108,7 @@ export function apply(ctx: ClientContext): void {
             scope: "root",
           },
         },
-        inject: () => ({ slotsView }),
+        inject: () => ({ slotsView, sectionsApi }),
       },
       LauncherHost,
     ),

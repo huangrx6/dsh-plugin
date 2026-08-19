@@ -14,6 +14,10 @@
  * The section contract: plugins register to
  * 'dsh-launcher.workspace.section' with id 'skills' | 'mcp' | ... —
  * matching ids REPLACE the launcher's placeholder for that section.
+ *
+ * Section ordering, grouping, and labels are driven by metadata from
+ * the host-side RPC (launcher-sections.json), falling back to the
+ * built-in defaults when the RPC is unavailable.
  */
 import {
   useCallback,
@@ -25,6 +29,7 @@ import {
   type ReactNode,
 } from "react";
 import type { PropsRenderSlots } from "@deepseek-ai/dsh-client-ui-slots";
+import type { SectionMetadata } from "../contracts.ts";
 import {
   IconArchive,
   IconClose,
@@ -42,12 +47,14 @@ import type { LauncherLocaleKey } from "./locales.ts";
 export interface WorkspaceSection {
   /** Stable id — the workspace persists this across renders. */
   readonly id: string;
-  /** Localized label key. */
-  readonly labelKey: LauncherLocaleKey;
-  /** Short subtitle shown under the title in the section header. */
-  readonly subtitleKey?: LauncherLocaleKey;
-  /** Localized key of the nav group this section lives under. */
+  /** Resolved display label (already localized). */
+  readonly label: string;
+  /** Resolved subtitle (already localized). undefined when absent. */
+  readonly subtitle: string | undefined;
+  /** Locale key of the nav group this section lives under. */
   readonly groupKey: LauncherLocaleKey;
+  /** Menu priority for ordering (lower = higher). */
+  readonly menuPriority: number;
   /** Inline icon (a ReactElement). */
   readonly icon: JSX.Element;
   /** Section renderer. Defaults to the placeholder; replaced by slot
@@ -71,84 +78,113 @@ export interface SlotEntryView {
   };
 }
 
+/** RPC API for fetching section metadata from the host. */
+export interface LauncherSectionsApi {
+  readonly callSectionsRpc: () => Promise<{
+    readonly ok: boolean;
+    readonly value?: { readonly sections: readonly SectionMetadata[] };
+    readonly error?: { readonly code: string; readonly message: string };
+  }>;
+}
+
 export const WORKSPACE_SECTION_SLOT = "dsh-launcher.workspace.section";
 
-/** Sections the launcher itself ships. Slot contributions override these
-    by id (a plugin registering id 'skills' replaces the placeholder). */
-export const DEFAULT_SECTIONS: readonly WorkspaceSection[] = [
-  // Agent rules first — the config you reach for most.
-  {
-    id: "rules",
+// ─── Fallback icon + locale key map (used when RPC is unavailable) ──
+
+interface FallbackEntry {
+  readonly icon: JSX.Element;
+  readonly labelKey: LauncherLocaleKey;
+  readonly subtitleKey?: LauncherLocaleKey;
+  readonly groupKey: LauncherLocaleKey;
+  readonly menuPriority: number;
+}
+
+const FALLBACK_BY_ID: Record<string, FallbackEntry> = {
+  rules: {
+    icon: <IconRules size={20} />,
     labelKey: "menuAgentRules",
     subtitleKey: "menuAgentRulesSubtitle",
     groupKey: "menuGroupAgentRules",
-    icon: <IconRules size={20} />,
-    render: () => <SectionPlaceholder id="rules" />,
+    menuPriority: 1,
   },
-  // 订阅用量（管理组内）
-  {
-    id: "usage",
+  usage: {
+    icon: <IconGauge size={20} />,
     labelKey: "menuUsage",
     subtitleKey: "menuUsageSubtitle",
     groupKey: "menuGroupManage",
-    icon: <IconGauge size={20} />,
-    render: () => <SectionPlaceholder id="usage" />,
+    menuPriority: 2,
   },
-  // 外观
-  {
-    id: "layout",
+  layout: {
+    icon: <IconLayout size={20} />,
     labelKey: "menuLayout",
     subtitleKey: "menuLayoutSubtitle",
     groupKey: "menuGroupAppearance",
-    icon: <IconLayout size={20} />,
-    render: () => <SectionPlaceholder id="layout" />,
+    menuPriority: 3,
   },
-  // 管理
-  {
-    id: "skills",
+  skills: {
+    icon: <IconSkills size={20} />,
     labelKey: "menuSkills",
     subtitleKey: "menuSkillsSubtitle",
     groupKey: "menuGroupManage",
-    icon: <IconSkills size={20} />,
-    render: () => <SectionPlaceholder id="skills" />,
+    menuPriority: 4,
   },
-  {
-    id: "mcp",
+  mcp: {
+    icon: <IconMcp size={20} />,
     labelKey: "menuMcp",
     subtitleKey: "menuMcpSubtitle",
     groupKey: "menuGroupManage",
-    icon: <IconMcp size={20} />,
-    render: () => <SectionPlaceholder id="mcp" />,
+    menuPriority: 5,
   },
-  // 工具
-  {
-    id: "remote",
+  remote: {
+    icon: <IconRemote size={20} />,
     labelKey: "menuRemote",
     subtitleKey: "menuRemoteSubtitle",
     groupKey: "menuGroupTools",
-    icon: <IconRemote size={20} />,
-    render: () => <SectionPlaceholder id="remote" />,
+    menuPriority: 6,
   },
-  {
-    id: "archive",
+  archive: {
+    icon: <IconArchive size={20} />,
     labelKey: "menuArchive",
     subtitleKey: "menuArchiveSubtitle",
     groupKey: "menuGroupTools",
-    icon: <IconArchive size={20} />,
-    render: () => <SectionPlaceholder id="archive" />,
+    menuPriority: 7,
   },
-];
+};
+
+/** Build default sections with labels resolved via the locale `t` function. */
+function buildDefaultSections(
+  t: (key: LauncherLocaleKey) => string,
+): readonly WorkspaceSection[] {
+  return Object.entries(FALLBACK_BY_ID)
+    .sort(([, a], [, b]) => a.menuPriority - b.menuPriority)
+    .map(([id, fb]) => ({
+      id,
+      label: t(fb.labelKey),
+      subtitle: fb.subtitleKey !== undefined ? t(fb.subtitleKey) : undefined,
+      groupKey: fb.groupKey,
+      menuPriority: fb.menuPriority,
+      icon: fb.icon,
+      render: () => <SectionPlaceholder id={id} />,
+    }));
+}
+
+/** Map host-side menuGroup values to locale keys for the group header. */
+const GROUP_KEY_MAP: Record<string, LauncherLocaleKey> = {
+  agent: "menuGroupAgentRules",
+  manage: "menuGroupManage",
+  appearance: "menuGroupAppearance",
+  tools: "menuGroupTools",
+};
+
+function resolveGroupKey(menuGroup: string): LauncherLocaleKey {
+  return GROUP_KEY_MAP[menuGroup] ?? "menuGroupTools";
+}
 
 export interface WorkspaceViewProps {
   readonly t: (key: LauncherLocaleKey) => string;
   readonly document: Document;
   readonly slotsView: SlotRegistryLike;
-  /** Framework renderSlot narrowed to our declared children; when present,
-      plugin sections render through the platform's own machinery (props,
-      error boundaries, locale seats all included). Typed with the
-      framework's own PropsRenderSlots so the composed-props contract
-      checks structurally at the register site. `| undefined` keeps the
-      optional prop assignable under exactOptionalPropertyTypes. */
+  readonly sectionsApi: LauncherSectionsApi;
   readonly renderSlot?:
     | PropsRenderSlots<"dsh-launcher.workspace.section">["renderSlot"]
     | undefined;
@@ -159,18 +195,53 @@ export function WorkspaceView({
   t,
   document,
   slotsView,
+  sectionsApi,
   renderSlot,
   onClose,
 }: WorkspaceViewProps): JSX.Element {
-  const [activeId, setActiveId] = useState<string>(
-    DEFAULT_SECTIONS[0]?.id ?? "",
-  );
-  // Exit choreography: closing first plays the canvas-out animation and
-  // only then unmounts (animationend on the root's own animation).
-  // prefers-reduced-motion skips the wait — the stylesheet drops the
-  // animation entirely there, so waiting would hang the surface open.
+  const [activeId, setActiveId] = useState<string>("");
   const [closing, setClosing] = useState(false);
   const canvasRef = useRef<HTMLDivElement | null>(null);
+  const [metaSections, setMetaSections] = useState<readonly WorkspaceSection[]>(
+    () => buildDefaultSections(t),
+  );
+
+  // Fetch section metadata from the host on mount.
+  useEffect(() => {
+    let cancelled = false;
+    sectionsApi
+      .callSectionsRpc()
+      .then((result) => {
+        if (cancelled) return;
+        if (!result.ok || result.value === undefined) return;
+        const mapped = result.value.sections.map<WorkspaceSection>((meta) => {
+          const fb = FALLBACK_BY_ID[meta.id];
+          return {
+            id: meta.id,
+            label: meta.zh.name,
+            subtitle: meta.zh.desc,
+            groupKey: resolveGroupKey(meta.menuGroup),
+            menuPriority: meta.menuPriority,
+            icon: fb?.icon ?? <IconSparkle size={20} />,
+            render: () => <SectionPlaceholder id={meta.id} />,
+          };
+        });
+        if (mapped.length > 0) setMetaSections(mapped);
+      })
+      .catch(() => {
+        /* RPC unavailable — keep defaults */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sectionsApi]);
+
+  // Set initial active section once metadata is available.
+  useEffect(() => {
+    if (activeId === "" && metaSections.length > 0) {
+      setActiveId(metaSections[0]!.id);
+    }
+  }, [activeId, metaSections]);
 
   const beginClose = useCallback(() => {
     setClosing((already) => {
@@ -202,11 +273,6 @@ export function WorkspaceView({
   useEffect(() => {
     const handleKey = (event: KeyboardEvent): void => {
       if (event.key !== "Escape") return;
-      // Modals render through portals at body level and trap focus, so
-      // an Escape typed with a modal open originates INSIDE that modal,
-      // not inside the canvas. Let the modal's own Escape handling win
-      // — exiting the workspace here would skip a layer (one press must
-      // close the modal, the next the canvas).
       const target = event.target;
       const dialog =
         target instanceof Element
@@ -227,8 +293,7 @@ export function WorkspaceView({
     () => slotsView.entries(WORKSPACE_SECTION_SLOT),
   );
 
-  // Lock page scroll while the canvas is up (the overlay is fixed, so the
-  // page behind it shouldn't scroll on wheel/touch).
+  // Lock page scroll while the canvas is up.
   useEffect(() => {
     const previous = document.documentElement.style.overflow;
     document.documentElement.style.overflow = "hidden";
@@ -237,13 +302,14 @@ export function WorkspaceView({
     };
   }, [document]);
 
+  // Merge metadata sections with slot contributions.
   const sections = useMemo<readonly WorkspaceSection[]>(() => {
     const overrides = new Map<string, SlotEntryView>();
     for (const entry of slotEntries) {
       if (entry.options.id !== undefined)
         overrides.set(entry.options.id, entry);
     }
-    return DEFAULT_SECTIONS.map((section) => {
+    return metaSections.map((section) => {
       const override = overrides.get(section.id);
       if (override === undefined) return section;
       const Component = override.component as
@@ -255,16 +321,16 @@ export function WorkspaceView({
         render: () => <Component />,
       };
     });
-  }, [slotEntries]);
+  }, [metaSections, slotEntries]);
 
   const active =
     sections.find((section) => section.id === activeId) ?? sections[0];
 
-  // Nav groups preserve DEFAULT_SECTIONS order: 管理 (skills/mcp),
-  // 工具 (remote/archive), 外观 (layout) — like the reference layout,
-  // grouped with small caps headers instead of one flat list.
   const groups = useMemo(() => {
-    const out: { key: LauncherLocaleKey; sections: readonly WorkspaceSection[] }[] = [];
+    const out: {
+      key: LauncherLocaleKey;
+      sections: readonly WorkspaceSection[];
+    }[] = [];
     for (const section of sections) {
       const last = out[out.length - 1];
       if (last !== undefined && last.key === section.groupKey) {
@@ -287,10 +353,6 @@ export function WorkspaceView({
         </div>
       );
     }
-    // Preferred path: the framework's renderSlot (only this entry is
-    // authorized to render the slot, and plugin entries get their full
-    // composed props — injected api, locale seat, error boundary). The
-    // `only` opt narrows the list to the active section's id.
     if (renderSlot !== undefined) {
       return renderSlot(
         WORKSPACE_SECTION_SLOT,
@@ -312,9 +374,6 @@ export function WorkspaceView({
       aria-label={t("workspace")}
       onAnimationEnd={handleAnimationEnd}
     >
-      {/* Always-visible corner X: the rail-bottom exit alone proved too
-          hard to find; a top-right close is where every desktop app
-          puts it. Absolute over the grid, above both panes. */}
       <button
         type="button"
         className="dsh-launcher-canvas-x"
@@ -325,8 +384,6 @@ export function WorkspaceView({
         <IconClose size={14} />
       </button>
       <nav className="dsh-launcher-canvas-menu" aria-label={t("menuSection")}>
-        {/* Groups scroll; the exit stays pinned to the rail's bottom like
-            every modern sidebar's secondary action. */}
         <div className="dsh-launcher-menu-scroll">
           <div className="dsh-launcher-menu-identity">
             <span className="dsh-launcher-menu-identity-icon">
@@ -343,7 +400,9 @@ export function WorkspaceView({
           </div>
           {groups.map((group) => (
             <div key={group.key} className="dsh-launcher-menu-group">
-              <div className="dsh-launcher-canvas-menu-label">{t(group.key)}</div>
+              <div className="dsh-launcher-canvas-menu-label">
+                {t(group.key)}
+              </div>
               {group.sections.map((section) => (
                 <button
                   key={section.id}
@@ -357,7 +416,7 @@ export function WorkspaceView({
                     {section.icon}
                   </span>
                   <span className="dsh-launcher-canvas-menu-item-label">
-                    {t(section.labelKey)}
+                    {section.label}
                   </span>
                 </button>
               ))}
@@ -366,34 +425,28 @@ export function WorkspaceView({
         </div>
       </nav>
       <main className="dsh-launcher-canvas-content" aria-busy={false}>
-        <SectionContent section={active} translate={t} />
+        <SectionContent section={active} />
         {renderSectionBody()}
       </main>
     </div>
   );
 }
 
-/** Section header: slim title row (title + subtitle, hairline below) —
-    the content speaks, not a hero tile. */
 function SectionContent({
   section,
-  translate,
 }: {
   readonly section: WorkspaceSection | undefined;
-  readonly translate: (key: LauncherLocaleKey) => string;
 }): JSX.Element {
   if (section === undefined) return <></>;
   return (
     <header className="dsh-launcher-section-header">
       <div className="dsh-launcher-section-header-body">
-        <h1 className="dsh-launcher-section-header-title">
-          {translate(section.labelKey)}
-        </h1>
-        {section.subtitleKey === undefined ? null : (
+        <h1 className="dsh-launcher-section-header-title">{section.label}</h1>
+        {section.subtitle !== undefined ? (
           <p className="dsh-launcher-section-header-subtitle">
-            {translate(section.subtitleKey)}
+            {section.subtitle}
           </p>
-        )}
+        ) : null}
       </div>
     </header>
   );

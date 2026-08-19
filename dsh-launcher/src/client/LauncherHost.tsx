@@ -16,8 +16,13 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import type { PropsRenderSlots } from "@deepseek-ai/dsh-client-ui-slots";
+import type { ConnectionHandle } from "@deepseek-ai/dsh-client-connection/client";
 import { LauncherPanelView } from "./LauncherPanel.tsx";
-import { WorkspaceView, type SlotRegistryLike } from "./WorkspaceOverlay.tsx";
+import {
+  WorkspaceView,
+  type LauncherSectionsApi,
+  type SlotRegistryLike,
+} from "./WorkspaceOverlay.tsx";
 import { on, LauncherEvents } from "./events.ts";
 import { findNativeSettingsTrigger } from "./dom-watcher.ts";
 import { IconGrid } from "./icons.tsx";
@@ -32,6 +37,8 @@ export interface LauncherHostProps {
   /** Narrow view over the slot registry, handed in via register's inject
       factory — the workspace menu reads live section entries from it. */
   readonly slotsView: SlotRegistryLike;
+  /** RPC client for fetching launcher section metadata from the host. */
+  readonly sectionsApi: LauncherSectionsApi;
   /** Framework renderSlot narrowed to the children we declared on the
       overlay entry ('dsh-launcher.workspace.section'). Supplied by the
       slot machinery itself (PropsRenderSlots is part of the composed
@@ -46,6 +53,7 @@ export interface LauncherHostProps {
 export function LauncherHost({
   t,
   slotsView,
+  sectionsApi,
   renderSlot,
 }: LauncherHostProps): JSX.Element {
   const [panelOpen, setPanelOpen] = useState(false);
@@ -137,6 +145,7 @@ export function LauncherHost({
           t={t}
           document={document}
           slotsView={slotsView}
+          sectionsApi={sectionsApi}
           renderSlot={renderSlot}
           onClose={closeWorkspace}
         />

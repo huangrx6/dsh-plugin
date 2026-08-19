@@ -192,6 +192,7 @@ function clamp(n: number): number {
 
 function Bar({ bar }: { readonly bar: UsageBar }): JSX.Element {
   const pct = clamp(bar.remainingPercent ?? 0)
+  const fillState = pct > 50 ? 'safe' : pct > 20 ? 'warning' : 'critical'
   const tooltip = bar.remaining !== undefined && bar.total !== undefined
     ? `${bar.remaining} / ${bar.total}${bar.unit !== undefined ? ' ' + bar.unit : ''}`
     : `${pct}%`
@@ -201,7 +202,7 @@ function Bar({ bar }: { readonly bar: UsageBar }): JSX.Element {
         <span className="u-barLabel">{bar.label}</span>
         <span className="u-barVal">{pct}%</span>
       </div>
-      <div className="u-track"><div className="u-fill" style={{ width: `${pct}%` }} /></div>
+      <div className="u-track"><div className="u-fill" data-fill={fillState} style={{ width: `${pct}%` }} /></div>
     </div>
   )
 }
