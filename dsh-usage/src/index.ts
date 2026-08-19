@@ -115,17 +115,25 @@ function formatDuration(ms: number): string {
   return `${Math.round(ms / 60_000)} 分钟`
 }
 
+/** Normalize a provider reset time (ms epoch OR ISO 8601 string OR Date)
+ *  to epoch ms; exactOptionalPropertyTypes forbids passing through NaN. */
+function toMs(ts: number | string): number {
+  const ms = new Date(ts).getTime()
+  return Number.isFinite(ms) ? ms : NaN
+}
+
 /** Format a reset timestamp as "MM-dd HH:mm:ss" in the host's local time. */
-function formatReset(ts: number): string {
+function formatReset(ts: number | string): string {
   const d = new Date(ts)
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
 
-/** Format a reset timestamp as "MM-dd HH:mm:ss" (now-floored, e.g. 每 5 小时). */
-function formatResetIn(ts: number): string {
-  const delta = ts - Date.now()
-  if (delta < 0) return formatReset(ts)
+/** Format a reset timestamp plus a live countdown: "MM-dd HH:mm:ss（n 天后）". */
+function formatResetIn(ts: number | string): string {
+  const target = toMs(ts)
+  const delta = Number.isFinite(target) ? target - Date.now() : NaN
+  if (!Number.isFinite(delta) || delta < 0) return formatReset(ts)
   return `${formatReset(ts)}（${formatDuration(delta)}后）`
 }
 
@@ -314,9 +322,9 @@ async function queryOpencode(entry: UsageEntry): Promise<UsageQueryResult> {
   }
   const json = (await response.json()) as {
     usage?: {
-      rolling?: { percent?: number; status?: string; resetsAt?: number }
-      weekly?: { percent?: number; status?: string; resetsAt?: number }
-      monthly?: { percent?: number; status?: string; resetsAt?: number }
+      rolling?: { percent?: number; status?: string; resetsAt?: number | string }
+      weekly?: { percent?: number; status?: string; resetsAt?: number | string }
+      monthly?: { percent?: number; status?: string; resetsAt?: number | string }
     }
   }
   const usage = json.usage ?? {}
