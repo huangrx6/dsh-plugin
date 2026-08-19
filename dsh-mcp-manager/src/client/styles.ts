@@ -399,6 +399,58 @@ const CSS = `
 .dshmcp-modal .dshmcp-editor { border: 0; border-radius: 0; background: transparent; }
 .dshmcp-modal .dshmcp-editorFoot { background: var(--dsw-alias-bg-layer-1, #1c1c1f); }
 
+/* ── scrollbars: one thin recipe over every plugin scroller ─────────────── */
+/* All of this plugin's scroll containers (modal bodies, the tool schema
+   viewport, the editor textareas, the test error pre) ride one thin quiet
+   scrollbar — label color at 18% over a transparent track, brightening to
+   28% on hover — instead of the browser default the page layout cannot
+   reach. Visibility follows dsh-layout's scrollbar setting: 'hidden'
+   removes the bars here as well (scrolling keeps working); the native
+   default — and any overlay-style tier — keeps this thin style.
+   (.dshmcp-mkt-seg deliberately keeps its own scrollbar-width: none: it
+   is a toolbar strip, not a content scroller.) */
+.dshmcp-modalBody,
+.dshmcp-toolModalBody,
+.dshmcp-schemaViewport,
+.dshmcp-testPanel pre,
+.dshmcp-textarea {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent) transparent;
+}
+.dshmcp-modalBody::-webkit-scrollbar,
+.dshmcp-toolModalBody::-webkit-scrollbar,
+.dshmcp-schemaViewport::-webkit-scrollbar,
+.dshmcp-testPanel pre::-webkit-scrollbar,
+.dshmcp-textarea::-webkit-scrollbar { width: 8px; height: 8px; }
+.dshmcp-modalBody::-webkit-scrollbar-thumb,
+.dshmcp-toolModalBody::-webkit-scrollbar-thumb,
+.dshmcp-schemaViewport::-webkit-scrollbar-thumb,
+.dshmcp-testPanel pre::-webkit-scrollbar-thumb,
+.dshmcp-textarea::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent);
+  border-radius: 999px;
+}
+.dshmcp-modalBody::-webkit-scrollbar-thumb:hover,
+.dshmcp-toolModalBody::-webkit-scrollbar-thumb:hover,
+.dshmcp-schemaViewport::-webkit-scrollbar-thumb:hover,
+.dshmcp-testPanel pre::-webkit-scrollbar-thumb:hover,
+.dshmcp-textarea::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 28%, transparent); }
+.dshmcp-modalBody::-webkit-scrollbar-track,
+.dshmcp-toolModalBody::-webkit-scrollbar-track,
+.dshmcp-schemaViewport::-webkit-scrollbar-track,
+.dshmcp-testPanel pre::-webkit-scrollbar-track,
+.dshmcp-textarea::-webkit-scrollbar-track { background: transparent; }
+html[data-dsh-layout-scrollbar='hidden'] .dshmcp-modalBody,
+html[data-dsh-layout-scrollbar='hidden'] .dshmcp-toolModalBody,
+html[data-dsh-layout-scrollbar='hidden'] .dshmcp-schemaViewport,
+html[data-dsh-layout-scrollbar='hidden'] .dshmcp-testPanel pre,
+html[data-dsh-layout-scrollbar='hidden'] .dshmcp-textarea { scrollbar-width: none; }
+html[data-dsh-layout-scrollbar='hidden'] .dshmcp-modalBody::-webkit-scrollbar,
+html[data-dsh-layout-scrollbar='hidden'] .dshmcp-toolModalBody::-webkit-scrollbar,
+html[data-dsh-layout-scrollbar='hidden'] .dshmcp-schemaViewport::-webkit-scrollbar,
+html[data-dsh-layout-scrollbar='hidden'] .dshmcp-testPanel pre::-webkit-scrollbar,
+html[data-dsh-layout-scrollbar='hidden'] .dshmcp-textarea::-webkit-scrollbar { display: none; }
+
 /* ── spinner ────────────────────────────────────────────────────────────── */
 .dshmcp-spin { animation: dshmcp-rotate 1s linear infinite; }
 @keyframes dshmcp-rotate { to { transform: rotate(360deg); } }
@@ -546,6 +598,7 @@ const CSS = `
 .dshmcp-mkt-addbtn[disabled] { opacity: .5; cursor: default; }
 .dshmcp-mkt-addbtn.is-quiet { background: transparent; border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); box-shadow: none; color: var(--dsw-alias-label-secondary, #b3b3b8); }
 .dshmcp-mkt-addbtn.is-quiet:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dshmcp-mkt-addhint { flex: 1 1 100%; font-size: 11px; line-height: 15px; color: var(--dsw-alias-label-tertiary, #8a8a8e); }
 
 /* the list: one grouped container of compact rows */
 .dshmcp-mkt-row { margin: 0; }
@@ -637,6 +690,27 @@ const CSS = `
 .dshmcp-mkt-remove:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #ffb74d); outline-offset: -2px; }
 .dshmcp-mkt-remove[disabled] { opacity: .55; cursor: default; }
 
+/* ── quiet 详情 action on market rows / cards: same secondary recipe as
+   the remove button, but neutral — hover brightens instead of reddening */
+.dshmcp-mkt-detail {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
+  border-radius: var(--dsh-layout-radius-user, 8px);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary, #b3b3b8);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease);
+}
+.dshmcp-mkt-detail:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dshmcp-mkt-detail:active { transform: scale(0.97); }
+.dshmcp-mkt-detail:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #ffb74d); outline-offset: -2px; }
+
 .dshmcp-mkt-empty {
   text-align: center;
   padding: 40px 16px;
@@ -710,6 +784,7 @@ const CSS = `
 .dshmcp-mkt-srcNameLine { min-width: 0; display: flex; align-items: center; gap: 6px; }
 .dshmcp-mkt-srcName { font-size: 13px; font-weight: 600; line-height: 17px; color: var(--dsw-alias-label-primary, #f4f4f5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dshmcp-mkt-srcUrl { font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; line-height: 15px; color: var(--dsw-alias-label-tertiary, #8a8a8e); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshmcp-mkt-srcErr { font-size: 11px; line-height: 15px; color: var(--dsw-alias-state-danger-primary, #ef5350); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dshmcp-mkt-srcActions { flex: none; display: inline-flex; align-items: center; gap: 4px; }
 .dshmcp-mkt-srcBtn {
   width: 26px;
@@ -914,6 +989,7 @@ html[data-dsh-layout-material='on'] .dshmcp-toolModalBody > :first-child { backg
   .dshmcp-mkt-addbtn,
   .dshmcp-mkt-install,
   .dshmcp-mkt-remove,
+  .dshmcp-mkt-detail,
   .dshmcp-mkt-srcRow,
   .dshmcp-mkt-srcBtn,
   .dshmcp-mkt-viewseg button,

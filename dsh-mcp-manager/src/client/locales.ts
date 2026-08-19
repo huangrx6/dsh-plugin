@@ -128,6 +128,20 @@ export const zhCN = {
   marketUpdate: "更新",
   marketUpdating: "更新中…",
   marketUpdateHint: "市场版本 {market}，已安装 {installed}",
+  addSourceHint: "支持 GitHub 仓库地址、.mcp.json 链接或自定义清单",
+  discoverItemDesc: "来自 {repo} 的 MCP 服务器",
+  discoverNoConfig: "该仓库没有 .mcp.json / mcp.json",
+  discoverRepoNotFound: "GitHub 仓库 {repo} 不存在或不可访问",
+  discoverUnauthorized: "访问被拒绝（HTTP {status}）：可能为私有仓库或缺少访问凭证",
+  discoverRateLimited: "请求触发 GitHub 限流，请稍后再试",
+  discoverInvalidJson: "响应不是有效 JSON",
+  discoverInvalid: "链接返回的既不是市场清单（items）也不是 MCP 配置（mcpServers）",
+  discoverInvalidUrl: "源地址无效：支持 GitHub 仓库地址、.mcp.json 链接或自定义清单",
+  marketDetailSource: "来源",
+  marketDetailAuthor: "作者",
+  marketDetailTags: "标签",
+  marketDetailInstallConfig: "安装配置",
+  marketDetailNoConfig: "该条目未携带可识别的安装配置。",
 } as const;
 
 export const enUS: Record<keyof typeof zhCN, string> = {
@@ -262,6 +276,20 @@ export const enUS: Record<keyof typeof zhCN, string> = {
   marketUpdate: "Update",
   marketUpdating: "Updating…",
   marketUpdateHint: "Market {market}, installed {installed}",
+  addSourceHint: "Supports GitHub repo URLs, .mcp.json links, or custom manifests",
+  discoverItemDesc: "MCP server from {repo}",
+  discoverNoConfig: "This repository has no .mcp.json / mcp.json",
+  discoverRepoNotFound: "GitHub repository {repo} not found or inaccessible",
+  discoverUnauthorized: "Access denied (HTTP {status}): private repository or missing credentials",
+  discoverRateLimited: "GitHub rate limit hit; try again later",
+  discoverInvalidJson: "The response is not valid JSON",
+  discoverInvalid: "The URL returned neither a market manifest (items) nor an MCP config (mcpServers)",
+  discoverInvalidUrl: "Invalid source URL: GitHub repo URLs, .mcp.json links, or custom manifests are supported",
+  marketDetailSource: "Source",
+  marketDetailAuthor: "Author",
+  marketDetailTags: "Tags",
+  marketDetailInstallConfig: "Install config",
+  marketDetailNoConfig: "This entry carries no recognizable install config.",
 };
 
 export type McpManagerLocaleKey = keyof typeof zhCN;

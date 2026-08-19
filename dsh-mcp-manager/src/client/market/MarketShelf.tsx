@@ -45,6 +45,10 @@ import {
   updateMarketSource as updateMarketSourceImpl,
 } from "./data-source-store.ts";
 import { fetchAllManifests, type SourceSnapshot } from "./manifest.ts";
+import {
+  normalizeSourceUrl,
+  type DiscoverStrings,
+} from "./discover.ts";
 import type { MarketItem, MarketItemKind, MarketSource } from "./types.ts";
 import { loadMarketView, saveMarketView, type MarketView } from "../preferences.ts";
 import { versionsDiffer } from "./version.ts";
@@ -133,7 +137,40 @@ export type MarketUiLocaleKey =
   | "marketUpdatable"
   | "marketUpdate"
   | "marketUpdating"
-  | "marketUpdateHint";
+  | "marketUpdateHint"
+  | "detailButton"
+  | "addSourceHint"
+  | "discoverItemDesc"
+  | "discoverNoConfig"
+  | "discoverRepoNotFound"
+  | "discoverUnauthorized"
+  | "discoverRateLimited"
+  | "discoverInvalidJson"
+  | "discoverInvalid"
+  | "discoverInvalidUrl";
+
+/** Fill a "{placeholder}" template from the locale dictionary. */
+function fill(template: string, params: Record<string, string>): string {
+  let out = template;
+  for (const [key, value] of Object.entries(params)) {
+    out = out.replace(`{${key}}`, value);
+  }
+  return out;
+}
+
+/** Locale-aware discovery strings handed to the manifest fetcher. */
+function discoverStrings(t: (key: MarketUiLocaleKey) => string): DiscoverStrings {
+  return {
+    fallbackDescription: (label) => fill(t("discoverItemDesc"), { repo: label }),
+    noConfig: (label) => fill(t("discoverNoConfig"), { repo: label }),
+    repoNotFound: (label) => fill(t("discoverRepoNotFound"), { repo: label }),
+    unauthorized: (status) => fill(t("discoverUnauthorized"), { status: String(status) }),
+    rateLimited: () => t("discoverRateLimited"),
+    invalidJson: () => t("discoverInvalidJson"),
+    invalidManifest: () => t("discoverInvalid"),
+    invalidUrl: () => t("discoverInvalidUrl"),
+  };
+}
 
 /**
  * Pick a row tile icon by item kind. The launcher's "default" tile is
@@ -230,7 +267,7 @@ export function MarketShelf({
     setRefreshing(true);
     setError(undefined);
     try {
-      const next = await fetchAllManifests(sources, fetcher);
+      const next = await fetchAllManifests(sources, fetcher, discoverStrings(t));
       setSnapshots(next);
     } catch (fetchError) {
       setError(
@@ -239,7 +276,7 @@ export function MarketShelf({
     } finally {
       setRefreshing(false);
     }
-  }, [sources, fetcher]);
+  }, [sources, fetcher, t]);
 
   useEffect(() => {
     void refresh();
@@ -257,7 +294,7 @@ export function MarketShelf({
     if (draftName.trim() === "" || draftUrl.trim() === "") return;
     const next = addMarketSourceImpl(storage, sources, {
       name: draftName.trim(),
-      url: draftUrl.trim(),
+      url: normalizeSourceUrl(draftUrl),
     });
     setSources(next);
     setDraftName("");
@@ -289,7 +326,7 @@ export function MarketShelf({
     if (editSource.name.trim() === "" || editSource.url.trim() === "") return;
     const next = updateMarketSourceImpl(storage, sources, editSource.id, {
       name: editSource.name.trim(),
-      url: editSource.url.trim(),
+      url: normalizeSourceUrl(editSource.url),
     });
     setSources(next);
     setEditSource(undefined);
@@ -476,6 +513,7 @@ export function MarketShelf({
             setDraftUrl("");
           }}
           translate={translate}
+          t={t}
         />
       ) : null}
       {manageOpen ? (
@@ -625,8 +663,12 @@ function SourceSegmented({
             title={
               snapshot?.state === "ok"
                 ? translate("marketSourceUp")
-                : snapshot?.state === "offline"
-                  ? translate("marketSourceDown")
+                : snapshot?.state === "offline" || snapshot?.state === "invalid"
+                  ? snapshot.error === undefined
+                    ? snapshot.state === "offline"
+                      ? translate("marketSourceDown")
+                      : translate("marketSourceInvalid")
+                    : `${snapshot.state === "offline" ? translate("marketSourceDown") : translate("marketSourceInvalid")} — ${snapshot.error}`
                   : translate("marketSourceInvalid")
             }
           >
@@ -742,6 +784,13 @@ function SourceManagePanel({
                 <span className="dshmcp-mkt-srcUrl" title={source.url}>
                   {source.url}
                 </span>
+                {snapshot !== undefined &&
+                snapshot.state !== "ok" &&
+                snapshot.error !== undefined ? (
+                  <span className="dshmcp-mkt-srcErr" role="note">
+                    {snapshot.error}
+                  </span>
+                ) : null}
               </span>
               <span className="dshmcp-mkt-srcActions">
                 <button
@@ -792,6 +841,7 @@ interface AddSourceFormProps {
   readonly onSubmit: () => void;
   readonly onCancel: () => void;
   readonly translate: (key: MarketplaceLocaleKey) => string;
+  readonly t: (key: MarketUiLocaleKey) => string;
 }
 
 /** Compact inline disclosure: two inputs + confirm/cancel, one row. */
@@ -803,6 +853,7 @@ function AddSourceForm({
   onSubmit,
   onCancel,
   translate,
+  t,
 }: AddSourceFormProps): JSX.Element {
   return (
     <div className="dshmcp-mkt-addrow">
@@ -816,7 +867,8 @@ function AddSourceForm({
         }}
       />
       <input
-        type="url"
+        type="text"
+        inputMode="url"
         placeholder={translate("marketSourceUrl")}
         aria-label={translate("marketSourceUrl")}
         value={url}
@@ -835,6 +887,7 @@ function AddSourceForm({
       <button type="button" className="dshmcp-mkt-addbtn is-quiet" onClick={onCancel}>
         {translate("close")}
       </button>
+      <span className="dshmcp-mkt-addhint">{t("addSourceHint")}</span>
     </div>
   );
 }
@@ -994,6 +1047,16 @@ export function MarketRow({
         {item.description}
       </span>
       <span className="dshmcp-mkt-rowSide">
+        {onOpen === undefined ? null : (
+          <button
+            type="button"
+            className="dshmcp-mkt-detail"
+            onClick={onOpen}
+            title={t("detailButton")}
+          >
+            {t("detailButton")}
+          </button>
+        )}
         <ItemActions
           installed={installed}
           updatable={updatable}
@@ -1101,6 +1164,16 @@ export function MarketCard({
           </div>
         )}
         <div className="dshmcp-mkt-cardFoot">
+          {onOpen === undefined ? null : (
+            <button
+              type="button"
+              className="dshmcp-mkt-detail"
+              onClick={onOpen}
+              title={t("detailButton")}
+            >
+              {t("detailButton")}
+            </button>
+          )}
           <ItemActions
             installed={installed}
             updatable={updatable}
