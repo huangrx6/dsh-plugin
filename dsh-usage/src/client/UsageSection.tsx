@@ -262,7 +262,10 @@ function StatCard({ entry, result, loadingLabel, onEdit, onDelete, editLabel, de
               : `${pct}%`
             return (
               <div key={i} className="u-statBarRow" title={tooltip}>
-                <span className="u-statBarLabel">{bar.label}</span>
+                <span className="u-statBarLabel">
+                  <span className="u-statBarName">{bar.label}</span>
+                  {bar.detail !== undefined ? <span className="u-statBarDetail">{bar.detail}</span> : null}
+                </span>
                 <span className="u-statBarTrack"><span className="u-statBarFill" data-fill={fillState(pct)} style={{ width: `${pct}%` }} /></span>
                 <span className="u-statBarVal">{pct}%</span>
               </div>

@@ -273,14 +273,29 @@ export const USAGE_STYLES = `
 }
 .u-statBarRow {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) 40px;
+  grid-template-columns: minmax(72px, auto) minmax(0, 1fr) 40px;
   align-items: center;
   gap: 10px;
 }
 .u-statBarLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.u-statBarName {
   font-size: 11px;
   color: var(--dsw-alias-label-tertiary, #8a8a8e);
   white-space: nowrap;
+}
+.u-statBarDetail {
+  font-size: 10px;
+  line-height: 1.3;
+  color: var(--dsw-alias-label-tertiary, #8a8a8e);
+  opacity: 0.75;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .u-statBarTrack {
   display: block;

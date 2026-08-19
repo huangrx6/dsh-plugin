@@ -96,16 +96,48 @@ function bar(partial: {
   readonly remaining?: number
   readonly total?: number
   readonly unit?: string
+  readonly detail?: string
 }): UsageBar {
   const out: UsageBar = { label: partial.label }
   if (partial.remainingPercent !== undefined) out.remainingPercent = partial.remainingPercent
   if (partial.remaining !== undefined) out.remaining = partial.remaining
   if (partial.total !== undefined) out.total = partial.total
   if (partial.unit !== undefined) out.unit = partial.unit
+  if (partial.detail !== undefined) out.detail = partial.detail
   return out
 }
 
-/** GLM Coding Plan quota: 5h + weekly bars. */
+/** Format a duration in ms as a compact human string. */
+function formatDuration(ms: number): string {
+  if (!Number.isFinite(ms) || ms <= 0) return '—'
+  if (ms >= 48 * 3_600_000) return `${(ms / 86_400_000).toFixed(1)} 天`
+  if (ms >= 3_600_000) return `${(ms / 3_600_000).toFixed(1)} 小时`
+  return `${Math.round(ms / 60_000)} 分钟`
+}
+
+/** Format a reset timestamp as "MM-dd HH:mm" in the host's local time. */
+function formatReset(ts: number): string {
+  const d = new Date(ts)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+/** Label a TOKENS_LIMIT window from its reset distance: ≤10 days reads as
+    每周, longer windows as 每月 (current GLM plans ship one of each). */
+function glmWindowLabel(nextResetTime: number | undefined): string {
+  if (nextResetTime === undefined) return '额度'
+  const days = (nextResetTime - Date.now()) / 86_400_000
+  return days <= 10 ? '每周' : '每月'
+}
+
+/** GLM Coding Plan quota — GET /api/monitor/usage/quota/limit.
+ *
+ * data.limits[] carries ONE TIME_LIMIT (rolling 5h window: usage /
+ * currentValue / remaining counts + percentage used) and ONE OR MORE
+ * TOKENS_LIMIT entries (one per token-pool window — weekly AND monthly on
+ * current plans; each has percentage used + nextResetTime). Percentage is
+ * always "used", so remaining = 100 - percentage.
+ */
 async function queryGlm(entry: UsageEntry): Promise<UsageQueryResult> {
   const token = resolveSecret(entry.apiKey)?.trim()
   const endpoint =
@@ -124,29 +156,48 @@ async function queryGlm(entry: UsageEntry): Promise<UsageQueryResult> {
     return { id: entry.id, label: entry.label, ok: false, message: `HTTP ${response.status}` }
   }
   const json = (await response.json()) as {
-    data?: { limits?: Array<{ type?: string; percentage?: number; currentValue?: number; remaining?: number; usage?: number }>; level?: string }
+    data?: {
+      limits?: Array<{
+        type?: string
+        percentage?: number
+        currentValue?: number
+        remaining?: number
+        usage?: number
+        nextResetTime?: number
+      }>
+      level?: string
+    }
   }
   const limits = json.data?.limits ?? []
-  const byType = (t: string) => limits.find((l) => l.type === t)
-  const time = byType('TIME_LIMIT')
-  const tokens = byType('TOKENS_LIMIT')
   const bars: UsageBar[] = []
+  for (const limit of limits) {
+    if (limit.type === 'TOKENS_LIMIT') {
+      const b = bar({
+        label: glmWindowLabel(limit.nextResetTime),
+        remainingPercent: Math.max(0, 100 - (limit.percentage ?? 0)),
+      })
+      if (limit.nextResetTime !== undefined) b.detail = `重置于 ${formatReset(limit.nextResetTime)}`
+      bars.push(b)
+    }
+  }
+  const time = limits.find((l) => l.type === 'TIME_LIMIT')
   if (time !== undefined) {
-    bars.push(bar({
+    const b = bar({
       label: '5 小时',
       remainingPercent: Math.max(0, 100 - (time.percentage ?? 0)),
       remaining: time.remaining,
-      total: time.currentValue !== undefined && time.remaining !== undefined ? time.currentValue + time.remaining : undefined,
+      total: time.usage !== undefined && time.remaining !== undefined ? time.usage + time.remaining : undefined,
       unit: time.usage !== undefined ? '次' : undefined,
-    }))
-  }
-  if (tokens !== undefined) {
-    bars.push(bar({
-      label: '每周',
-      remainingPercent: Math.max(0, 100 - (tokens.percentage ?? 0)),
-      remaining: tokens.remaining,
-      total: tokens.currentValue !== undefined && tokens.remaining !== undefined ? tokens.currentValue + tokens.remaining : undefined,
-    }))
+    })
+    if (time.remaining !== undefined && time.usage !== undefined) {
+      b.detail = `剩余 ${time.remaining} / ${time.usage + time.remaining} 次`
+    }
+    if (time.nextResetTime !== undefined && b.detail === undefined) {
+      b.detail = `重置于 ${formatReset(time.nextResetTime)}`
+    } else if (time.nextResetTime !== undefined) {
+      b.detail += ` · ${formatReset(time.nextResetTime)}`
+    }
+    bars.unshift(b)
   }
   const out: UsageQueryResult = { id: entry.id, label: entry.label, ok: true, bars }
   if (json.data?.level !== undefined) out.level = json.data.level
@@ -178,8 +229,18 @@ async function queryMinimax(entry: UsageEntry): Promise<UsageQueryResult> {
   const json = (await response.json()) as {
     model_remains?: Array<{
       model_name?: string
+      remains_time?: number
+      weekly_remains_time?: number
+      current_interval_total_count?: number
+      current_interval_usage_count?: number
       current_interval_remaining_percent?: number
+      current_interval_status?: number
+      current_weekly_total_count?: number
+      current_weekly_usage_count?: number
       current_weekly_remaining_percent?: number
+      current_weekly_status?: number
+      end_time?: number
+      weekly_end_time?: number
     }>
     base_resp?: { status_code?: number; status_msg?: string }
   }
@@ -187,21 +248,24 @@ async function queryMinimax(entry: UsageEntry): Promise<UsageQueryResult> {
     return { id: entry.id, label: entry.label, ok: false, message: json.base_resp?.status_msg || '接口返回错误' }
   }
   const buckets = json.model_remains ?? []
-  const bucket =
-    buckets.find((b) => b.model_name === 'general') ??
-    buckets.find((b) => b.current_interval_remaining_percent !== undefined || b.current_weekly_remaining_percent !== undefined)
-  if (bucket === undefined) {
-    return { id: entry.id, label: entry.label, ok: false, message: '响应中无用量数据' }
-  }
+  // Every bucket becomes its own bar pair: 'general' is the shared chat
+  // quota (unprefixed), other buckets (video, …) get their name prefixed.
   const bars: UsageBar[] = []
-  if (bucket.current_interval_remaining_percent !== undefined) {
-    bars.push(bar({ label: '5 小时', remainingPercent: bucket.current_interval_remaining_percent }))
-  }
-  if (bucket.current_weekly_remaining_percent !== undefined) {
-    bars.push(bar({ label: '每周', remainingPercent: bucket.current_weekly_remaining_percent }))
+  for (const bucket of buckets) {
+    const prefix = bucket.model_name === 'general' || bucket.model_name === undefined ? '' : `${bucket.model_name} · `
+    if (bucket.current_interval_remaining_percent !== undefined) {
+      const b = bar({ label: `${prefix}5 小时`, remainingPercent: bucket.current_interval_remaining_percent })
+      if (bucket.remains_time !== undefined) b.detail = `剩余 ${formatDuration(bucket.remains_time)}`
+      bars.push(b)
+    }
+    if (bucket.current_weekly_remaining_percent !== undefined) {
+      const b = bar({ label: `${prefix}每周`, remainingPercent: bucket.current_weekly_remaining_percent })
+      if (bucket.weekly_remains_time !== undefined) b.detail = `剩余 ${formatDuration(bucket.weekly_remains_time)}`
+      bars.push(b)
+    }
   }
   if (bars.length === 0) {
-    return { id: entry.id, label: entry.label, ok: false, message: '响应中无剩余百分比' }
+    return { id: entry.id, label: entry.label, ok: false, message: '响应中无用量数据' }
   }
   return { id: entry.id, label: entry.label, ok: true, bars }
 }

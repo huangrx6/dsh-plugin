@@ -27,6 +27,9 @@ export interface UsageBar {
   remaining?: number
   total?: number
   unit?: string
+  /** Human-readable supplement shown under the label, e.g. "剩余 2.6 小时"
+      or "重置于 08-21 09:00". */
+  detail?: string
 }
 
 /** Per-entry query outcome. */
