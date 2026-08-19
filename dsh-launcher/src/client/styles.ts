@@ -100,7 +100,7 @@ export const LAUNCHER_STYLES = `
   animation: dsh-launcher-panel-out 200ms cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 .dsh-launcher-panel {
-  width: min(380px, 92vw);
+  width: min(320px, 92vw);
   background: var(--dsw-alias-bg-layer-1, #1c1c1f);
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
   border-radius: var(--dsh-layout-radius-user-lg, 16px);
@@ -577,16 +577,15 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
   .dsh-launcher-section-header-subtitle { font-size: 11px; }
 
   .dsh-launcher-panel-mask {
-    padding: 0;
-    align-items: stretch;
-    justify-content: stretch;
+    padding: 20px;
+    align-items: center;
+    justify-content: center;
   }
+  /* Compact centered card on phones too — not full-screen */
   .dsh-launcher-panel {
-    width: 100%;
-    height: 100%;
-    max-height: 100%;
-    border-radius: 0;
-    border: 0;
+    width: min(360px, 92vw);
+    height: auto;
+    max-height: min(520px, 82vh);
     animation: dsh-launcher-panel-mobile-in 240ms var(--ds-ease-in-out, ease);
   }
   .dsh-launcher-panel-head {
