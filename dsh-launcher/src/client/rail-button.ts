@@ -91,20 +91,22 @@ export function installRailButton(target: Document): () => void {
  };
 }
 
-/** Collapsed when the narrowest observed footprint is icon-rail width:
-    whichever element actually shrinks on collapse (column or footer),
-    the minimum catches it. */
+/** Collapsed when the rail's structural width is icon-only. Probes are
+    NATIVE elements only (the sidebar column and the native session
+    tree inside it): our own wrap or its host are content-sized around
+    the trigger, so using them self-fulfills — hide label → shrink →
+    stay collapsed forever, which is exactly the "expanded rail shows
+    an icon-only centered button" bug. */
 function syncCollapsed(
  target: Document,
  column?: HTMLElement,
 ): void {
  const wrap = target.getElementById(RAIL_BTN_ID);
  if (wrap === null) return;
- const host = wrap.parentElement;
+ const tree = column?.querySelector<HTMLElement>('[role="tree"]');
  const width = Math.min(
-  wrap.offsetWidth,
-  host instanceof HTMLElement ? host.offsetWidth : Number.POSITIVE_INFINITY,
   column?.offsetWidth ?? Number.POSITIVE_INFINITY,
+  tree?.offsetWidth ?? Number.POSITIVE_INFINITY,
  );
  wrap.classList.toggle("is-collapsed", width < COLLAPSED_THRESHOLD);
 }
@@ -123,7 +125,7 @@ function reconcile(
 
  // Replacement, not coexistence: flag the native trigger so the rule in
  // styles.ts hides it while we hold the footer slot. Idempotent and
- // re-applied every pass — platform re-renders recreate the node bare.
+ // re-applied every pass — platform re-renderers recreate the node bare.
  nativeTrigger.setAttribute(REPLACED_FLAG, "");
 
  const existing = target.getElementById(RAIL_BTN_ID);
@@ -136,14 +138,25 @@ function reconcile(
   nativeTrigger.parentElement.insertBefore(existing, nativeTrigger);
  }
 
- const wrap = target.getElementById(RAIL_BTN_ID);
- if (wrap !== null) {
-  const host = wrap.parentElement;
-  const observed = [sidebar, wrap];
-  if (host instanceof HTMLElement && host !== sidebar) observed.push(host);
-  watchSizes(...observed);
- }
+ const observed = [sidebar];
+ const tree = sidebar.querySelector<HTMLElement>('[role="tree"]');
+ if (tree !== null) observed.push(tree);
+ watchSizes(...observed);
  target.body.setAttribute(RAIL_FLAG, "");
+}
+
+/** Drive dsh-layout's mobile drawer through its own close button so the
+    runtime's internal state stays consistent; clear the open flag
+    directly only if the button can't be found. Silent when the drawer
+    isn't open (desktop rail, or dsh-layout not installed). */
+function closeMobileDrawer(target: Document): void {
+ const root = target.documentElement;
+ if (!root.hasAttribute("data-dsh-layout-mobile-sidebar-open")) return;
+ const close = target.querySelector<HTMLButtonElement>(
+  ".dsh-layout-mobile-sidebar-close",
+ );
+ if (close !== null) close.click();
+ else root.removeAttribute("data-dsh-layout-mobile-sidebar-open");
 }
 
 function buildWrap(target: Document): HTMLDivElement {
@@ -160,6 +173,10 @@ function buildWrap(target: Document): HTMLDivElement {
  button.title = "功能";
  button.append(buildIconSpan(target), buildLabelSpan(target));
  button.addEventListener("click", () => {
+  // On phones the sidebar is dsh-layout's off-canvas drawer and the
+  // chooser opens over the whole viewport — close the drawer first or
+  // it covers the chooser. No-op when no drawer is open (desktop rail).
+  closeMobileDrawer(target);
   emit(target, LauncherEvents.PanelOpen);
  });
  wrap.append(button);
