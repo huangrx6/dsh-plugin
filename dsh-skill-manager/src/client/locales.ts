@@ -127,6 +127,25 @@ export const zhCN = {
   marketNoSources: "还没有市场数据源",
   marketNoSourcesHint: "添加一个清单 URL，即可浏览并安装其中的 Skill。",
   marketAddFirstSource: "添加数据源",
+  marketManageSources: "管理数据源",
+  marketDeleteSourceConfirm: "确定删除该市场数据源？",
+  marketSourceBuiltinTag: "内置",
+  marketSourceBuiltinHint: "内置数据源不可删除。",
+  marketDetail: "详情",
+  marketDetailSource: "来源",
+  marketDetailVersion: "版本",
+  marketDetailAuthor: "作者",
+  marketDetailTags: "标签",
+  marketDetailTarget: "安装目标",
+  addSourceHint: "支持 GitHub 仓库地址或自定义清单",
+  discoverItemDesc: "来自 {repo} 的 Skill",
+  discoverNoSkills: "该仓库没有找到 SKILL.md",
+  discoverRepoNotFound: "GitHub 仓库 {repo} 不存在或不可访问",
+  discoverUnauthorized: "访问被拒绝（HTTP {status}）：可能为私有仓库或缺少访问凭证",
+  discoverRateLimited: "请求触发 GitHub 限流，请稍后再试",
+  discoverInvalidJson: "响应不是有效 JSON",
+  discoverInvalid: "链接返回的不是市场清单（items）",
+  discoverInvalidUrl: "源地址无效：支持 GitHub 仓库地址或自定义清单",
 } as const;
 
 export const enUS: Record<keyof typeof zhCN, string> = {
@@ -261,6 +280,27 @@ export const enUS: Record<keyof typeof zhCN, string> = {
   marketNoSources: "No marketplace sources yet",
   marketNoSourcesHint: "Add a manifest URL to browse and install its skills.",
   marketAddFirstSource: "Add a source",
+  marketManageSources: "Manage sources",
+  marketDeleteSourceConfirm: "Remove this market source?",
+  marketSourceBuiltinTag: "Built-in",
+  marketSourceBuiltinHint: "The built-in source cannot be removed.",
+  marketDetail: "Details",
+  marketDetailSource: "Source",
+  marketDetailVersion: "Version",
+  marketDetailAuthor: "Author",
+  marketDetailTags: "Tags",
+  marketDetailTarget: "Install target",
+  addSourceHint: "Supports GitHub repository URLs or custom manifests",
+  discoverItemDesc: "Skill from {repo}",
+  discoverNoSkills: "No SKILL.md found in this repository",
+  discoverRepoNotFound: "GitHub repository {repo} does not exist or is not accessible",
+  discoverUnauthorized:
+    "Access denied (HTTP {status}): the repository may be private or credentials are missing",
+  discoverRateLimited: "GitHub rate limit hit — please retry later",
+  discoverInvalidJson: "Response is not valid JSON",
+  discoverInvalid: "The link did not return a market manifest (items)",
+  discoverInvalidUrl:
+    "Invalid source URL: GitHub repository URLs or custom manifests are supported",
 };
 
 export type SkillManagerLocaleKey = keyof typeof zhCN;

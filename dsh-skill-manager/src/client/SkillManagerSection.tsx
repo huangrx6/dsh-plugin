@@ -5,7 +5,7 @@ import type { SkillManagerApi } from './api.ts'
 import type { SkillManagerLocaleKey } from './locales.ts'
 import { SkillDetailModal } from './SkillDetailModal.tsx'
 import { SkillImportView } from './SkillImportView.tsx'
-import { IconGrid, IconRows } from './market/icons.tsx'
+import { IconGrid, IconList } from './market/icons.tsx'
 import { hueStyle } from './market/hue.ts'
 import { loadInstalledView, saveInstalledView, type InstalledViewMode } from './installed-view.ts'
 
@@ -120,23 +120,21 @@ export function SkillManagerSection({ t, api }: SkillManagerSectionProps) {
         {view.kind === 'browse'
           ? (
             <div
-              className="dshm-mkt-seg dshm-mkt-viewSeg"
+              className="dshm-mkt-viewseg"
               role="group"
               aria-label={t('installedViewList') + ' / ' + t('installedViewCards')}
             >
               <button
                 type="button"
-                className={`dshm-mkt-segBtn dshm-mkt-segIcon${viewMode === 'list' ? ' is-active' : ''}`}
                 aria-pressed={viewMode === 'list'}
                 onClick={() => { pickViewMode('list') }}
                 title={t('installedViewList')}
                 aria-label={t('installedViewList')}
               >
-                <IconRows size={14} />
+                <IconList size={14} />
               </button>
               <button
                 type="button"
-                className={`dshm-mkt-segBtn dshm-mkt-segIcon${viewMode === 'cards' ? ' is-active' : ''}`}
                 aria-pressed={viewMode === 'cards'}
                 onClick={() => { pickViewMode('cards') }}
                 title={t('installedViewCards')}

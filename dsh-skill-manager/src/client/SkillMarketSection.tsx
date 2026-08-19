@@ -20,6 +20,8 @@ import type { MarketItem, MarketSource } from "./market/types.ts"
 import type { SkillManagerApi } from "./api.ts"
 import type { SkillListItem } from "../contracts.ts"
 import { zhCN, type SkillManagerLocaleKey } from "./locales.ts"
+import { isUpdateAvailable } from "./market/update.ts"
+import { MarketItemDetailModal } from "./MarketItemDetailModal.tsx"
 import { SkillManagerSection } from "./SkillManagerSection.tsx"
 
 const MODE_STORAGE_KEY = "dsh-skill-manager.market.mode.v1"
@@ -61,6 +63,9 @@ export function SkillMarketSection({
   )
   const [skills, setSkills] = useState<readonly SkillListItem[]>([])
   const [version, setVersion] = useState(0)
+  const [detail, setDetail] = useState<
+    { readonly item: MarketItem; readonly source: MarketSource } | undefined
+  >(undefined)
 
   const reload = useCallback(() => {
     void api.list().then(setSkills).catch(() => undefined)
@@ -121,6 +126,14 @@ export function SkillMarketSection({
     setVersion((value) => value + 1)
   }, [api, skillByName])
 
+  // row / card "详情" target: the market item detail modal re-resolves
+  // its install state on every render so it tracks installs live
+  const detailInstalled = detail === undefined ? false : isInstalled(detail.item)
+  const detailUpdatable =
+    detail === undefined
+      ? false
+      : detailInstalled && isUpdateAvailable(detail.item.version, installedVersion(detail.item))
+
   // Market chrome copy lives in this plugin's dictionary; the launcher's
   // seat stays as a fallback for keys we have not (yet) localized.
   const marketTranslate = useCallback(
@@ -165,16 +178,30 @@ export function SkillMarketSection({
       {mode === "installed"
         ? <SkillManagerSection t={t} api={api} />
         : (
-          <MarketShelf
-            storage={window.localStorage}
-            defaultSources={[]}
-            kinds={["skill"]}
-            translate={marketTranslate}
-            onInstall={handleInstall}
-            onRemove={handleRemove}
-            isInstalled={isInstalled}
-            installedVersion={installedVersion}
-          />
+          <>
+            <MarketShelf
+              storage={window.localStorage}
+              defaultSources={[]}
+              kinds={["skill"]}
+              translate={marketTranslate}
+              onInstall={handleInstall}
+              onRemove={handleRemove}
+              isInstalled={isInstalled}
+              installedVersion={installedVersion}
+              onItemOpen={(item, source) => { setDetail({ item, source }) }}
+            />
+            {detail === undefined ? null : (
+              <MarketItemDetailModal
+                t={t}
+                item={detail.item}
+                source={detail.source}
+                installed={detailInstalled}
+                updatable={detailUpdatable}
+                onInstall={handleInstall}
+                onClose={() => { setDetail(undefined) }}
+              />
+            )}
+          </>
         )}
     </div>
   )

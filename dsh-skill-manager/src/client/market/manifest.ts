@@ -3,6 +3,12 @@
  * own URL; the fetcher pulls them in parallel and surfaces per-source
  * status so the UI can show "online" / "offline" / "invalid" badges.
  *
+ * Discovery: every source URL is first classified (see ./discover.ts) —
+ * GitHub repository URLs go through the GitHub adapter (tree scan for
+ * SKILL.md directories), everything else is fetched directly and must be
+ * our manifest envelope ({items: []}), so existing custom manifests keep
+ * working unchanged.
+ *
  * Caching: the fetcher uses an in-memory TTL cache keyed by URL. This is
  * not a substitute for HTTP caching (the browser already does that), but
  * it stops the same source from being re-fetched across simultaneous
@@ -13,13 +19,13 @@
  * browsers; the runtime transport doesn't expose a JS fetch polyfill here.
  */
 import {
-  parseManifest,
-  type ManifestEnvelope,
-  type MarketSource,
-  type MarketSourceState,
-} from "./types.ts";
+  DEFAULT_DISCOVER_STRINGS,
+  DISCOVER_TIMEOUT_MS,
+  discoverSource,
+  type DiscoverStrings,
+} from "./discover.ts";
+import type { ManifestEnvelope, MarketSource, MarketSourceState } from "./types.ts";
 
-const DEFAULT_TIMEOUT_MS = 12_000;
 const CACHE_TTL_MS = 60_000;
 
 interface FetchOk {
@@ -49,66 +55,31 @@ export function clearManifestCache(): void {
 export async function fetchManifest(
   source: MarketSource,
   fetcher: typeof fetch = fetch,
-  timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  timeoutMs: number = DISCOVER_TIMEOUT_MS,
+  strings: DiscoverStrings = DEFAULT_DISCOVER_STRINGS,
 ): Promise<FetchResult> {
   const cached = cache.get(source.url);
   if (cached !== undefined && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
     return cached;
   }
-  let response: Response;
-  try {
-    response = await fetcher(source.url, {
-      headers: {
-        accept: "application/json",
-        "user-agent": "dsh-launcher/0.1 (+marketplace)",
-      },
-      signal: AbortSignal.timeout(timeoutMs),
-      redirect: "follow",
-    });
-  } catch (error) {
-    const result: FetchFail = {
-      state: "offline",
-      error: error instanceof Error ? error.message : String(error),
-      fetchedAt: Date.now(),
+  const outcome = await discoverSource(source.url, fetcher, timeoutMs, strings);
+  let result: FetchResult;
+  if (outcome.state === "ok") {
+    const envelope: ManifestEnvelope = {
+      ...(outcome.name === undefined ? {} : { name: outcome.name }),
+      ...(outcome.description === undefined
+        ? {}
+        : { description: outcome.description }),
+      items: outcome.items,
     };
-    cache.set(source.url, result);
-    return result;
+    result = { state: "ok", envelope, fetchedAt: Date.now() };
+  } else if (outcome.state === "offline") {
+    result = { state: "offline", error: outcome.error, fetchedAt: Date.now() };
+  } else {
+    result = { state: "invalid", error: outcome.error, fetchedAt: Date.now() };
   }
-  if (!response.ok) {
-    const result: FetchFail = {
-      state: "offline",
-      error: `HTTP ${response.status}`,
-      fetchedAt: Date.now(),
-    };
-    cache.set(source.url, result);
-    return result;
-  }
-  let body: unknown;
-  try {
-    body = await response.json();
-  } catch (error) {
-    const result: FetchInvalid = {
-      state: "invalid",
-      error: error instanceof Error ? error.message : String(error),
-      fetchedAt: Date.now(),
-    };
-    cache.set(source.url, result);
-    return result;
-  }
-  try {
-    const envelope = parseManifest(body);
-    const result: FetchOk = { state: "ok", envelope, fetchedAt: Date.now() };
-    cache.set(source.url, result);
-    return result;
-  } catch (error) {
-    const result: FetchInvalid = {
-      state: "invalid",
-      error: error instanceof Error ? error.message : String(error),
-      fetchedAt: Date.now(),
-    };
-    cache.set(source.url, result);
-    return result;
-  }
+  cache.set(source.url, result);
+  return result;
 }
 
 export interface SourceSnapshot {
@@ -122,10 +93,16 @@ export interface SourceSnapshot {
 export async function fetchAllManifests(
   sources: readonly MarketSource[],
   fetcher: typeof fetch = fetch,
+  strings: DiscoverStrings = DEFAULT_DISCOVER_STRINGS,
 ): Promise<SourceSnapshot[]> {
   const results = await Promise.all(
     sources.map(async (source) => {
-      const result = await fetchManifest(source, fetcher);
+      const result = await fetchManifest(
+        source,
+        fetcher,
+        DISCOVER_TIMEOUT_MS,
+        strings,
+      );
       if (result.state === "ok") {
         const snapshot: SourceSnapshot = {
           source,
