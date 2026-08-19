@@ -54,7 +54,7 @@ declare module "@deepseek-ai/dsh-client-ui-slots" {
   }
 }
 
-export const inject = ["slots", "locale"] as const;
+export const inject = ["slots", "locale", "connection"] as const;
 
 export function apply(ctx: ClientContext): void {
   ctx.effect(() => installStyles(document), "dsh-launcher: styles");
