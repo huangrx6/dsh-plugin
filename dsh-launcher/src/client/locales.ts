@@ -22,6 +22,7 @@ export type LauncherLocaleKey =
  | "workspaceClose"
  | "menuSection"
  | "menuGroupManage"
+ | "menuGroupAgentRules"
  | "menuGroupTools"
  | "menuGroupAppearance"
  | "workspaceIdentityHint"
@@ -75,6 +76,7 @@ export const zhCN: Record<LauncherLocaleKey, string> = {
  workspaceHint: "点击左侧菜单切换视图",
  workspaceClose: "退出空间",
  menuSection: "菜单",
+ menuGroupAgentRules: "Agent",
  menuGroupManage: "管理",
  menuGroupTools: "工具",
  menuGroupAppearance: "外观",
@@ -132,6 +134,7 @@ export const enUS: Record<LauncherLocaleKey, string> = {
  workspaceHint: "Pick a section on the left to dive in",
  workspaceClose: "Leave workspace",
  menuSection: "Sections",
+ menuGroupAgentRules: "Agent",
  menuGroupManage: "Manage",
  menuGroupTools: "Tools",
  menuGroupAppearance: "Appearance",

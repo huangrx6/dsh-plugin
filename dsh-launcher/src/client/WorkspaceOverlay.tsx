@@ -75,6 +75,25 @@ export const WORKSPACE_SECTION_SLOT = "dsh-launcher.workspace.section";
 /** Sections the launcher itself ships. Slot contributions override these
     by id (a plugin registering id 'skills' replaces the placeholder). */
 export const DEFAULT_SECTIONS: readonly WorkspaceSection[] = [
+  // Agent rules first — the config you reach for most.
+  {
+    id: "rules",
+    labelKey: "menuAgentRules",
+    subtitleKey: "menuAgentRulesSubtitle",
+    groupKey: "menuGroupAgentRules",
+    icon: <IconRules size={20} />,
+    render: () => <SectionPlaceholder id="rules" />,
+  },
+  // 外观
+  {
+    id: "layout",
+    labelKey: "menuLayout",
+    subtitleKey: "menuLayoutSubtitle",
+    groupKey: "menuGroupAppearance",
+    icon: <IconLayout size={20} />,
+    render: () => <SectionPlaceholder id="layout" />,
+  },
+  // 管理
   {
     id: "skills",
     labelKey: "menuSkills",
@@ -91,6 +110,7 @@ export const DEFAULT_SECTIONS: readonly WorkspaceSection[] = [
     icon: <IconMcp size={20} />,
     render: () => <SectionPlaceholder id="mcp" />,
   },
+  // 工具
   {
     id: "remote",
     labelKey: "menuRemote",
@@ -106,22 +126,6 @@ export const DEFAULT_SECTIONS: readonly WorkspaceSection[] = [
     groupKey: "menuGroupTools",
     icon: <IconArchive size={20} />,
     render: () => <SectionPlaceholder id="archive" />,
-  },
-  {
-    id: "layout",
-    labelKey: "menuLayout",
-    subtitleKey: "menuLayoutSubtitle",
-    groupKey: "menuGroupAppearance",
-    icon: <IconLayout size={20} />,
-    render: () => <SectionPlaceholder id="layout" />,
-  },
-  {
-    id: "rules",
-    labelKey: "menuAgentRules",
-    subtitleKey: "menuAgentRulesSubtitle",
-    groupKey: "menuGroupManage",
-    icon: <IconRules size={20} />,
-    render: () => <SectionPlaceholder id="rules" />,
   },
 ];
 
