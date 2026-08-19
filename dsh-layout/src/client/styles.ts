@@ -822,9 +822,6 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   html[data-dsh-layout-mobile-sidebar][data-dsh-layout-material='on'] [data-dsh-layout-sidebar-col] > div > div {
     background: transparent !important;
   }
-  /* Drawer top row: keep the brand, drop the app's own collapse toggle (the
-     floating handle owns opening/closing). */
-  html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-sidebar-col] [class*='logoRow'] button[class*='toggle'] { display: none; }
   /* Compact native-app list rows; inline nodes ignore min-height, so the
      suffix match can only affect the row boxes themselves. */
   html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-sidebar-col] [class*='projectRow'],
