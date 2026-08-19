@@ -11,8 +11,9 @@
  *     pencil on a chip edits name / URL in place)
  *   - items: either a grouped container of compact rows (32px icon base,
  *     13px name + 11px source meta, single-line description) or a card
- *     grid (40px icon base, version badge, two-line description, tags,
- *     bottom action bar) — the choice persists in localStorage
+ *     grid (40px hue-keyed gradient icon base, version badge, two-line
+ *     description, tags, bottom action bar) — the choice persists in
+ *     localStorage; rows stay quiet, cards carry the texture
  *   - installed items whose market version differs from the installed one
  *     surface a business-colored "Update available" badge and an update
  *     action (the consumer's onInstall doubles as the update wire call)
@@ -44,6 +45,7 @@ import {
   updateMarketSource as updateMarketSourceImpl,
 } from "./data-source-store.ts";
 import { fetchAllManifests, type SourceSnapshot } from "./manifest.ts";
+import { hueStyle } from "./hue.ts";
 import type { MarketItem, MarketItemKind, MarketSource } from "./types.ts";
 import { isUpdateAvailable } from "./update.ts";
 import {
@@ -852,9 +854,11 @@ export interface MarketCardProps {
   readonly onRemove: () => void;
 }
 
-/** One card inside the grid view: 40px tile, meta, 2-line description,
- *  tags and a bottom action bar. Feedback stays background-only (4%
- *  hover lighten) per the Quiet Structure grammar. */
+/** One card inside the grid view: 46px hue-keyed gradient tile (the
+ *  item's name hashed to one stable hue), meta, 2-line description,
+ *  tags and a bottom action bar. Cards carry the market's only texture —
+ *  a lit surface with a soft ambient shadow; hover brightens the border
+ *  and deepens the shadow only (rows stay quiet). */
 export function MarketCard({
   item,
   source,
@@ -870,10 +874,11 @@ export function MarketCard({
     <li
       className={`dshm-mkt-card${installed ? " is-installed" : ""}`}
       data-kind={item.kind}
+      style={hueStyle(item.name)}
     >
       <div className="dshm-mkt-cardHead">
         <span className="dshm-mkt-cardTile" aria-hidden={true}>
-          <TileIcon kind={item.kind} size={18} />
+          <TileIcon kind={item.kind} size={20} />
         </span>
         <span className="dshm-mkt-cardId">
           <span className="dshm-mkt-cardNameRow">

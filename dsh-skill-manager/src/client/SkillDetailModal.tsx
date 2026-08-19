@@ -11,10 +11,11 @@ export interface SkillDetailModalProps {
   readonly onClose: () => void
 }
 
-/** Quiet-Structure modal shell around the skill detail content: a dimmed
- *  (label-primary 32%) blurred (4px) overlay and a bordered layer-1 dialog
- *  at 760px × min(640px, 84vh) that slides up over 160ms. Closes via Esc,
- *  an overlay click, or the in-content close button. */
+/** Quiet-Structure modal shell around the skill detail content: a dark
+ *  (rgba(0,0,0,.45)) blurred (4px) overlay and an opaque bg-layer-1
+ *  bordered dialog at 760px × min(640px, 84vh) that slides up over
+ *  160ms. Closes via Esc, an overlay click, or the in-content close
+ *  button. */
 export function SkillDetailModal({ t, api, name, path, onClose }: SkillDetailModalProps): JSX.Element {
   const dialogRef = useRef<HTMLDivElement | null>(null)
 

@@ -6,6 +6,7 @@ import type { SkillManagerLocaleKey } from './locales.ts'
 import { SkillDetailModal } from './SkillDetailModal.tsx'
 import { SkillImportView } from './SkillImportView.tsx'
 import { IconGrid, IconRows } from './market/icons.tsx'
+import { hueStyle } from './market/hue.ts'
 import { loadInstalledView, saveInstalledView, type InstalledViewMode } from './installed-view.ts'
 
 export interface SkillManagerSectionProps {
@@ -307,33 +308,35 @@ interface InstalledCardProps {
   readonly onDelete: (skill: SkillListItem) => Promise<void>
 }
 
-/** One installed card: 40px tile + name + source badge head, two-line
- *  description, provider / path meta, and a hairline bottom action bar
- *  (detail + delete for managed copies). Feedback stays background-only
- *  (4% hover lighten) per the Quiet Structure grammar. */
+/** One installed card: 46px hue-keyed gradient tile (the skill's name
+ *  hashed to one stable hue) + name + version capsule head, two-line
+ *  description, status capsules (rank / shadowed / invalid) + provider /
+ *  path meta, and a hairline bottom action bar (detail + delete for
+ *  managed copies). Cards carry the catalog's only texture — a lit
+ *  surface with a soft ambient shadow; hover brightens the border and
+ *  deepens the shadow only (rows stay quiet). */
 function InstalledCard({ t, skill, busy, onOpen, onDelete }: InstalledCardProps) {
   const tileClass = skill.invalid !== undefined ? ' is-error' : skill.shadowed ? ' is-warn' : ''
   const removable = skill.managed && skill.path !== undefined
   return (
-    <li className="dshm-instCard" data-skill={skill.name}>
+    <li className="dshm-instCard" data-skill={skill.name} style={hueStyle(skill.name)}>
       <button type="button" className="dshm-instCardHead" onClick={() => { onOpen(skill) }}>
         <span className={`dshm-tile dshm-instCardTile${tileClass}`} aria-hidden="true">
-          <IconSkillOutline16 size={18} />
+          <IconSkillOutline16 size={20} />
         </span>
         <span className="dshm-instCardId">
           <span className="dshm-instCardNameRow">
             <span className="dshm-instCardName">{skill.name}</span>
             {skill.version !== undefined ? <span className="dshm-instCardVer">v{skill.version}</span> : null}
           </span>
-          <span className="dshm-instCardMeta">
-            {sourceLabel(t, skill.source)}{skill.rank !== undefined ? ` · rank ${skill.rank}` : ''}
-          </span>
+          <span className="dshm-instCardMeta">{sourceLabel(t, skill.source)}</span>
         </span>
       </button>
       <p className="dshm-instCardDesc">{skill.description}</p>
       <div className="dshm-instCardInfo">
         {skill.shadowed ? <span className="dshm-instFlag is-warn">{t('shadowedTag')}</span> : null}
         {skill.invalid !== undefined ? <span className="dshm-instFlag is-error">{t('invalidTag')}</span> : null}
+        {skill.rank !== undefined ? <span className="dshm-instFlag is-rank">{`rank ${skill.rank}`}</span> : null}
         <span>{skill.provider}</span>
         {skill.path !== undefined ? <span title={skill.path}>{shortPath(skill.path)}</span> : null}
       </div>

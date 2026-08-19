@@ -6,21 +6,33 @@ const STYLE_ID = 'dsh-skill-manager-styles'
  *   - content lives in grouped containers (bg layer-2, 1px hairline
  *     borders mixed from label-primary, radius bridged to the user's
  *     dsh-layout corner radii) holding compact rows separated by 1px
- *     hairlines — one list per group; the market's opt-in card grid is
- *     the single exception, built from the same quiet fills (3% base,
- *     4% hover, no lift / shadow / gradient)
+ *     hairlines — one list per group
+ *   - the market's opt-in card grid and the installed catalog's card
+ *     view are the single exception and carry the only "texture":
+ *     each card gets a hue-keyed gradient icon base (name → djb2 hue,
+ *     hsl(h,55%,55%) at 14%→7%, icon in a brighter tone of the hue) on
+ *     a slightly dimensional surface (label-primary 5%→2% gradient +
+ *     inset top highlight + a soft ambient shadow); hover only
+ *     brightens the border and deepens the shadow — no lift, no shift
  *   - typography is fixed and small: names 13px/600, meta 11px tertiary,
  *     descriptions 12px secondary, section labels 11px/500 with wide
  *     tracking; the workspace shell owns the big titles
- *   - interaction grammar is background-only: rows lighten 4% on hover
- *     (120ms), buttons press via scale(0.97); no translateY lifts, no
- *     drop shadows, no gradient fills, no glow (status dots stay flat)
+ *   - interaction grammar is background-only: list rows lighten 4% on
+ *     hover (120ms), buttons press via scale(0.97); no translateY lifts,
+ *     no glow (status dots stay flat)
+ *   - every button is ONE recipe at 28px (toolbar, segmented controls,
+ *     card action bars, modal footers): secondary = transparent fill +
+ *     10% hairline with hover pouring 5% only; primary = 10% fill +
+ *     24% border + top inset highlight, hover 13%/28%
  *   - every color rides a --dsw-alias-* token with a dark hex fallback
  *   - the dsh-layout material (data-dsh-layout-material='on') swaps the
  *     quiet fills for translucent glass tints: groups 34%, panels 46%,
- *     icon bases 52%, borders from --dsh-layout-line 45-55%
- *   - motion is background/color 120ms only; prefers-reduced-motion
- *     disables every transition and the loading animations
+ *     icon bases 52%, borders from --dsh-layout-line 45-55%; cards pour
+ *     the 34% glass while keeping their top inset highlight, and the
+ *     hue-keyed gradient bases survive the glass untouched
+ *   - motion is background/color/shadow 120ms only;
+ *     prefers-reduced-motion disables every transition and the loading
+ *     animations
  */
 const CSS = `
 /* ── shell ──────────────────────────────────────────────────────────────── */
@@ -46,18 +58,26 @@ const CSS = `
 .dshm-heading h3 { font-size: 13px; font-weight: 600; letter-spacing: .01em; line-height: 18px; margin: 0; }
 .dshm-spacer { flex: 1; }
 
-/* ── buttons: 26-28px, flat fills, press-down only ─────────────────────── */
-.dshm-button { height: 28px; padding: 0 11px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); font: inherit; font-size: 12.5px; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease); }
-.dshm-button:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent); }
+/* ── buttons: ONE recipe plugin-wide (toolbar, segments, card bars,
+   modal footers all converge here) — every control is 28px tall.
+   Secondary: transparent fill + 10% hairline, hover pours 5% only.
+   Primary ("退出空间"-light): 10% fill + 24% border + a top inset
+   highlight; hover deepens to 13%/28%. Press = scale(0.97). ────────── */
+.dshm-button { height: 28px; padding: 0 11px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); background: transparent; color: var(--dsw-alias-label-primary, #f4f4f5); font: inherit; font-size: 12.5px; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease); }
+.dshm-button:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); }
 .dshm-button:active { transform: scale(0.97); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); }
 .dshm-button:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #6ea8fe); outline-offset: -2px; }
 .dshm-button[disabled] { opacity: .5; cursor: default; transform: none; }
-.dshm-buttonPrimary { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 24%, transparent); }
-.dshm-buttonPrimary:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 17%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 28%, transparent); }
+.dshm-buttonPrimary { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 24%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent); }
+.dshm-buttonPrimary:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 13%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 28%, transparent); }
 .dshm-buttonDanger { color: var(--dsw-alias-state-error-primary, #ef5350); border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 30%, transparent); }
 .dshm-buttonDanger:hover { background: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 10%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 40%, transparent); }
-.dshm-iconBtn { width: 28px; height: 28px; padding: 0; justify-content: center; flex: none; }
-.dshm-iconBtn.is-primary { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 24%, transparent); }
+.dshm-iconBtn { width: 28px; height: 28px; padding: 0; justify-content: center; flex: none; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); background: transparent; color: var(--dsw-alias-label-primary, #f4f4f5); cursor: pointer; display: inline-flex; align-items: center; transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease); }
+.dshm-iconBtn:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); }
+.dshm-iconBtn:active { transform: scale(0.97); }
+.dshm-iconBtn:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #6ea8fe); outline-offset: -2px; }
+.dshm-iconBtn.is-primary { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 24%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent); }
+.dshm-iconBtn.is-primary:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 13%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 28%, transparent); }
 
 /* ── icon bases: 32px flat pads ────────────────────────────────────────── */
 .dshm-tile { width: 32px; height: 32px; flex: none; border-radius: var(--dsh-layout-radius-user, 8px); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); color: var(--dsw-alias-label-secondary, #b3b3b8); display: grid; place-items: center; }
@@ -68,8 +88,8 @@ const CSS = `
 .dshm-status { color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 12px; line-height: 18px; margin: 0; padding: 0 4px; }
 .dshm-failure { color: var(--dsw-alias-state-error-primary, #ef5350); font-size: 12.5px; line-height: 19px; display: flex; align-items: center; gap: 10px; }
 .dshm-failure p { margin: 0; }
-.dshm-failure button { height: 26px; padding: 0 10px; border: 1px solid color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 30%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); font: inherit; font-size: 12px; cursor: pointer; background: none; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px); transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease); }
-.dshm-failure button:hover { background: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 10%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 42%, transparent); }
+.dshm-failure button { height: 28px; padding: 0 10px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); font: inherit; font-size: 12px; cursor: pointer; background: transparent; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px); transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease); }
+.dshm-failure button:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); }
 
 /* ── loading skeletons: compact rows inside the group rhythm ───────────── */
 @keyframes dshm-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
@@ -112,29 +132,46 @@ const CSS = `
 .dshm-mkt-iconBtn.is-danger { color: var(--dsw-alias-state-error-primary, #ef5350); border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 28%, transparent); }
 .dshm-mkt-iconBtn.is-danger:hover { background: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 10%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 40%, transparent); }
 
-/* the card grid: auto-fill cards at ≥240px inside one grouped container */
-.dshm-instCards { margin: 0; padding: 6px; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
-.dshm-instCard { min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: calc(var(--dsh-layout-radius-user-lg, 12px) - 5px); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 3%, transparent); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease); }
-.dshm-instCard:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); }
-.dshm-instCardHead { display: flex; align-items: center; gap: 10px; min-width: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; padding: 0; }
+/* the card grid: auto-fill cards at ≥300px inside one grouped container.
+   Cards are the installed catalog's one textured surface — same recipe
+   as the market grid: a top-lit 5%→2% fill, inset highlight, soft
+   ambient shadow; hover only brightens the border + deepens the shadow.
+   Generous footprint: 18px padding, 12px section gaps, 46px tile,
+   ~160px minimum height. */
+.dshm-instCards { margin: 0; padding: 6px; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
+.dshm-instCard { min-width: 0; min-height: 160px; display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: calc(var(--dsh-layout-radius-user-lg, 12px) - 5px); background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 2%, transparent)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent), 0 4px 16px rgba(0, 0, 0, 0.18); transition: border-color 120ms var(--ds-ease-in-out, ease), box-shadow 120ms var(--ds-ease-in-out, ease); }
+.dshm-instCard:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent), 0 8px 24px rgba(0, 0, 0, 0.26); }
+.dshm-instCardHead { display: flex; align-items: center; gap: 12px; min-width: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; padding: 0; }
 .dshm-instCardHead:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #6ea8fe); outline-offset: 2px; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px); }
-.dshm-instCardTile { width: 40px; height: 40px; border-radius: var(--dsh-layout-radius-user, 10px); }
+/* hue-keyed gradient base: the card publishes --dshm-h (djb2 of its
+   name); flagged tiles (is-warn / is-error) still outrank the identity */
+.dshm-instCardTile { width: 46px; height: 46px; border-radius: var(--dsh-layout-radius-user, 10px); background: linear-gradient(180deg, hsl(var(--dshm-h, 220) 55% 55% / 0.14), hsl(var(--dshm-h, 220) 55% 55% / 0.07)); color: hsl(var(--dshm-h, 220) 65% 72%); }
 .dshm-instCardId { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .dshm-instCardNameRow { min-width: 0; display: flex; align-items: center; gap: 6px; }
-.dshm-instCardName { font-size: 13px; font-weight: 600; line-height: 17px; color: var(--dsw-alias-label-primary, #f4f4f5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dshm-instCardVer { flex: none; height: 17px; padding: 0 6px; display: inline-flex; align-items: center; border-radius: 999px; background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); color: var(--dsw-alias-label-secondary, #b3b3b8); font-family: var(--ds-font-family-code); font-size: 10px; font-weight: 500; line-height: 15px; white-space: nowrap; }
+.dshm-instCardName { font-size: 14px; font-weight: 600; line-height: 19px; color: var(--dsw-alias-label-primary, #f4f4f5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshm-instCardVer { flex: none; height: 19px; padding: 0 7px; display: inline-flex; align-items: center; border-radius: 999px; background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); color: var(--dsw-alias-label-secondary, #b3b3b8); font-family: var(--ds-font-family-code); font-size: 10px; font-weight: 500; line-height: 17px; white-space: nowrap; }
 .dshm-instCardMeta { font-size: 11px; line-height: 15px; color: var(--dsw-alias-label-tertiary, #8a8a8e); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dshm-instCardDesc { margin: 0; font-size: 12px; line-height: 17px; color: var(--dsw-alias-label-secondary, #b3b3b8); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.dshm-instCardDesc { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--dsw-alias-label-secondary, #b3b3b8); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 .dshm-instCardInfo { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 11px; line-height: 15px; color: var(--dsw-alias-label-tertiary, #8a8a8e); flex-wrap: wrap; }
 .dshm-instCardInfo > span { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dshm-instCardBar { margin-top: auto; display: flex; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
+/* status badges on cards graduate from plain colored text to small
+   capsules in the matching hue (rows keep the quiet text form) */
+.dshm-instCard .dshm-instFlag { flex: none; height: 18px; padding: 0 7px; display: inline-flex; align-items: center; border-radius: 999px; }
+.dshm-instCard .dshm-instFlag.is-rank { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); color: var(--dsw-alias-label-secondary, #b3b3b8); font-variant-numeric: tabular-nums; }
+.dshm-instCard .dshm-instFlag.is-warn { background: color-mix(in srgb, var(--dsw-alias-state-warning-primary, #d97706) 10%, transparent); }
+.dshm-instCard .dshm-instFlag.is-error { background: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 10%, transparent); }
+.dshm-instCardBar { margin-top: auto; display: flex; align-items: center; gap: 8px; padding-top: 12px; border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
 .dshm-instCardBarMeta { min-width: 0; font-size: 11px; color: var(--dsw-alias-label-tertiary, #8a8a8e); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dshm-instCardBarActions { margin-left: auto; display: flex; align-items: center; gap: 6px; flex: none; }
 
-/* ── detail modal: dimmed blurred overlay + 760px slide-up dialog ───────── */
+/* ── detail modal: dark blurred overlay + 760px slide-up dialog ───────── */
+/* The mask rides a plain dark base (rgba(0,0,0,.45)) rather than a
+   label-primary mix — label-primary goes white-ish in dark themes and
+   washed the dialog out; the dialog itself stays an opaque bg-layer-1
+   card so file previews never shimmer through. */
 @keyframes dshm-modalFade { from { opacity: 0; } }
 @keyframes dshm-modalUp { from { opacity: 0; transform: translateY(10px); } }
-.dshm-modalOverlay { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 20px; background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 32%, transparent); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); animation: dshm-modalFade 160ms var(--ds-ease-in-out, ease); }
+.dshm-modalOverlay { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 20px; background: rgba(0, 0, 0, 0.45); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); animation: dshm-modalFade 160ms var(--ds-ease-in-out, ease); }
 .dshm-modal { display: flex; flex-direction: column; width: min(760px, 100%); height: min(640px, 84vh); min-height: 0; background: var(--dsw-alias-bg-layer-1, #1c1c1f); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); overflow: hidden; outline: none; animation: dshm-modalUp 160ms var(--ds-ease-in-out, ease); }
 
 /* ── detail content (renders inside the modal dialog) ──────────────────── */
@@ -209,11 +246,14 @@ const CSS = `
 .dshm-input:focus-visible, .dshm-select:focus-visible { border-color: var(--dsw-alias-state-business-primary, #6ea8fe); }
 .dshm-input::placeholder { color: var(--dsw-alias-label-tertiary, #8a8a8e); }
 
-/* ── segmented control (import mode, preview switch) ────────────────────── */
+/* ── segmented control (import mode, mode tabs, preview switch) ───────────
+   Same recipe as the market source seg (.dshm-mkt-seg): 2px 4% track,
+   28px borderless pills, hover pours 5%, active sits on a 12% fill. */
 .dshm-seg { display: inline-flex; gap: 2px; padding: 2px; background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user, 8px); }
-.dshm-seg button { height: 26px; padding: 0 12px; border: 0; background: transparent; color: var(--dsw-alias-label-tertiary, #8a8a8e); font: inherit; font-size: 12px; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: color 120ms var(--ds-ease-in-out, ease), background-color 120ms var(--ds-ease-in-out, ease); }
-.dshm-seg button:hover { color: var(--dsw-alias-label-primary, #f4f4f5); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
+.dshm-seg button { height: 28px; padding: 0 12px; border: 0; background: transparent; color: var(--dsw-alias-label-tertiary, #8a8a8e); font: inherit; font-size: 12px; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: color 120ms var(--ds-ease-in-out, ease), background-color 120ms var(--ds-ease-in-out, ease); }
+.dshm-seg button:hover { color: var(--dsw-alias-label-primary, #f4f4f5); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); }
 .dshm-seg button[aria-pressed=true] { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); font-weight: 500; }
+.dshm-seg button[aria-selected=true] { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); font-weight: 500; }
 .dshm-seg button:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #6ea8fe); outline-offset: -2px; }
 
 /* ── file picker / upload ───────────────────────────────────────────────── */
@@ -253,8 +293,8 @@ const CSS = `
 .dshm-previewChips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .dshm-previewPath { font-family: var(--ds-font-family-code); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dshm-segSm { padding: 2px; border-radius: var(--dsh-layout-radius-user, 8px); align-self: center; }
-.dshm-segSm button { height: 24px; padding: 0 10px; font-size: 12px; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 3px); }
-.dshm-buttonGhostSm { height: 26px; padding: 0 9px; font-size: 12px; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px); gap: 5px; align-self: center; text-decoration: none; }
+.dshm-segSm button { height: 28px; padding: 0 10px; font-size: 12px; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px); }
+.dshm-buttonGhostSm { height: 28px; padding: 0 9px; font-size: 12px; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px); gap: 5px; align-self: center; text-decoration: none; }
 .dshm-previewBody { position: relative; max-height: 460px; overflow: auto; }
 .dshm-previewLoading { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
 .dshm-previewBody .dshm-md { padding: 6px 16px 14px; }
@@ -286,8 +326,8 @@ const CSS = `
 .dshm-mkt-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dshm-mkt-seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; max-width: 100%; overflow-x: auto; padding: 2px; gap: 2px; background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user, 8px); scrollbar-width: none; }
 .dshm-mkt-seg::-webkit-scrollbar { display: none; }
-.dshm-mkt-segBtn { height: 26px; min-width: 0; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px); background: transparent; color: var(--dsw-alias-label-tertiary, #8a8a8e); font: inherit; font-size: 12px; cursor: pointer; transition: background-color 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease); }
-.dshm-mkt-segBtn:hover { color: var(--dsw-alias-label-primary, #f4f4f5); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
+.dshm-mkt-segBtn { height: 28px; min-width: 0; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px); background: transparent; color: var(--dsw-alias-label-tertiary, #8a8a8e); font: inherit; font-size: 12px; cursor: pointer; transition: background-color 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease); }
+.dshm-mkt-segBtn:hover { color: var(--dsw-alias-label-primary, #f4f4f5); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); }
 .dshm-mkt-segBtn.is-active { color: var(--dsw-alias-label-primary, #f4f4f5); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent); font-weight: 500; }
 .dshm-mkt-segBtn:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #6ea8fe); outline-offset: -2px; }
 .dshm-mkt-segLabel { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -305,21 +345,23 @@ const CSS = `
 .dshm-mkt-search input:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent); }
 .dshm-mkt-search input:focus-visible { border-color: var(--dsw-alias-state-business-primary, #6ea8fe); }
 .dshm-mkt-iconBtn { width: 28px; height: 28px; flex: none; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); border-radius: var(--dsh-layout-radius-user, 8px); background: transparent; color: var(--dsw-alias-label-primary, #f4f4f5); cursor: pointer; transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease); }
-.dshm-mkt-iconBtn:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent); }
+.dshm-mkt-iconBtn:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); }
 .dshm-mkt-iconBtn:active { transform: scale(0.97); }
 .dshm-mkt-iconBtn:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #6ea8fe); outline-offset: -2px; }
 .dshm-mkt-iconBtn[disabled] { opacity: .55; cursor: default; }
 .dshm-mkt-iconBtn svg { width: 14px; height: 14px; }
 .dshm-mkt-iconBtn.is-spin svg { animation: dshm-mkt-spin 1.2s linear infinite; }
 
-/* compact buttons: install (primary) / remove (danger) / add-form */
-.dshm-mkt-btn { height: 26px; padding: 0 10px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px); background: transparent; color: var(--dsw-alias-label-primary, #f4f4f5); font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease); }
-.dshm-mkt-btn:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent); }
+/* compact buttons: the same one recipe (28px; secondary transparent +
+   10% border, hover pours 5%; primary 10% fill + 24% border + top
+   highlight) shared with .dshm-button above */
+.dshm-mkt-btn { height: 28px; padding: 0 10px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px); background: transparent; color: var(--dsw-alias-label-primary, #f4f4f5); font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease); }
+.dshm-mkt-btn:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); }
 .dshm-mkt-btn:active { transform: scale(0.97); }
 .dshm-mkt-btn:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #6ea8fe); outline-offset: -2px; }
 .dshm-mkt-btn[disabled] { opacity: .55; cursor: default; transform: none; }
-.dshm-mkt-btn.is-primary { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 24%, transparent); }
-.dshm-mkt-btn.is-primary:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 17%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 28%, transparent); }
+.dshm-mkt-btn.is-primary { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 24%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent); }
+.dshm-mkt-btn.is-primary:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 13%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 28%, transparent); }
 .dshm-mkt-btn.is-danger { color: var(--dsw-alias-state-error-primary, #ef5350); border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 28%, transparent); }
 .dshm-mkt-btn.is-danger:hover { background: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 10%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 40%, transparent); }
 
@@ -375,31 +417,40 @@ button.dshm-mkt-rowMain:focus-visible { outline: 2px solid var(--dsw-alias-state
 
 /* view toggle: auto-width icon segments inside the seg grammar */
 .dshm-mkt-viewSeg { grid-auto-columns: auto; flex: none; }
-.dshm-mkt-segIcon { width: 26px; min-width: 26px; padding: 0; justify-content: center; }
+.dshm-mkt-segIcon { width: 28px; min-width: 28px; padding: 0; justify-content: center; }
 .dshm-mkt-segIcon svg { width: 14px; height: 14px; }
 
-/* update state: business-colored badge + button (list rows and cards) */
+/* update state: business-colored badge + button (list rows and cards);
+   the button rides the light primary recipe (10% + 24% + top light) */
 .dshm-mkt-badge.is-update { background: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 12%, transparent); color: var(--dsw-alias-state-business-primary, #6ea8fe); }
 .dshm-mkt-badge.is-update .dshm-mkt-badgeDot { background: var(--dsw-alias-state-business-primary, #6ea8fe); }
-.dshm-mkt-btn.is-update { background: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 16%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 30%, transparent); }
-.dshm-mkt-btn.is-update:hover { background: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 20%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 38%, transparent); }
+.dshm-mkt-btn.is-update { background: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 10%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 24%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 14%, transparent); }
+.dshm-mkt-btn.is-update:hover { background: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 13%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 28%, transparent); }
 
-/* card grid view: one grouped container, auto-fill cards at ≥240px */
-.dshm-mkt-cards { margin: 0; padding: 6px; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
-.dshm-mkt-card { min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: calc(var(--dsh-layout-radius-user-lg, 12px) - 5px); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 3%, transparent); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease); }
-.dshm-mkt-card:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); }
-.dshm-mkt-card.is-installed .dshm-mkt-cardTile { color: var(--dsw-alias-state-success-primary, #4caf50); }
-.dshm-mkt-cardHead { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.dshm-mkt-cardTile { width: 40px; height: 40px; flex: none; border-radius: var(--dsh-layout-radius-user, 10px); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); color: var(--dsw-alias-label-secondary, #b3b3b8); display: grid; place-items: center; }
+/* card grid view: one grouped container, auto-fill cards at ≥300px.
+   Cards are the market's one textured surface (matching the installed
+   catalog): a hue-keyed gradient icon base, a top-lit 5%→2% fill with
+   an inset highlight and a soft ambient shadow; hover only brightens
+   the border and deepens the shadow — no lift, no background shift.
+   Generous footprint: 18px padding, 12px section gaps, 46px tile,
+   ~160px minimum height. */
+.dshm-mkt-cards { margin: 0; padding: 6px; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
+.dshm-mkt-card { min-width: 0; min-height: 160px; display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: calc(var(--dsh-layout-radius-user-lg, 12px) - 5px); background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 2%, transparent)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent), 0 4px 16px rgba(0, 0, 0, 0.18); transition: border-color 120ms var(--ds-ease-in-out, ease), box-shadow 120ms var(--ds-ease-in-out, ease); }
+.dshm-mkt-card:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent), 0 8px 24px rgba(0, 0, 0, 0.26); }
+.dshm-mkt-cardHead { display: flex; align-items: center; gap: 12px; min-width: 0; }
+/* hue-keyed gradient base: the card publishes --dshm-h (djb2 of the
+   item name); the icon rides a brighter tone of the same hue while
+   installed / updatable state stays on the badges below */
+.dshm-mkt-cardTile { width: 46px; height: 46px; flex: none; border-radius: var(--dsh-layout-radius-user, 10px); background: linear-gradient(180deg, hsl(var(--dshm-h, 220) 55% 55% / 0.14), hsl(var(--dshm-h, 220) 55% 55% / 0.07)); color: hsl(var(--dshm-h, 220) 65% 72%); display: grid; place-items: center; }
 .dshm-mkt-cardId { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .dshm-mkt-cardNameRow { min-width: 0; display: flex; align-items: center; gap: 6px; }
-.dshm-mkt-cardName { font-size: 13px; font-weight: 600; line-height: 17px; color: var(--dsw-alias-label-primary, #f4f4f5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dshm-mkt-cardVer { flex: none; height: 17px; padding: 0 6px; display: inline-flex; align-items: center; border-radius: 999px; background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); color: var(--dsw-alias-label-secondary, #b3b3b8); font-family: var(--ds-font-family-code); font-size: 10px; font-weight: 500; line-height: 15px; white-space: nowrap; }
+.dshm-mkt-cardName { font-size: 14px; font-weight: 600; line-height: 19px; color: var(--dsw-alias-label-primary, #f4f4f5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshm-mkt-cardVer { flex: none; height: 19px; padding: 0 7px; display: inline-flex; align-items: center; border-radius: 999px; background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); color: var(--dsw-alias-label-secondary, #b3b3b8); font-family: var(--ds-font-family-code); font-size: 10px; font-weight: 500; line-height: 17px; white-space: nowrap; }
 .dshm-mkt-cardMeta { font-size: 11px; line-height: 15px; color: var(--dsw-alias-label-tertiary, #8a8a8e); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dshm-mkt-cardDesc { margin: 0; font-size: 12px; line-height: 17px; color: var(--dsw-alias-label-secondary, #b3b3b8); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.dshm-mkt-cardDesc { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--dsw-alias-label-secondary, #b3b3b8); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 .dshm-mkt-cardTags { display: flex; flex-wrap: wrap; gap: 4px; }
 .dshm-mkt-cardTag { height: 18px; max-width: 130px; padding: 0 7px; display: inline-flex; align-items: center; border-radius: 999px; background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); color: var(--dsw-alias-label-secondary, #b3b3b8); font-size: 10.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dshm-mkt-cardBar { margin-top: auto; display: flex; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
+.dshm-mkt-cardBar { margin-top: auto; display: flex; align-items: center; gap: 8px; padding-top: 12px; border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
 .dshm-mkt-cardKind { min-width: 0; display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--dsw-alias-label-tertiary, #8a8a8e); text-transform: capitalize; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dshm-mkt-cardKind svg { width: 11px; height: 11px; flex: none; }
 .dshm-mkt-cardActions { margin-left: auto; display: flex; align-items: center; gap: 6px; flex: none; }
@@ -417,6 +468,7 @@ button.dshm-mkt-rowMain:focus-visible { outline: 2px solid var(--dsw-alias-state
   .dshm-mkt-toolbar { gap: 6px; }
   .dshm-mkt-cards { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
   .dshm-instCards { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .dshm-mkt-card, .dshm-instCard { padding: 14px; gap: 10px; }
 }
 @media (max-width: 640px) {
   .dshm-mkt-rowDesc { display: none; }
@@ -434,8 +486,11 @@ button.dshm-mkt-rowMain:focus-visible { outline: 2px solid var(--dsw-alias-state
    When the dsh-layout plugin turns its frosted material on (flag on
    <html>), the quiet fills swap for translucent glass tints over the
    blurred canvas: grouped lists 34%, panels/inputs 46%, icon bases 52%;
-   borders move to --dsh-layout-line at 45-55%. Hover stays a flat 4%
-   lighten — only the fill and border recipes change. */
+   borders move to --dsh-layout-line at 45-55%. The textured cards pour
+   the same 34% glass while keeping their top inset highlight and soft
+   ambient shadow, and their hue-keyed gradient bases survive untouched.
+   The detail dialog stays an OPAQUE bg-layer-1 card — previews must not
+   shimmer through the glass. Hover stays a border/shadow-only change. */
 html[data-dsh-layout-material='on'] .dshm-instList,
 html[data-dsh-layout-material='on'] .dshm-instCards,
 html[data-dsh-layout-material='on'] .dshm-detailCard,
@@ -448,7 +503,12 @@ html[data-dsh-layout-material='on'] .dshm-mkt-blank {
   background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 34%, transparent);
   border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 45%, transparent);
 }
-html[data-dsh-layout-material='on'] .dshm-modal,
+/* card surfaces: same 34% glass pour, top highlight + ambient shadow
+   inherited from the base card rule */
+html[data-dsh-layout-material='on'] .dshm-instCard,
+html[data-dsh-layout-material='on'] .dshm-mkt-card {
+  background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 34%, transparent);
+}
 html[data-dsh-layout-material='on'] .dshm-filePanel,
 html[data-dsh-layout-material='on'] .dshm-previewHead,
 html[data-dsh-layout-material='on'] .dshm-seg,
@@ -467,14 +527,13 @@ html[data-dsh-layout-material='on'] .dshm-emptyTile,
 html[data-dsh-layout-material='on'] .dshm-dropIcon,
 html[data-dsh-layout-material='on'] .dshm-resultIcon,
 html[data-dsh-layout-material='on'] .dshm-mkt-rowTile,
-html[data-dsh-layout-material='on'] .dshm-mkt-cardTile,
 html[data-dsh-layout-material='on'] .dshm-mkt-blankTile {
   background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 52%, transparent);
   border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 55%, transparent);
 }
 
 /* ── motion safety ────────────────────────────────────────────────────────
-   Everything above only transitions background/color at 120ms; under
+   Everything above only transitions background/color/shadow at 120ms; under
    prefers-reduced-motion the transitions, the shimmer, the spin and the
    press scale all drop out. */
 @media (prefers-reduced-motion: reduce) {
