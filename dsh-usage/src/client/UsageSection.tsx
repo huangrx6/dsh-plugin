@@ -27,11 +27,11 @@ interface EditState {
 
 const EMPTY: EditState = { label: '', provider: 'glm', apiKey: '', endpoint: '', region: 'bigmodel' }
 
-/** Provider card metadata for the selector. */
-const PROVIDERS: { id: UsageProvider; color: string; icon: string }[] = [
-  { id: 'glm', color: '#4285f4', icon: '🧠' },
-  { id: 'minimax', color: '#8b5cf6', icon: '⚡' },
-  { id: 'opencode', color: '#10b981', icon: '🔑' },
+/** Provider metadata — initials used as icon text, color as accent. */
+const PROVIDERS: { id: UsageProvider; color: string; initials: string }[] = [
+  { id: 'glm', color: '#4285f4', initials: 'GLM' },
+  { id: 'minimax', color: '#8b5cf6', initials: 'MM' },
+  { id: 'opencode', color: '#10b981', initials: 'OC' },
 ]
 
 export function UsageSection({ t, api }: UsageSectionProps): JSX.Element {
@@ -122,12 +122,11 @@ export function UsageSection({ t, api }: UsageSectionProps): JSX.Element {
         </button>
       </div>
 
-      {status === 'loading' ? <div className="u-empty"><span className="u-empty-icon">⏳</span>{t('loading')}</div> : null}
-      {status === 'error' ? <div className="u-empty u-empty--error" role="alert"><span className="u-empty-icon">⚠️</span>{message}</div> : null}
+      {status === 'loading' ? <div className="u-empty"><span className="u-empty-text">{t('loading')}</span></div> : null}
+      {status === 'error' ? <div className="u-empty u-empty--error" role="alert"><span className="u-empty-text">{message}</span></div> : null}
       {entries.length === 0 && status === 'ready' ? (
         <div className="u-empty">
-          <span className="u-empty-icon">📊</span>
-          <span>{t('addEntry')}…</span>
+          <span className="u-empty-text">{t('addEntry')}</span>
         </div>
       ) : null}
 
@@ -139,7 +138,7 @@ export function UsageSection({ t, api }: UsageSectionProps): JSX.Element {
           return (
             <div key={entry.id} className="u-row" style={{ '--u-accent': pmeta?.color ?? '#6ea8fe' } as React.CSSProperties}>
               <div className="u-rowHead">
-                <span className="u-provider-icon">{pmeta?.icon ?? '📦'}</span>
+                <span className="u-provider-icon">{pmeta?.initials ?? '—'}</span>
                 <div className="u-rowInfo">
                   <span className="u-label">{entry.label}</span>
                   <span className="u-provider">{providerLabel(t, entry.provider)}{r?.level !== undefined ? ` · ${r.level}` : ''}</span>
@@ -153,7 +152,7 @@ export function UsageSection({ t, api }: UsageSectionProps): JSX.Element {
                   <button type="button" className="u-mini u-mini--danger" onClick={() => void remove(entry.id)}>{t('delete')}</button>
                 </span>
               </div>
-              {r === undefined ? <div className="u-bar-loading">{t('loading')}…</div> :
+              {r === undefined ? <div className="u-bar-loading">{t('loading')}</div> :
                 r.ok === false ? <div className="u-bar-loading u-bar-loading--error">{r.message}</div> :
                   <div className="u-bars">
                     {(r.bars ?? []).map((bar, i) => <Bar key={i} bar={bar} />)}
@@ -183,7 +182,7 @@ export function UsageSection({ t, api }: UsageSectionProps): JSX.Element {
                   style={{ '--u-accent': p.color } as React.CSSProperties}
                   onClick={() => setEditing({ ...editing, provider: p.id, apiKey: '', endpoint: '', region: 'bigmodel' })}
                 >
-                  <span className="u-providerCard-icon">{p.icon}</span>
+                  <span className="u-providerCard-initials" style={{ background: p.color }}>{p.initials}</span>
                   <span className="u-providerCard-name">{providerLabel(t, p.id)}</span>
                 </button>
               ))}
@@ -211,7 +210,7 @@ export function UsageSection({ t, api }: UsageSectionProps): JSX.Element {
 
             {editing.provider === 'minimax' || editing.provider === 'opencode' ? (
               <label className="u-f">{t('entryEndpoint')}
-                <input type="url" value={editing.endpoint} placeholder={editing.provider === 'opencode' ? 'https://opencode.ai/zen/go/v1/usage' : 'https://…'} onChange={(e) => setEditing({ ...editing, endpoint: e.target.value })} />
+                <input type="url" value={editing.endpoint} placeholder={editing.provider === 'opencode' ? 'https://opencode.ai/zen/go/v1/usage' : 'https://www.minimaxi.com/v1/token_plan/remains'} onChange={(e) => setEditing({ ...editing, endpoint: e.target.value })} />
               </label>
             ) : null}
 

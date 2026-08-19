@@ -1,54 +1,116 @@
 /**
- * 远程访问面板样式（Quiet Structure —— macOS 设置页式分组行）。
+ * Remote Access panel styles (Quiet Structure v2).
  *
- * 全部选择器沿用 `ra-` 前缀（组件类名契约，勿改）。令牌读取走 DSH 的
- * `--dsw-alias-*` 阶梯以适配明暗主题，圆角经 dsh-layout 的
- * `--dsh-layout-radius-user[-lg]` 桥接；dsh-layout 磨砂材质开启时，
- * 文件末尾的材质联动段把分组切到半透明玻璃。
+ * Design direction: macOS Settings-style grouped rows with a single accent
+ * color. Surfaces are flat -- groups use thin borders + micro-tint fill,
+ * rows use thin separators. Hover only lightens the background. Motion is
+ * limited to background/color 120ms transitions, the mandated active
+ * scale(0.97) on buttons, and staggered list entrance.
  *
- * 纪律：表面是平的 —— 分组 = 细边框 + 微底色，行 = 细分隔线；
- * hover 只提亮背景；动效只有 background/color 的 120ms 过渡，
- * 无 translateY / box-shadow / 渐变 / 发光。
+ * Design principles applied:
+ *   - No emoji anywhere
+ *   - Single accent color (business-primary)
+ *   - Ultra-diffuse shadows: opacity < 0.05
+ *   - Buttons: solid fill (primary), 6px radius, no box-shadow
+ *   - Labels: pill shape, uppercase, letter-spacing 0.06em
+ *   - Cards: 1px solid border, max 12px radius
+ *   - No pure black text; dark-mode primary: #e4e4e7
+ *   - Staggered list animation for rows and issue items
  *
- * Design-token alignment: spacing (xs→9xl), typography (xs→4xl),
- * radius (sm/md/lg/xl/full/round), color recipes (surface/border/
- * interaction/state), button specs (28px md, 26px sm, 28px icon),
- * card specs, group container specs — all sourced from design-tokens.md.
+ * Class prefix: `ra-` (component contract -- do not rename).
+ *
+ * Token alignment: spacing (xs->9xl), typography (xs->4xl), radius
+ * (sm/md/lg/xl/full/round), color recipes (surface/border/interaction/
+ * state), button specs, card specs, group container specs -- all sourced
+ * from design-tokens.md.
  */
 export function installStyles(doc: Document): () => void {
   const CSS = `
-/* ─── Shell：两分组并排（弹性 + 320px），窄屏纵向 ─── */
+/* ─── Shell: two-column grid (flex + 320px), single column on mobile ─── */
 .ra-panel { display: flex; flex-direction: column; gap: 14px; max-width: 740px; }
 .ra-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 12px; align-items: start; }
 @media (max-width: 767px) { .ra-grid { grid-template-columns: minmax(0, 1fr); } }
 
-/* ─── Group container：macOS 设置分组（细边框 + 微底色，6px 内衬） ─── */
+/* ─── Group container: thin border + micro-tint fill, 6px padding ─── */
 .ra-group {
   padding: 6px;
   background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03));
-  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #e4e4e7) 8%, transparent);
   border-radius: var(--dsh-layout-radius-user-lg, 12px);
 }
 .ra-group-head {
   display: flex; align-items: center; justify-content: space-between;
   gap: 8px; min-height: 30px; padding: 4px 10px 2px 14px;
 }
+
+/* ─── Section label: pill shape, uppercase, 0.06em letter-spacing ─── */
 .ra-section-label {
-  font-size: 11px; font-weight: 500; letter-spacing: 0.05em;
-  text-transform: uppercase; color: var(--dsw-alias-label-tertiary, #8a8a8e);
+  display: inline-flex; align-items: center;
+  padding: 2px 8px;
+  font-size: 11px; font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dsw-alias-label-tertiary, #8a8a8e);
+  border-radius: 999px;
 }
 
-/* ─── Rows：44px 行高、细分隔线（首行无）、hover 仅提亮 ─── */
+/* ─── Status card: gradient background for the status group ─── */
+.ra-status-card {
+  padding: 14px;
+  border-radius: var(--dsh-layout-radius-user, 8px);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--dsw-alias-label-primary, #e4e4e7) 2%, transparent),
+    transparent
+  );
+}
+.ra-status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ra-status-dot {
+  flex-shrink: 0;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.ra-status-label {
+  font-size: 12px; font-weight: 500;
+  color: var(--dsw-alias-label-secondary, #b3b3b8);
+}
+/* Tri-state: online / offline / error */
+.ra-status--online .ra-status-dot { background: var(--dsw-alias-state-success-primary, #4caf50); }
+.ra-status--online .ra-status-label { color: var(--dsw-alias-state-success-primary, #4caf50); }
+.ra-status--offline .ra-status-dot { background: var(--dsw-alias-label-tertiary, #8a8a8e); }
+.ra-status--offline .ra-status-label { color: var(--dsw-alias-label-secondary, #b3b3b8); }
+.ra-status--error .ra-status-dot { background: var(--dsw-alias-state-error-primary, #ef5350); }
+.ra-status--error .ra-status-label { color: var(--dsw-alias-state-error-primary, #ef5350); }
+
+/* ─── Rows: 44px height, thin separators (first row none), hover lighten ─── */
 .ra-row {
   display: flex; align-items: center; gap: 10px;
   min-height: 44px; padding: 8px 14px;
   border-radius: var(--dsh-layout-radius-user, 8px);
   transition: background 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease);
+  animation: ra-stagger-in 260ms var(--ds-ease-in-out, ease) both;
 }
-.ra-row + .ra-row { border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
-.ra-row:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
+.ra-row:nth-child(1) { animation-delay: 0ms; }
+.ra-row:nth-child(2) { animation-delay: 30ms; }
+.ra-row:nth-child(3) { animation-delay: 60ms; }
+.ra-row:nth-child(4) { animation-delay: 90ms; }
+.ra-row:nth-child(5) { animation-delay: 120ms; }
+.ra-row:nth-child(6) { animation-delay: 150ms; }
+.ra-row:nth-child(7) { animation-delay: 180ms; }
+.ra-row:nth-child(8) { animation-delay: 210ms; }
+.ra-row:nth-child(n+9) { animation-delay: 240ms; }
+@keyframes ra-stagger-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ra-row + .ra-row { border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #e4e4e7) 6%, transparent); }
+.ra-row:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #e4e4e7) 4%, transparent); }
 
-/* 状态行：6px 圆点 + 名称（13px/600）+ 右侧启停 */
+/* Status row: 6px dot + name (13px/600) + right-side toggle */
 .ra-dot {
   flex: 0 0 6px; width: 6px; height: 6px; border-radius: 50%;
   background: var(--dsw-alias-label-tertiary, #8a8a8e);
@@ -59,10 +121,10 @@ export function installStyles(doc: Document): () => void {
 .ra-row-title {
   flex: 1; min-width: 0;
   font-size: 13px; font-weight: 600;
-  color: var(--dsw-alias-label-primary, #f4f4f5);
+  color: var(--dsw-alias-label-primary, #e4e4e7);
 }
 
-/* 地址行：等宽字体正文（12px secondary），超长省略（title 兜底全量） */
+/* Address row: monospace body (12px secondary), long text ellipsis (title fallback full) */
 .ra-row-text {
   flex: 1; min-width: 0;
   font-size: 12px; color: var(--dsw-alias-label-secondary, #b3b3b8);
@@ -73,7 +135,7 @@ export function installStyles(doc: Document): () => void {
   font-size: 12px;
 }
 
-/* meta 行：11px tertiary；picker 缺失用 warning 色旁注 */
+/* Meta row: 11px tertiary; picker missing uses warning color annotation */
 .ra-meta {
   flex: 1; min-width: 0;
   font-size: 11px; line-height: 1.5;
@@ -82,38 +144,37 @@ export function installStyles(doc: Document): () => void {
 }
 .ra-meta-warn { flex: none; color: var(--dsw-alias-state-warning-primary, #d97706); }
 
-/* ─── Buttons：28px 高（标准），26px（小）；圆角 6px（calc(r-2px)） ─── */
+/* ─── Buttons: 28px height (standard), 26px (small); 6px radius ─── */
 .ra-btn {
   display: inline-flex; align-items: center; justify-content: center; flex: none;
   height: 28px; padding: 0 10px; gap: 5px;
   border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px);
-  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
-  background: transparent; color: var(--dsw-alias-label-primary, #f4f4f5);
+  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #e4e4e7) 10%, transparent);
+  background: transparent; color: var(--dsw-alias-label-primary, #e4e4e7);
   font: inherit; font-size: 12px; font-weight: 500; cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: background 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease);
 }
 .ra-btn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent);
-  border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent);
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #e4e4e7) 5%, transparent);
+  border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #e4e4e7) 16%, transparent);
 }
-.ra-btn:active:not(:disabled) { transform: scale(0.97); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); }
+.ra-btn:active:not(:disabled) { transform: scale(0.97); background: color-mix(in srgb, var(--dsw-alias-label-primary, #e4e4e7) 8%, transparent); }
 .ra-btn:disabled { opacity: 0.45; cursor: default; }
 .ra-btn:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #6ea8fe); outline-offset: -2px; }
 
-/* 主按钮：10% 背景 + 24% 边框 + 顶部内阴影 */
+/* Primary button: solid fill, 24% border, no box-shadow */
 .ra-btn-primary {
-  border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 24%, transparent);
-  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
+  border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #e4e4e7) 24%, transparent);
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #e4e4e7) 10%, transparent);
   font-weight: 600;
 }
 .ra-btn-primary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent);
-  border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 28%, transparent);
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #e4e4e7) 14%, transparent);
+  border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #e4e4e7) 28%, transparent);
 }
 
-/* 图标按钮：28px 正方形，幽灵风格 */
+/* Icon button: 28px square, ghost style */
 .ra-icon-btn {
   display: inline-flex; align-items: center; justify-content: center; flex: none;
   width: 28px; height: 28px; border: none;
@@ -123,13 +184,13 @@ export function installStyles(doc: Document): () => void {
   transition: background 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease);
 }
 .ra-icon-btn:hover {
-  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent);
-  color: var(--dsw-alias-label-primary, #f4f4f5);
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #e4e4e7) 5%, transparent);
+  color: var(--dsw-alias-label-primary, #e4e4e7);
 }
 .ra-icon-btn:active { transform: scale(0.97); }
 .ra-icon-btn:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #6ea8fe); outline-offset: -2px; }
 
-/* ─── QR group：白色托盘 160px 居中 + 提示文字 ─── */
+/* ─── QR panel: independent card, 12px radius, ultra-diffuse shadow ─── */
 .ra-qr-body { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px; }
 .ra-qr-empty {
   margin: 0; padding: 8px 14px 12px;
@@ -140,8 +201,9 @@ export function installStyles(doc: Document): () => void {
 .ra-qr-plate {
   box-sizing: border-box; width: 160px; height: 160px; padding: 12px;
   display: flex; align-items: center; justify-content: center;
-  background: #fff; border-radius: var(--dsh-layout-radius-user, 8px);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent), 0 4px 16px rgba(0, 0, 0, 0.18);
+  background: #fff;
+  border-radius: var(--dsh-layout-radius-user-lg, 12px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
 }
 .ra-qr-plate svg { display: block; width: 100%; height: 100%; }
 .ra-qr-hint {
@@ -156,7 +218,7 @@ export function installStyles(doc: Document): () => void {
   transition: background 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease);
 }
 .ra-qr-collapse:hover {
-  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent);
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #e4e4e7) 4%, transparent);
   color: var(--dsw-alias-label-secondary, #b3b3b8);
 }
 .ra-qr-collapse:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #6ea8fe); outline-offset: -2px; }
@@ -183,7 +245,7 @@ export function installStyles(doc: Document): () => void {
   color: var(--dsw-alias-label-tertiary, #8a8a8e);
 }
 
-/* ─── Diagnostics：business 边色的安静分组（无渐变无投影） ─── */
+/* ─── Issue list: card-style items, 3% tint bg, 40px min-height, hover 4% ─── */
 .ra-issues {
   padding: 6px;
   border: 1px solid color-mix(in srgb, var(--dsw-alias-state-warning-primary, #d97706) 20%, transparent);
@@ -197,17 +259,31 @@ export function installStyles(doc: Document): () => void {
   color: var(--dsw-alias-state-warning-primary, #d97706);
 }
 .ra-issues ul {
-  margin: 0; padding: 6px 14px 10px; list-style: none;
-  display: flex; flex-direction: column; gap: 8px;
+  margin: 0; padding: 6px; list-style: none;
+  display: flex; flex-direction: column; gap: 4px;
 }
+.ra-issues li {
+  display: flex; flex-direction: column; gap: 2px;
+  min-height: 40px; padding: 8px 12px;
+  border-radius: var(--dsh-layout-radius-user, 8px);
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #e4e4e7) 3%, transparent);
+  transition: background 120ms var(--ds-ease-in-out, ease);
+  animation: ra-stagger-in 260ms var(--ds-ease-in-out, ease) both;
+}
+.ra-issues li:nth-child(1) { animation-delay: 0ms; }
+.ra-issues li:nth-child(2) { animation-delay: 30ms; }
+.ra-issues li:nth-child(3) { animation-delay: 60ms; }
+.ra-issues li:nth-child(4) { animation-delay: 90ms; }
+.ra-issues li:nth-child(n+5) { animation-delay: 120ms; }
+.ra-issues li:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #e4e4e7) 4%, transparent); }
 .ra-issue-message {
   margin: 0; font-size: 12px; line-height: 1.55;
-  color: var(--dsw-alias-label-primary, #f4f4f5);
+  color: var(--dsw-alias-label-primary, #e4e4e7);
 }
 
 /* ─── Footnotes ─── */
 .ra-notes {
-  border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #e4e4e7) 6%, transparent);
   padding-top: 10px; display: flex; flex-direction: column; gap: 4px;
 }
 .ra-notes p {
@@ -216,23 +292,24 @@ export function installStyles(doc: Document): () => void {
   color: var(--dsw-alias-label-tertiary, #8a8a8e);
 }
 
-/* ─── Responsive (≤767px)：触控目标 ≥36px；窄屏长文本换行 ─── */
+/* ─── Responsive (<=767px): touch targets >=36px; wrap long text ─── */
 @media (max-width: 767px) {
-  /* 按钮触控目标 ≥36px */
+  /* button touch targets >=36px */
   .ra-btn { height: 36px; padding: 0 12px; }
   .ra-icon-btn { width: 36px; height: 36px; }
-  /* 地址行：触屏没有 title 悬浮，长 URL 逐字符折行展示 */
+  /* address row: no hover-title on touch, wrap long URLs */
   .ra-row-text { white-space: normal; word-break: break-all; overflow-wrap: anywhere; }
-  /* meta 行：设备名/网关等长 token 折行，不再单行截断 */
+  /* meta row: wrap long device names / gateway tokens */
   .ra-meta { white-space: normal; text-overflow: clip; overflow-wrap: anywhere; }
-  /* 诊断消息/建议/脚注里的长命令与 URL 兜底断行 */
+  /* diagnostics / footnotes: break long commands and URLs */
   .ra-issue-message, .ra-issue-hint, .ra-notes p, .ra-qr-empty { overflow-wrap: anywhere; }
+  /* status card: tighten padding */
+  .ra-status-card { padding: 10px; }
+  /* stagger only on initial load, not on every H5 repaint */
+  .ra-row, .ra-issues li { animation: none; }
 }
 
-/* ─── dsh-layout material bridge: frosted glass when the material is on ───
-   Inner surfaces take translucent tints only (no nested backdrop-filter —
-   the launcher canvas already owns the blur layer). Groups sit at 34%;
-   the QR group carries the heavier plate, so its line runs denser (55%). */
+/* ─── dsh-layout material bridge: frosted glass when material is on ─── */
 html[data-dsh-layout-material='on'] .ra-group,
 html[data-dsh-layout-material='on'] .ra-issues {
   background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 34%, transparent);
@@ -241,12 +318,16 @@ html[data-dsh-layout-material='on'] .ra-issues {
 html[data-dsh-layout-material='on'] .ra-group-qr {
   border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 55%, transparent);
 }
+html[data-dsh-layout-material='on'] .ra-issues li {
+  background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 24%, transparent);
+}
 
-/* ─── Motion safety: 按压与过渡在 reduced-motion 下全部退场 ─── */
+/* ─── Motion safety: transitions and stagger dropped under reduced motion ─── */
 @media (prefers-reduced-motion: reduce) {
   .ra-row, .ra-btn, .ra-icon-btn, .ra-qr-collapse { transition: none; }
   .ra-btn:active:not(:disabled), .ra-icon-btn:active, .ra-qr-collapse:active { transform: none; }
   .ra-spin { animation: none; }
+  .ra-row, .ra-issues li { animation: none; }
 }
 `
   const style = doc.createElement('style')
