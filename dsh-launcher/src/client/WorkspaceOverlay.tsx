@@ -33,6 +33,7 @@ import {
   IconMcp,
   IconRemote,
   IconRules,
+  IconGauge,
   IconSkills,
   IconSparkle,
 } from "./icons.tsx";
@@ -83,6 +84,15 @@ export const DEFAULT_SECTIONS: readonly WorkspaceSection[] = [
     groupKey: "menuGroupAgentRules",
     icon: <IconRules size={20} />,
     render: () => <SectionPlaceholder id="rules" />,
+  },
+  // 订阅用量（管理组内）
+  {
+    id: "usage",
+    labelKey: "menuUsage",
+    subtitleKey: "menuUsageSubtitle",
+    groupKey: "menuGroupManage",
+    icon: <IconGauge size={20} />,
+    render: () => <SectionPlaceholder id="usage" />,
   },
   // 外观
   {

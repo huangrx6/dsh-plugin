@@ -164,3 +164,14 @@ export function IconRules({ size = 16, className, title }: IconProps): ReactElem
     </svg>
   )
 }
+
+/** A gauge — the subscription usage monitor section. */
+export function IconGauge({ size = 16, className, title }: IconProps): ReactElement {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden={title === undefined ? 'true' : undefined} className={className} width={size} height={size} role={title === undefined ? undefined : 'img'}>
+      {title === undefined ? null : <title>{title}</title>}
+      {svgInner('M3.5 10.5a4.5 4.5 0 1 1 9 0M8 10.5V6M8 10.5a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6Z')}
+      {svgInner('M8 1v1.5')}
+    </svg>
+  )
+}

@@ -38,6 +38,8 @@ export type LauncherLocaleKey =
  | "menuLayoutSubtitle"
  | "menuAgentRules"
  | "menuAgentRulesSubtitle"
+ | "menuUsage"
+ | "menuUsageSubtitle"
  | "marketTitle"
  | "marketSources"
  | "marketAddSource"
@@ -94,6 +96,8 @@ export const zhCN: Record<LauncherLocaleKey, string> = {
  menuLayout: "页面布局",
  menuLayoutSubtitle: "页面材质、阅读宽度、收笔、气泡、轨迹、统计。",
  menuAgentRules: "Agent 全局指令",
+ menuUsage: "订阅用量",
+ menuUsageSubtitle: "查看各订阅的额度剩余（GLM / MiniMax / Opencode）。",
  menuAgentRulesSubtitle: "编辑 ~/.dsh/AGENTS.md，注入每个会话的全局 Agent 指令。",
  marketTitle: "市场",
  marketSources: "数据源",
@@ -153,6 +157,8 @@ export const enUS: Record<LauncherLocaleKey, string> = {
  menuLayoutSubtitle:
   "Page material, reading width, scroll end, bubbles, trace, stats.",
  menuAgentRules: "Agent rules",
+ menuUsage: "Subscription usage",
+ menuUsageSubtitle: "Remaining quota for your GLM / MiniMax / Opencode subscriptions.",
  menuAgentRulesSubtitle:
   "Edit ~/.dsh/AGENTS.md, the global instructions injected into every session.",
  marketTitle: "Marketplace",
