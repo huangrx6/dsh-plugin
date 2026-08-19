@@ -557,10 +557,18 @@ const CSS = `
 
 /* ── responsive — collapse to a single column on H5 ──────────────────────── */
 @media (max-width: 767px) {
-  .dam-shell { grid-template-columns: 1fr; }
+  .dam-shell { grid-template-columns: minmax(0, 1fr); }
   .dam-list { position: static; max-height: none; }
   .dam-list-scroll { max-height: 264px; }
   .dam-toolbar-name { flex-basis: 100%; min-width: 0; }
+  /* long tokens must not stretch the 1fr track past the viewport:
+     anywhere (unlike break-word) also shrinks min-content sizing */
+  .dam-note { overflow-wrap: anywhere; }
+  .dam-kv-val { white-space: normal; overflow-wrap: anywhere; }
+  .dam-tl-text.is-open { overflow-wrap: anywhere; }
+  .dam-tl-state { overflow-wrap: anywhere; }
+  /* fixed toast: 360px max-width exceeds a 375px viewport minus margins */
+  .dam-toast { max-width: calc(100vw - 32px); overflow-wrap: anywhere; }
 }
 
 /* ── dsh-layout material bridge ─────────────────────────────────────────────

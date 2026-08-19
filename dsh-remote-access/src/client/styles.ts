@@ -135,6 +135,16 @@ export function installStyles(doc: Document): () => void {
 .ra-notes { border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); padding-top: 10px; display: flex; flex-direction: column; gap: 4px; }
 .ra-notes p { margin: 0; max-width: 560px; font-size: 11px; line-height: 1.6; color: var(--dsw-alias-label-tertiary, #8a8a8e); }
 
+/* ─── Responsive (≤767px)：窄屏长文本换行，防横向溢出；桌面端不受影响 ─── */
+@media (max-width: 767px) {
+  /* 地址行：触屏没有 title 悬浮，长 URL 逐字符折行展示（复制按钮仍取全量） */
+  .ra-row-text { white-space: normal; word-break: break-all; overflow-wrap: anywhere; }
+  /* meta 行：设备名/网关等长 token 折行，不再单行截断 */
+  .ra-meta { white-space: normal; text-overflow: clip; overflow-wrap: anywhere; }
+  /* 诊断消息/建议/脚注里的长命令与 URL 兜底断行 */
+  .ra-issue-message, .ra-issue-hint, .ra-notes p, .ra-qr-empty { overflow-wrap: anywhere; }
+}
+
 /* ─── dsh-layout material bridge: frosted glass when the material is on ───
    Inner surfaces take translucent tints only (no nested backdrop-filter —
    the launcher canvas already owns the blur layer). Groups sit at 34%;

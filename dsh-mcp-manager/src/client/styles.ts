@@ -998,19 +998,58 @@ html[data-dsh-layout-material='on'] .dshmcp-toolModalBody > :first-child { backg
   .dshmcp-switchKnob { transition: none !important; }
 }
 
-/* ── narrow viewports ───────────────────────────────────────────────────── */
+/* ── narrow viewports (phones, ≤767px) ──────────────────────────────────── */
+/* Everything mobile lives here so the desktop recipes above stay frozen.
+   The recurring phone failure modes, each covered once below:
+   - rows/grids with desktop flex-basis or minmax(300px) tracks → drop the
+     desc column, let the id block flex, narrow the card tracks + padding
+   - long unbreakable strings (commands, urls, env keys, schema names,
+     error text) → overflow-wrap: anywhere so they wrap inside their box
+   - dialogs → 12px scrim inset; the tool dialog spans it exactly (its
+     desktop width:92vw plus the 2×24px inset overflowed the viewport) */
 @media (max-width: 767px) {
-  .dshmcp-mkt-bar { align-items: stretch; flex-direction: column; }
+  /* market toolbar: the sources strip and the search each take a full
+     wrap row; view toggle + icon buttons share the last row, pushed right */
   .dshmcp-mkt-seg { max-width: none; width: 100%; }
-  .dshmcp-mkt-search { min-width: 0; }
-  .dshmcp-mkt-bar .dshmcp-mkt-iconbtn { align-self: flex-end; }
-  .dshmcp-mkt-bar .dshmcp-mkt-viewseg { align-self: flex-end; }
+  .dshmcp-mkt-search { flex-basis: 100%; min-width: 0; }
+  .dshmcp-mkt-bar .dshmcp-mkt-viewseg { margin-left: auto; }
+
+  /* compact rows: no room for the desc line; the id block takes the slack */
   .dshmcp-mkt-rowDesc { display: none; }
   .dshmcp-mkt-rowId { flex-basis: auto; flex: 1; }
-  .dshmcp-mkt-cards { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); }
   .dshmcp-instDesc { display: none; }
   .dshmcp-instId { flex-basis: auto; flex: 1; }
+
+  /* card grids: narrow tracks, tighter cards */
+  .dshmcp-mkt-cards { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); }
   .dshmcp-instCards { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); }
+  .dshmcp-instCard, .dshmcp-mkt-card { padding: 12px; gap: 10px; }
+  .dshmcp-mkt-cardDesc { overflow-wrap: anywhere; }
+
+  /* long unbreakable content wraps inside its box instead of pushing wide:
+     field keys (dt rides a fixed 108px grid track), schema-table cells,
+     callouts / errors / meta carrying commands, urls, env values */
+  .dshmcp-fields dt,
+  .dshmcp-paramName,
+  .dshmcp-paramType,
+  .dshmcp-paramDesc,
+  .dshmcp-callout,
+  .dshmcp-status,
+  .dshmcp-failure p,
+  .dshmcp-mkt-error,
+  .dshmcp-testMeta { overflow-wrap: anywhere; }
+  .dshmcp-testPanel pre { max-width: 100%; }
+
+  /* dialogs: thinner scrim inset, feet wrap instead of overflowing */
+  [role="presentation"]:has(> [role="dialog"].dshmcp-modal),
+  [role="presentation"]:has(> [role="dialog"].dshmcp-toolModal) { padding: 12px; }
+  [role="dialog"].dshmcp-toolModal { width: 100%; }
+  .dshmcp-modal { max-height: calc(100dvh - 24px); }
+  .dshmcp-modalInner { max-height: calc(100dvh - 24px); }
+  .dshmcp-modalFoot, .dshmcp-editorFoot { flex-wrap: wrap; }
+
+  /* expanded tool rows: shallower indent so the schema table breathes */
+  .dshmcp-detailToolBody { padding: 2px 8px 10px 12px; }
 }
 @media (max-width: 480px) {
   .dshmcp-mkt-rowSide { flex-direction: column; align-items: flex-end; gap: 4px; }

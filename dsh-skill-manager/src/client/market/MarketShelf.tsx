@@ -543,77 +543,79 @@ export function MarketShelf({
             }}
           />
         </label>
-        <div
-          className="dshm-mkt-viewseg"
-          role="group"
-          aria-label={translate("marketViewList") + " / " + translate("marketViewCards")}
-        >
+        <div className="dshm-mkt-tools">
+          <div
+            className="dshm-mkt-viewseg"
+            role="group"
+            aria-label={translate("marketViewList") + " / " + translate("marketViewCards")}
+          >
+            <button
+              type="button"
+              aria-pressed={view === "list"}
+              title={translate("marketViewList")}
+              aria-label={translate("marketViewList")}
+              onClick={() => {
+                handleViewChange("list");
+              }}
+            >
+              <IconList size={14} />
+            </button>
+            <button
+              type="button"
+              aria-pressed={view === "cards"}
+              title={translate("marketViewCards")}
+              aria-label={translate("marketViewCards")}
+              onClick={() => {
+                handleViewChange("cards");
+              }}
+            >
+              <IconGrid size={14} />
+            </button>
+          </div>
           <button
             type="button"
-            aria-pressed={view === "list"}
-            title={translate("marketViewList")}
-            aria-label={translate("marketViewList")}
+            className={`dshm-mkt-iconBtn${refreshing ? " is-spin" : ""}`}
             onClick={() => {
-              handleViewChange("list");
+              void refresh();
             }}
+            disabled={refreshing}
+            title={
+              refreshing
+                ? translate("marketRefreshing")
+                : translate("marketRefresh")
+            }
+            aria-label={translate("marketRefresh")}
           >
-            <IconList size={14} />
+            <IconRefresh size={14} />
           </button>
           <button
             type="button"
-            aria-pressed={view === "cards"}
-            title={translate("marketViewCards")}
-            aria-label={translate("marketViewCards")}
+            className={`dshm-mkt-iconBtn${showAddForm ? " is-active" : ""}`}
             onClick={() => {
-              handleViewChange("cards");
+              setShowAddForm((open) => !open);
             }}
+            aria-expanded={showAddForm}
+            aria-pressed={showAddForm}
+            title={translate("marketAddSource")}
+            aria-label={translate("marketAddSource")}
           >
-            <IconGrid size={14} />
+            <IconPlus size={14} />
+          </button>
+          <button
+            type="button"
+            className={`dshm-mkt-iconBtn${manageOpen ? " is-active" : ""}`}
+            onClick={() => {
+              setManageOpen((open) => !open);
+              setEditSource(undefined);
+            }}
+            aria-expanded={manageOpen}
+            aria-pressed={manageOpen}
+            title={translate("marketManageSources")}
+            aria-label={translate("marketManageSources")}
+          >
+            <IconSliders size={14} />
           </button>
         </div>
-        <button
-          type="button"
-          className={`dshm-mkt-iconBtn${refreshing ? " is-spin" : ""}`}
-          onClick={() => {
-            void refresh();
-          }}
-          disabled={refreshing}
-          title={
-            refreshing
-              ? translate("marketRefreshing")
-              : translate("marketRefresh")
-          }
-          aria-label={translate("marketRefresh")}
-        >
-          <IconRefresh size={14} />
-        </button>
-        <button
-          type="button"
-          className={`dshm-mkt-iconBtn${showAddForm ? " is-active" : ""}`}
-          onClick={() => {
-            setShowAddForm((open) => !open);
-          }}
-          aria-expanded={showAddForm}
-          aria-pressed={showAddForm}
-          title={translate("marketAddSource")}
-          aria-label={translate("marketAddSource")}
-        >
-          <IconPlus size={14} />
-        </button>
-        <button
-          type="button"
-          className={`dshm-mkt-iconBtn${manageOpen ? " is-active" : ""}`}
-          onClick={() => {
-            setManageOpen((open) => !open);
-            setEditSource(undefined);
-          }}
-          aria-expanded={manageOpen}
-          aria-pressed={manageOpen}
-          title={translate("marketManageSources")}
-          aria-label={translate("marketManageSources")}
-        >
-          <IconSliders size={14} />
-        </button>
       </div>
       {showAddForm ? (
         <AddSourceForm

@@ -232,7 +232,7 @@ const CSS = `
 .dshm-detailCard { border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border-radius: var(--dsh-layout-radius-user-lg, 12px); padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
 .dshm-detailCard > h4 { font-size: 11px; font-weight: 500; letter-spacing: 0.05em; color: var(--dsw-alias-label-tertiary, #8a8a8e); margin: 0; line-height: 16px; text-transform: uppercase; }
 .dshm-desc { font-size: 12.5px; line-height: 1.55; margin: 0; overflow-wrap: anywhere; color: var(--dsw-alias-label-primary, #f4f4f5); }
-.dshm-callout { border: 1px solid color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 18%, transparent); border-left: 3px solid var(--dsw-alias-state-business-primary, #6ea8fe); background: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 7%, transparent); border-radius: var(--dsh-layout-radius-user, 8px); padding: 9px 12px; font-size: 12.5px; line-height: 1.55; margin: 0; color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dshm-callout { border: 1px solid color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 18%, transparent); border-left: 3px solid var(--dsw-alias-state-business-primary, #6ea8fe); background: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 7%, transparent); border-radius: var(--dsh-layout-radius-user, 8px); padding: 9px 12px; font-size: 12.5px; line-height: 1.55; margin: 0; overflow-wrap: anywhere; color: var(--dsw-alias-label-primary, #f4f4f5); }
 .dshm-calloutWarn { border-color: color-mix(in srgb, var(--dsw-alias-state-warning-primary, #d97706) 22%, transparent); border-left-color: var(--dsw-alias-state-warning-primary, #d97706); background: color-mix(in srgb, var(--dsw-alias-state-warning-primary, #d97706) 8%, transparent); }
 .dshm-calloutError { border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 22%, transparent); border-left-color: var(--dsw-alias-state-error-primary, #ef5350); background: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 8%, transparent); }
 .dshm-details { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 7px 12px; margin: 0; }
@@ -420,6 +420,12 @@ const CSS = `
 .dshm-mkt-viewseg button:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #6ea8fe); outline-offset: -2px; }
 .dshm-mkt-viewseg button[aria-pressed=true] { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
 .dshm-mkt-viewseg svg { width: 14px; height: 14px; }
+/* toolbar tools cluster (view toggle + refresh + add-source + manage):
+   transparent on desktop (display: contents) so the toolbar's five
+   controls keep their one-row flex layout untouched; the ≤767px tier
+   (responsive section) turns it into the stacked toolbar's trailing
+   right-aligned actions row */
+.dshm-mkt-tools { display: contents; }
 
 /* add-source: compact inline disclosure row on a proper grouped surface */
 .dshm-mkt-addrow { display: flex; gap: 8px; flex-wrap: wrap; padding: 8px; background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
@@ -618,15 +624,60 @@ html[data-dsh-layout-scrollbar='hidden'] .dshm-previewBody::-webkit-scrollbar,
 html[data-dsh-layout-scrollbar='hidden'] .dshm-tableWrap::-webkit-scrollbar { display: none; }
 
 /* ── responsive ─────────────────────────────────────────────────────────── */
+/* Phone tier (≤767px, 375px baseline): nothing may push the page wider
+   than the viewport. Card grids clamp their minimum track to the
+   container, the market toolbar stacks (source seg → search → one tools
+   row), the installed toolbar wraps, modals go full-bleed minus a 12px
+   rim with the detail tree stacked over the preview at a capped height,
+   and long code / tables / URLs / paths ride horizontal scrollers or
+   break instead of pushing the layout wide. Desktop rules above stay
+   untouched — every fix below is scoped to this tier. */
 @media (max-width: 767px) {
+  /* market toolbar: stack, and the trailing controls share one row */
   .dshm-mkt-toolbar { align-items: stretch; flex-direction: column; }
   .dshm-mkt-seg { max-width: none; width: 100%; }
   .dshm-mkt-search { min-width: 0; }
-  .dshm-mkt-toolbar .dshm-mkt-iconBtn { align-self: flex-end; }
-  .dshm-mkt-toolbar .dshm-mkt-viewseg { align-self: flex-end; }
-  .dshm-mkt-cards { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
-  .dshm-instCards { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .dshm-mkt-tools { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+  /* installed toolbar: let the dense search shrink instead of forcing
+     140px, and wrap the trailing controls when they no longer fit */
+  .dshm-instToolbar { flex-wrap: wrap; }
+  .dshm-instToolbar .dshm-search { min-width: 0; }
+  /* segmented controls (mode tabs, import mode, preview switch) scroll
+     inside their track instead of overflowing it */
+  .dshm-seg { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .dshm-seg::-webkit-scrollbar { display: none; }
+  .dshm-wsHead { flex-wrap: wrap; }
+  /* card grids: the minimum track can never exceed the container */
+  .dshm-mkt-cards { grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr)); }
+  .dshm-instCards { grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr)); }
   .dshm-mkt-card, .dshm-instCard { padding: 14px; gap: 10px; }
+  /* row sides wrap their 详情 / badge / action cluster on narrow rails */
+  .dshm-mkt-rowSide { flex-wrap: wrap; justify-content: flex-end; }
+  .dshm-instRowSide { flex-wrap: wrap; justify-content: flex-end; }
+  /* modals: full-bleed minus a 12px rim; footer buttons wrap */
+  .dshm-modalOverlay { padding: 12px; }
+  .dshm-modal { width: 100%; }
+  .dshm-modal.dshm-mktConfirm { width: 100%; }
+  .dshm-mktDetailFoot { flex-wrap: wrap; justify-content: flex-end; }
+  /* detail dialog: tree stacks over the preview, capped + scrollable */
+  .dshm-detailBody { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+  .dshm-detailTree { border-right: 0; border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
+  .dshm-detailTree .dshm-treeScroll { flex: none; max-height: 180px; }
+  /* hero facts strip: provider · path line may use the full width */
+  .dshm-heroMeta { max-width: 100%; }
+  /* the metadata disclosure (whenToUse + JSON tree) scrolls sideways
+     rather than widening the dialog */
+  .dshm-heroDetailsBody { min-width: 0; overflow-x: auto; }
+  /* long inline content: break or scroll locally, never push the page */
+  .dshm-previewPath { max-width: 100%; }
+  .dshm-md :is(table, pre) { display: block; max-width: 100%; overflow-x: auto; }
+  .dshm-mkt-error { overflow-wrap: anywhere; }
+  .dshm-failure { flex-wrap: wrap; }
+  .dshm-failure p { min-width: 0; overflow-wrap: anywhere; }
+  .dshm-resultHead { flex-wrap: wrap; }
+  .dshm-resultHead strong { overflow-wrap: anywhere; }
+  .dshm-resultMeta { min-width: 0; }
+  .dshm-resultMeta code { overflow-wrap: anywhere; }
 }
 @media (max-width: 640px) {
   .dshm-mkt-rowDesc { display: none; }
@@ -635,9 +686,6 @@ html[data-dsh-layout-scrollbar='hidden'] .dshm-tableWrap::-webkit-scrollbar { di
   .dshm-instRowDesc { display: none; }
   .dshm-instRowId { flex: 1 1 auto; max-width: none; }
   .dshm-instCards { grid-template-columns: 1fr; }
-  .dshm-detailBody { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
-  .dshm-detailTree { border-right: 0; border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
-  .dshm-detailTree .dshm-treeScroll { flex: none; max-height: 180px; }
 }
 
 /* ── dsh-layout material bridge ──────────────────────────────────────────
