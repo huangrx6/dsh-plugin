@@ -54,7 +54,7 @@ export function findNativeSettingsTrigger(
  if (sidebar !== null) {
   buttons = Array.from(
    sidebar.querySelectorAll<HTMLButtonElement>("button"),
-  ).filter(isNotOwnRailButton);
+  ).filter(isNotOwnRailButton).filter(isNotInsideDialog);
  }
  let hit = pickSettingsButton(buttons);
  // Mobile layouts can host the drawer / trigger outside the sidebar
@@ -65,7 +65,7 @@ export function findNativeSettingsTrigger(
   hit = pickSettingsButton(
    Array.from(target.querySelectorAll<HTMLButtonElement>("button")).filter(
     isNotOwnRailButton,
-   ),
+   ).filter(isNotInsideDialog),
   );
  }
  return hit;
@@ -75,6 +75,16 @@ export function findNativeSettingsTrigger(
     the replacement logic would then target itself. */
 function isNotOwnRailButton(button: HTMLButtonElement): boolean {
  return button.closest(".dsh-launcher-rail") === null;
+}
+
+/** Dialog content that happens to render inside the sidebar column is
+    NOT the rail trigger. The native settings dialog (role="dialog",
+    mounted in the column in some layouts) carries a "通用设置"/"设置"
+    nav cell that would otherwise be mistaken for the rail's settings
+    button — which is exactly how the launcher rail button ended up
+    injected into the settings dialog's own nav and hid "通用设置". */
+function isNotInsideDialog(button: HTMLButtonElement): boolean {
+ return button.closest('[role="dialog"]') === null;
 }
 
 /** Prefer the bottom-most button that looks like a settings trigger
