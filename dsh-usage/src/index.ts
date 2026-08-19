@@ -35,6 +35,17 @@ function configPath(): string {
   return join(home, 'dsh-usage.json')
 }
 
+/** Resolve a stored credential: `env:NAME` reads the local environment
+    variable at query time (never persisted); anything else is the literal
+    value the user typed. */
+function resolveSecret(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined
+  const trimmed = value.trim()
+  if (!trimmed.startsWith('env:')) return trimmed
+  const name = trimmed.slice('env:'.length).trim()
+  return process.env[name]
+}
+
 function ok(value: unknown): RpcResult<unknown> {
   return { ok: true, value }
 }
@@ -95,7 +106,7 @@ function bar(partial: {
 
 /** GLM Coding Plan quota: 5h + weekly bars. */
 async function queryGlm(entry: UsageEntry): Promise<UsageQueryResult> {
-  const token = entry.apiKey?.trim()
+  const token = resolveSecret(entry.apiKey)?.trim()
   const endpoint =
     entry.endpoint?.trim() ||
     (entry.region === 'zai'
@@ -143,7 +154,7 @@ async function queryGlm(entry: UsageEntry): Promise<UsageQueryResult> {
 
 /** MiniMax Token Plan usage: one unified usage bar from a configurable endpoint. */
 async function queryMinimax(entry: UsageEntry): Promise<UsageQueryResult> {
-  const key = entry.apiKey?.trim()
+  const key = resolveSecret(entry.apiKey)?.trim()
   const endpoint = entry.endpoint?.trim() ?? ''
   if (key === undefined || key === '') {
     return { id: entry.id, label: entry.label, ok: false, message: '未配置 API key' }
@@ -188,7 +199,7 @@ async function runQuery(entries: readonly UsageEntry[]): Promise<UsageQueryResul
       else if (entry.provider === 'minimax') outcome = await queryMinimax(entry)
       else {
         outcome = { id: entry.id, label: entry.label, ok: true, bars: [] }
-        const manual = entry.apiKey === undefined ? undefined : Number(entry.apiKey.trim())
+        const manual = resolveSecret(entry.apiKey) === undefined ? undefined : Number(resolveSecret(entry.apiKey)!.trim())
         if (manual !== undefined && Number.isFinite(manual)) outcome.manualPercent = manual
       }
     } catch (error) {
