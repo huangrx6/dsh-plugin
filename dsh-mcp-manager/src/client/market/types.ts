@@ -100,16 +100,11 @@ export type MarketSourceState =
  * starter that the package owner can swap out by editing this file and
  * bumping the package version.
  */
-export const DEFAULT_MARKET_SOURCES: readonly MarketSource[] = [
-  {
-    id: "dsh-launcher-builtin",
-    name: "DSH 内置",
-    url: "https://raw.githubusercontent.com/huangrx6/dsh-plugin/main/dsh-launcher/market/builtin.json",
-    builtIn: true,
-    order: 0,
-    tag: "official",
-  },
-];
+export const DEFAULT_MARKET_SOURCES: readonly MarketSource[] = [];
+
+/** The built-in "DSH 内置" feed was retired per user request — the market
+    ships empty and users add their own sources. loadMarketSources drops
+    stored copies of retired built-ins so they disappear on upgrade. */
 
 /**
  * Parse and validate a manifest response. Defensive: the manifest is user-

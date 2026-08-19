@@ -69,7 +69,16 @@ export function loadMarketSources(storage: Storage): MarketSource[] {
   const user = readRaw(storage);
   const userIds = new Set(user.map((source) => source.id));
   // The built-in sources always appear; if the user has stored a copy
-  // under the same id, the user's updated url / name wins.
+  // under the same id, the user's updated url / name wins. Stored records
+  // flagged builtIn that are no longer in the default list are retired
+  // built-ins (the removed "DSH 内置" feed) — they drop out here so the
+  // shelf stops rendering them once the package retires them.
+  const retiredBuiltIn = new Set(
+    user
+      .filter((source) => source.builtIn)
+      .map((source) => source.id)
+      .filter((id) => !DEFAULT_MARKET_SOURCES.some((builtIn) => builtIn.id === id)),
+  );
   const merged: MarketSource[] = [];
   for (const builtIn of DEFAULT_MARKET_SOURCES) {
     const override = user.find((source) => source.id === builtIn.id);
@@ -77,6 +86,7 @@ export function loadMarketSources(storage: Storage): MarketSource[] {
   }
   for (const source of user) {
     if (!userIds.has(source.id)) continue;
+    if (retiredBuiltIn.has(source.id)) continue;
     if (merged.some((existing) => existing.id === source.id)) continue;
     merged.push(source);
   }
@@ -113,6 +123,26 @@ export function removeMarketSource(
   id: string,
 ): MarketSource[] {
   const next = sources.filter((source) => source.id !== id || source.builtIn);
+  saveMarketSources(storage, next);
+  return next;
+}
+
+/**
+ * Rename / re-point an existing source. Keeps id, builtIn flag, order and
+ * tag; the stored copy wins over the built-in defaults on the next load,
+ * so editing works for every source (including overriding a built-in URL).
+ */
+export function updateMarketSource(
+  storage: Storage,
+  sources: readonly MarketSource[],
+  id: string,
+  patch: { name: string; url: string },
+): MarketSource[] {
+  const next = sources.map((source) =>
+    source.id === id
+      ? { ...source, name: patch.name, url: patch.url }
+      : source,
+  );
   saveMarketSources(storage, next);
   return next;
 }

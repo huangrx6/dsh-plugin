@@ -106,6 +106,22 @@ export const zhCN = {
   emptyRequired: "请填写必填项",
   notRemovable: "该条目来自其他补丁层或外部来源，只能停用，不能在这里删除。",
   marketTab: "MCP 市场",
+  modeInstalled: "已安装",
+  modeMarket: "市场",
+  marketManageSources: "管理数据源",
+  marketEditSource: "编辑数据源",
+  marketDeleteSource: "删除数据源",
+  marketDeleteSourceConfirm: "确定删除该市场数据源？",
+  marketSourceBuiltinTag: "内置",
+  marketSourceBuiltinHint: "内置数据源不可删除。",
+  marketSourceSave: "保存",
+  marketSourceCancel: "取消",
+  marketViewList: "列表视图",
+  marketViewCard: "卡片视图",
+  marketUpdatable: "可更新",
+  marketUpdate: "更新",
+  marketUpdating: "更新中…",
+  marketUpdateHint: "市场版本 {market}，已安装 {installed}",
 } as const;
 
 export const enUS: Record<keyof typeof zhCN, string> = {
@@ -218,6 +234,22 @@ export const enUS: Record<keyof typeof zhCN, string> = {
   notRemovable:
     "This entry comes from another patch layer or external source; it can only be disabled here.",
   marketTab: "MCP marketplace",
+  modeInstalled: "Installed",
+  modeMarket: "Market",
+  marketManageSources: "Manage sources",
+  marketEditSource: "Edit source",
+  marketDeleteSource: "Delete source",
+  marketDeleteSourceConfirm: "Remove this market source?",
+  marketSourceBuiltinTag: "Built-in",
+  marketSourceBuiltinHint: "The built-in source cannot be removed.",
+  marketSourceSave: "Save",
+  marketSourceCancel: "Cancel",
+  marketViewList: "List view",
+  marketViewCard: "Card view",
+  marketUpdatable: "Updatable",
+  marketUpdate: "Update",
+  marketUpdating: "Updating…",
+  marketUpdateHint: "Market {market}, installed {installed}",
 };
 
 export type McpManagerLocaleKey = keyof typeof zhCN;

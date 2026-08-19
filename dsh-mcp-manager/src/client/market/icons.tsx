@@ -114,3 +114,52 @@ export function IconRefresh({ size = 14, className, title }: IconProps): ReactEl
     </svg>
   )
 }
+
+export function IconList({ size = 14, className, title }: IconProps): ReactElement {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden={title === undefined ? "true" : undefined} className={className} width={size} height={size} role={title === undefined ? undefined : "img"}>
+      {title === undefined ? null : <title>{title}</title>}
+      {svgInner("M5.5 4h8M5.5 8h8M5.5 12h8")}
+      {svgInner("M2.5 4h.01M2.5 8h.01M2.5 12h.01")}
+    </svg>
+  )
+}
+
+export function IconGrid({ size = 14, className, title }: IconProps): ReactElement {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden={title === undefined ? "true" : undefined} className={className} width={size} height={size} role={title === undefined ? undefined : "img"}>
+      {title === undefined ? null : <title>{title}</title>}
+      {svgInner("M2.5 2.5h4.6v4.6H2.5zM8.9 2.5h4.6v4.6H8.9zM2.5 8.9h4.6v4.6H2.5zM8.9 8.9h4.6v4.6H8.9z")}
+    </svg>
+  )
+}
+
+export function IconSliders({ size = 14, className, title }: IconProps): ReactElement {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden={title === undefined ? "true" : undefined} className={className} width={size} height={size} role={title === undefined ? undefined : "img"}>
+      {title === undefined ? null : <title>{title}</title>}
+      {svgInner("M3.5 2.5v11M8 2.5v11M12.5 2.5v11")}
+      {svgInner("M1.8 6.2h3.4M6.3 9.8h3.4M10.8 5h3.4")}
+    </svg>
+  )
+}
+
+export function IconPencil({ size = 14, className, title }: IconProps): ReactElement {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden={title === undefined ? "true" : undefined} className={className} width={size} height={size} role={title === undefined ? undefined : "img"}>
+      {title === undefined ? null : <title>{title}</title>}
+      {svgInner("M3 13l.6-2.4 7.1-7.1 1.8 1.8-7.1 7.1L3 13Z")}
+      {svgInner("M10 4.2l1.8 1.8")}
+    </svg>
+  )
+}
+
+export function IconTrash({ size = 14, className, title }: IconProps): ReactElement {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden={title === undefined ? "true" : undefined} className={className} width={size} height={size} role={title === undefined ? undefined : "img"}>
+      {title === undefined ? null : <title>{title}</title>}
+      {svgInner("M2.5 4.5h11M6.3 2.5h3.4M4 4.5l.6 9h6.8l.6-9")}
+      {svgInner("M6.5 7.3v3.4M9.5 7.3v3.4")}
+    </svg>
+  )
+}

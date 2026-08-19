@@ -1,15 +1,17 @@
 /**
- * MCP marketplace section. Self-contained UI for the dsh-mcp-manager
- * plugin (vendored from dsh-launcher's market module — the platform's
- * ModuleLoader forbids cross-plugin value imports, so the source-of-truth
- * lives here).
+ * MCP workspace section (mounted by the dsh-launcher workspace through the
+ * `dsh-launcher.workspace.section` slot, id 'mcp').
  *
- * The launcher workspace reads us through the
- * `dsh-launcher.workspace.section` slot key; mounting happens via the
- * slot registration in client/index.ts. Each marketplace item's `payload`
- * carries a McpServerConfig (the same shape the existing McpEditor
- * consumes). Install serializes the config back via the existing `save`
- * endpoint; remove uses the existing `delete` endpoint.
+ * Dual-mode container: a segmented control switches between
+ *   - 已安装 (Installed): the existing McpManagerSection master–detail
+ *     (server list + config / tools detail)
+ *   - 市场 (Market): the upgraded MarketShelf (sources, list / card
+ *     views, install / update / remove)
+ * The choice persists in localStorage and survives reloads. Both modes
+ * share the same McpManagerApi; installs from the market are plain `save`
+ * calls that overwrite the server config (which is also what "update"
+ * does), and a successful install / update / remove clears the cached
+ * connection probe so the version badge and tool cache re-resolve.
  */
 import { useCallback, useEffect, useState } from "react"
 import { MarketShelf } from "./market/MarketShelf.tsx"
@@ -17,6 +19,13 @@ import type { MarketItem, MarketSource } from "./market/types.ts"
 import type { McpManagerApi } from "./api.ts"
 import type { McpServerConfig, McpServerView } from "../contracts.ts"
 import type { McpManagerLocaleKey } from "./locales.ts"
+import { McpManagerSection } from "./McpManagerSection.tsx"
+import {
+  loadSectionMode,
+  saveSectionMode,
+  type SectionMode,
+} from "./preferences.ts"
+import { clearCachedTest, loadCachedTest } from "./tool-cache.ts"
 
 export interface McpMarketSectionProps {
   readonly api: McpManagerApi
@@ -29,6 +38,48 @@ export function McpMarketSection({
   launcherT,
   t,
 }: McpMarketSectionProps): JSX.Element {
+  const [mode, setMode] = useState<SectionMode>(() =>
+    loadSectionMode(window.localStorage),
+  )
+
+  const pickMode = useCallback((next: SectionMode) => {
+    setMode(next)
+    saveSectionMode(window.localStorage, next)
+  }, [])
+
+  return (
+    <div className="dshmcp-section">
+      <div className="dshmcp-seg dshmcp-modeSeg" role="group" aria-label={t("marketTab")}>
+        <button
+          type="button"
+          aria-pressed={mode === "installed"}
+          onClick={() => { pickMode("installed") }}
+        >
+          {t("modeInstalled")}
+        </button>
+        <button
+          type="button"
+          aria-pressed={mode === "market"}
+          onClick={() => { pickMode("market") }}
+        >
+          {t("modeMarket")}
+        </button>
+      </div>
+      {mode === "installed"
+        ? <McpManagerSection t={t} api={api} />
+        : <MarketPane api={api} launcherT={launcherT} t={t} />}
+    </div>
+  )
+}
+
+interface MarketPaneProps {
+  readonly api: McpManagerApi
+  readonly launcherT: (key: string, params?: Record<string, unknown>) => string
+  readonly t: (key: McpManagerLocaleKey) => string
+}
+
+/** The 市场 half: market shelf wired to the real server list. */
+function MarketPane({ api, launcherT, t }: MarketPaneProps): JSX.Element {
   const [servers, setServers] = useState<readonly McpServerView[]>([])
   const [version, setVersion] = useState(0)
 
@@ -46,6 +97,11 @@ export function McpMarketSection({
     return servers.some((server) => server.serverName === item.id)
   }, [servers])
 
+  /** Installed version from the freshest cached probe, when we have one. */
+  const installedVersion = useCallback((item: MarketItem) => {
+    return loadCachedTest(window.localStorage, item.id)?.serverVersion
+  }, [])
+
   const handleInstall = useCallback(async (item: MarketItem, _source: MarketSource) => {
     const payload = item.payload ?? {}
     const config = parsePayloadConfig(payload, item.id)
@@ -53,6 +109,9 @@ export function McpMarketSection({
       throw new Error(`${t("tab")}: missing config`)
     }
     await api.save({ config })
+    // drop the stale probe (tools + serverVersion) so the update badge
+    // clears and the installed pane re-probes the fresh config
+    clearCachedTest(window.localStorage, config.serverName)
     setVersion((value) => value + 1)
   }, [api, t])
 
@@ -65,6 +124,7 @@ export function McpMarketSection({
       throw new Error(t("notRemovable"))
     }
     await api.deleteServer(server.entryId)
+    clearCachedTest(window.localStorage, server.serverName)
     setVersion((value) => value + 1)
   }, [api, servers, t])
 
@@ -74,9 +134,11 @@ export function McpMarketSection({
       defaultSources={[]}
       kinds={["mcp"]}
       translate={launcherT}
+      t={t}
       onInstall={handleInstall}
       onRemove={handleRemove}
       isInstalled={isInstalled}
+      installedVersion={installedVersion}
     />
   )
 }
