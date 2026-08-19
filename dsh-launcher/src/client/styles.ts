@@ -535,7 +535,7 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
      segmented row. More than five sections fall back to scroll. */
   .dsh-launcher-menu-scroll {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
     width: 100%;
     padding: 10px 10px 8px;
@@ -549,6 +549,7 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
   .dsh-launcher-canvas-menu-item {
     min-width: 0;
     justify-content: center;
+    margin: 6px 0;
     padding: 9px 8px;
     border-radius: 999px;
     background: transparent;
