@@ -10,7 +10,10 @@
  */
 import { DEFAULT_MARKET_SOURCES, type MarketSource } from "./types.ts";
 
-const STORAGE_KEY = "dsh-launcher.market.sources.v1";
+// Own storage slot — skill and MCP markets keep SEPARATE source
+// lists (they shared the launcher-era key once, which leaked skill
+// sources into the MCP market and back).
+const STORAGE_KEY = "dsh-mcp-manager.market.sources.v1";
 
 /** Storage slot the launcher owns. Public so other plugins can read it. */
 export function storageKey(): string {

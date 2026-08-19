@@ -5,6 +5,7 @@ import {
   removeMarketSource,
   updateMarketSource,
 } from '../src/client/market/data-source-store.ts'
+import { storageKey } from '../src/client/market/data-source-store.ts'
 import { DEFAULT_MARKET_SOURCES } from '../src/client/market/types.ts'
 
 class MemoryStorage implements Storage {
@@ -29,7 +30,7 @@ describe('market data source store', () => {
   it('drops stored copies of retired built-in sources on load', () => {
     const storage = new MemoryStorage()
     storage.setItem(
-      'dsh-launcher.market.sources.v1',
+      storageKey(),
       JSON.stringify([
         { id: 'dsh-launcher-builtin', name: 'DSH 内置', url: 'https://example.com/builtin.json', builtIn: true, order: 0 },
         { id: 'custom-1', name: '社区市场', url: 'https://example.com/market.json', builtIn: false, order: 1 },
