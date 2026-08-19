@@ -248,7 +248,9 @@ export const LAUNCHER_STYLES = `
    the sidebar's secondary action, like the reference layout. */
 .dsh-launcher-canvas-menu-item.is-exit {
   flex: none;
-  margin: 0;
+  /* Full-bleed inside the scroll column (negative margins cancel the
+     wrapper padding) right after the last group — no stretched void. */
+  margin: 10px -8px -12px;
   border-radius: 0;
   border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent);
   padding: 12px 16px;
@@ -509,10 +511,8 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
   .dsh-launcher-menu-scroll::-webkit-scrollbar { display: none; }
   /* Exit joins the tab row as the last pill instead of a bottom bar. */
   .dsh-launcher-canvas-menu-item.is-exit {
-    flex: 0 0 auto;
-    margin: 8px;
+    margin: 0 0 0 4px;
     border-top: 0;
-    border-radius: 999px;
     padding: 8px 14px;
     white-space: nowrap;
     animation-delay: 140ms;
