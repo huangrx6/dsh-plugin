@@ -117,7 +117,7 @@ const CSS = `
 
 /* the grouped row list (same quiet container grammar as the market list) —
    scrolls in place past ~70vh so long catalogs ride the thin scrollbar */
-.dshm-instList { margin: 0; padding: 6px; list-style: none; max-height: min(560px, 70vh); overflow-y: auto; overscroll-behavior: contain; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
+.dshm-instList { margin: 0; padding: 6px; list-style: none; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
 .dshm-instRow { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 8px; border-radius: calc(var(--dsh-layout-radius-user-lg, 12px) - 6px); transition: background-color 120ms var(--ds-ease-in-out, ease); }
 .dshm-instRow:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
 .dshm-instRow + .dshm-instRow { border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
@@ -141,7 +141,7 @@ const CSS = `
    ambient shadow; hover only brightens the border + deepens the shadow.
    Generous footprint: 18px padding, 12px section gaps, 46px tile,
    ~160px minimum height. */
-.dshm-instCards { margin: 0; padding: 6px; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; max-height: min(560px, 70vh); overflow-y: auto; overscroll-behavior: contain; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
+.dshm-instCards { margin: 0; padding: 6px; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
 .dshm-instCard { min-width: 0; min-height: 160px; display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: calc(var(--dsh-layout-radius-user-lg, 12px) - 5px); background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 2%, transparent)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent), 0 4px 16px rgba(0, 0, 0, 0.18); transition: border-color 120ms var(--ds-ease-in-out, ease), box-shadow 120ms var(--ds-ease-in-out, ease); }
 .dshm-instCard:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent), 0 8px 24px rgba(0, 0, 0, 0.26); }
 .dshm-instCardHead { display: flex; align-items: center; gap: 12px; min-width: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; padding: 0; }
@@ -395,7 +395,7 @@ const CSS = `
 .dshm-mkt-iconBtn[disabled] { opacity: .55; cursor: default; }
 .dshm-mkt-iconBtn.is-active { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); }
 .dshm-mkt-iconBtn svg { width: 14px; height: 14px; }
-.dshm-mkt-iconBtn.is-spin svg { animation: dshm-mkt-spin 1.2s linear infinite; }
+.dshm-mkt-iconBtn.is-spin svg { animation: dshm-mkt-spin 1.2s linear infinite; transform-box: fill-box; transform-origin: center; }
 
 /* compact buttons (26px, mirroring dsh-mcp-manager's mkt-install /
    mkt-remove): secondary = transparent + 10% border, hover pours 5%;
@@ -438,7 +438,7 @@ const CSS = `
 .dshm-mkt-addhint { flex: 1 1 100%; min-width: 0; padding: 0 2px; font-size: 11px; line-height: 16px; color: var(--dsw-alias-label-tertiary, #8a8a8e); }
 
 /* the grouped row list (48px rows, MCP rhythm) */
-.dshm-mkt-list { margin: 0; padding: 6px; list-style: none; max-height: min(560px, 70vh); overflow-y: auto; overscroll-behavior: contain; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
+.dshm-mkt-list { margin: 0; padding: 6px; list-style: none; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
 .dshm-mkt-row { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 5px 6px; border-radius: var(--dsh-layout-radius-user, 8px); transition: background-color 120ms var(--ds-ease-in-out, ease); }
 .dshm-mkt-row:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
 .dshm-mkt-row + .dshm-mkt-row { border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
@@ -509,7 +509,7 @@ button.dshm-mkt-rowMain:focus-visible { outline: 2px solid var(--dsw-alias-state
    the border and deepens the shadow — no lift, no background shift.
    Generous footprint: 18px padding, 12px section gaps, 46px tile,
    ~160px minimum height. */
-.dshm-mkt-cards { margin: 0; padding: 6px; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; max-height: min(560px, 70vh); overflow-y: auto; overscroll-behavior: contain; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
+.dshm-mkt-cards { margin: 0; padding: 6px; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
 .dshm-mkt-card { min-width: 0; min-height: 160px; display: flex; flex-direction: column; gap: 13px; padding: 18px; border-radius: var(--dsh-layout-radius-user, 8px); background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 2%, transparent)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent), 0 4px 16px rgba(0, 0, 0, 0.18); transition: border-color 120ms var(--ds-ease-in-out, ease), box-shadow 120ms var(--ds-ease-in-out, ease); }
 .dshm-mkt-card:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent), 0 8px 24px rgba(0, 0, 0, 0.26); }
 .dshm-mkt-cardHead { display: flex; align-items: center; gap: 12px; min-width: 0; }

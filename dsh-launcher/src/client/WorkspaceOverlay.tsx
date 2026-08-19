@@ -289,6 +289,18 @@ export function WorkspaceView({
       aria-label={t("workspace")}
       onAnimationEnd={handleAnimationEnd}
     >
+      {/* Always-visible corner X: the rail-bottom exit alone proved too
+          hard to find; a top-right close is where every desktop app
+          puts it. Absolute over the grid, above both panes. */}
+      <button
+        type="button"
+        className="dsh-launcher-canvas-x"
+        onClick={beginClose}
+        aria-label={t("workspaceClose")}
+        title={t("workspaceClose")}
+      >
+        <IconClose size={14} />
+      </button>
       <nav className="dsh-launcher-canvas-menu" aria-label={t("menuSection")}>
         {/* Groups scroll; the exit stays pinned to the rail's bottom like
             every modern sidebar's secondary action. */}

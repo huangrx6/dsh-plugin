@@ -548,7 +548,7 @@ html[data-dsh-layout-scrollbar='hidden'] .dshmcp-textarea::-webkit-scrollbar { d
 .dshmcp-mkt-iconbtn[disabled] { opacity: .5; cursor: default; }
 .dshmcp-mkt-iconbtn.is-active { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); }
 .dshmcp-mkt-iconbtn svg { width: 14px; height: 14px; }
-.dshmcp-mkt-iconbtn.is-spin svg { animation: dshmcp-mkt-spin 1.2s linear infinite; }
+.dshmcp-mkt-iconbtn.is-spin svg { animation: dshmcp-mkt-spin 1.2s linear infinite; transform-box: fill-box; transform-origin: center; }
 @media (prefers-reduced-motion: reduce) { .dshmcp-mkt-iconbtn.is-spin svg { animation: none !important; } }
 
 /* add-source: compact inline disclosure row on a proper grouped surface */

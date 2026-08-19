@@ -227,6 +227,35 @@ export const LAUNCHER_STYLES = `
   pointer-events: none;
 }
 
+/* Top-right corner close: absolute over the grid (both panes), a quiet
+   round X that's always reachable on every viewport. */
+.dsh-launcher-canvas-x {
+  position: absolute;
+  z-index: 20;
+  top: 12px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
+  border-radius: 50%;
+  background: var(--dsw-alias-bg-layer-1, #16161a);
+  color: var(--dsw-alias-label-secondary, #b3b3b8);
+  cursor: pointer;
+  transition: background 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease);
+  animation: dsh-launcher-topbar-in 260ms var(--dsh-launcher-ease, ease) 60ms backwards;
+}
+.dsh-launcher-canvas-x:hover {
+  background: var(--dsw-alias-interactive-bg-hover, rgba(255, 255, 255, 0.06));
+  color: var(--dsw-alias-label-primary, #f4f4f5);
+}
+.dsh-launcher-canvas-x:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 40%, transparent);
+  outline-offset: 1px;
+}
 .dsh-launcher-canvas-menu {
   grid-area: menu;
   display: flex;
@@ -397,6 +426,7 @@ export const LAUNCHER_STYLES = `
 
 @keyframes dsh-launcher-canvas-in { from { opacity: 0; transform: scale(1.02) } to { opacity: 1; transform: scale(1) } }
 @keyframes dsh-launcher-canvas-out { to { opacity: 0; transform: scale(0.985) } }
+@keyframes dsh-launcher-topbar-in { from { opacity: 0; transform: translateY(-8px) } to { opacity: 1; transform: translateY(0) } }
 @keyframes dsh-launcher-menu-in { from { opacity: 0; transform: translateX(-12px) } to { opacity: 1; transform: translateX(0) } }
 @keyframes dsh-launcher-item-in { from { opacity: 0; transform: translateX(-8px) } to { opacity: 1; transform: translateX(0) } }
 @keyframes dsh-launcher-tab-item-in { from { opacity: 0; transform: translateY(-8px) } to { opacity: 1; transform: translateY(0) } }
@@ -463,6 +493,7 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
 @media (prefers-reduced-motion: reduce) {
   .dsh-launcher-canvas,
   .dsh-launcher-canvas.is-closing,
+  .dsh-launcher-canvas-x,
   .dsh-launcher-canvas-menu,
   .dsh-launcher-canvas-menu-label,
   .dsh-launcher-canvas-menu-item,

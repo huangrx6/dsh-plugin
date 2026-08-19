@@ -871,6 +871,11 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     place-items: center;
     cursor: pointer;
   }
+  /* Hidden while the drawer is open — closing moves to the drawer's own
+     X (and the mask). Previously only the comment claimed this. */
+  html[data-dsh-layout-mobile-sidebar-open] .dsh-layout-mobile-sidebar-trigger {
+    display: none;
+  }
   /* Enlarged invisible tap target for the open handle. */
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger::before {
     content: '';
