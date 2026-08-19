@@ -18,6 +18,7 @@ import { BackgroundRuntime } from "./background.ts";
 import { MobileSidebarRuntime } from "./mobile-sidebar.ts";
 import { SettingsTopbarRuntime } from "./settings-topbar.ts";
 import { ShellRuntime } from "./shell.ts";
+import { ComposerFocusGuard } from "./composer-focus.ts";
 import { DshLayoutClient } from "./persistence.ts";
 
 declare module "@deepseek-ai/dsh-client-ui-slots" {
@@ -56,6 +57,7 @@ export function apply(ctx: ClientContext): void {
   const shell = new ShellRuntime(store, document, sync);
   const mobileSidebar = new MobileSidebarRuntime(store, document, sync);
   const settingsTopbar = new SettingsTopbarRuntime(document, sync);
+  const composerFocus = new ComposerFocusGuard(document);
 
   ctx.effect(
     () => ctx.locale.register(LAYOUT_NS, { zh: zhCN, en: enUS }),
@@ -86,6 +88,10 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => workbench.install(), "dsh-layout: composer workbench");
   ctx.effect(() => mobileSidebar.install(), "dsh-layout: mobile sidebar");
   ctx.effect(() => settingsTopbar.install(), "dsh-layout: settings topbar");
+  ctx.effect(
+    () => composerFocus.install(),
+    "dsh-layout: composer focus guard",
+  );
   ctx.effect(() => busySubmit.install(), "dsh-layout: busy submit");
   ctx.effect(
     () => suppressor.install(),
