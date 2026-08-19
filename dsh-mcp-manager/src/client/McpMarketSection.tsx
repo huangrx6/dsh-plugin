@@ -3,8 +3,8 @@
  * `dsh-launcher.workspace.section` slot, id 'mcp').
  *
  * Dual-mode container: a segmented control switches between
- *   - 已安装 (Installed): the existing McpManagerSection master–detail
- *     (server list + config / tools detail)
+ *   - 已安装 (Installed): the McpManagerSection server catalog (list ⇄
+ *     card views, per-row 详情/编辑 dialogs, enable switch, delete)
  *   - 市场 (Market): the upgraded MarketShelf (sources, list / card
  *     views, install / update / remove)
  * The choice persists in localStorage and survives reloads. Both modes

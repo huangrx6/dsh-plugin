@@ -2,9 +2,11 @@
  * Small view preferences persisted in localStorage (storage injectable so
  * tests never touch the real DOM):
  *
- *   - section mode: which of the two workspace sub-views ("已安装" master
- *     detail vs "市场" shelf) the MCP section opens on
+ *   - section mode: which of the two workspace sub-views ("已安装" server
+ *     list vs "市场" shelf) the MCP section opens on
  *   - market view: whether the shelf renders compact rows or the card grid
+ *   - installed view: whether the 已安装 pane renders rows or cards
+ *     (independent from the market view — each pane remembers its own)
  *
  * Readers tolerate a missing / quarantined storage and any junk value by
  * falling back to the default; writers swallow quota errors silently —
@@ -13,9 +15,11 @@
 
 export type SectionMode = 'installed' | 'market'
 export type MarketView = 'list' | 'card'
+export type InstalledView = 'list' | 'card'
 
 const SECTION_MODE_KEY = 'dsh-mcp-manager:section-mode'
 const MARKET_VIEW_KEY = 'dsh-mcp-manager:market-view'
+const INSTALLED_VIEW_KEY = 'dsh-mcp-manager:installed-view'
 
 export function loadSectionMode(storage: Storage): SectionMode {
   try {
@@ -44,6 +48,22 @@ export function loadMarketView(storage: Storage): MarketView {
 export function saveMarketView(storage: Storage, view: MarketView): void {
   try {
     storage.setItem(MARKET_VIEW_KEY, view)
+  } catch {
+    // ignore: preference persistence is best-effort
+  }
+}
+
+export function loadInstalledView(storage: Storage): InstalledView {
+  try {
+    return storage.getItem(INSTALLED_VIEW_KEY) === 'card' ? 'card' : 'list'
+  } catch {
+    return 'list'
+  }
+}
+
+export function saveInstalledView(storage: Storage, view: InstalledView): void {
+  try {
+    storage.setItem(INSTALLED_VIEW_KEY, view)
   } catch {
     // ignore: preference persistence is best-effort
   }

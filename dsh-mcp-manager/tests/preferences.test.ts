@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  loadInstalledView,
   loadMarketView,
   loadSectionMode,
+  saveInstalledView,
   saveMarketView,
   saveSectionMode,
 } from '../src/client/preferences.ts'
@@ -26,6 +28,7 @@ describe('section / market view preferences', () => {
     const storage = new MemoryStorage()
     expect(loadSectionMode(storage)).toBe('installed')
     expect(loadMarketView(storage)).toBe('list')
+    expect(loadInstalledView(storage)).toBe('list')
   })
 
   it('round-trips the market mode and card view', () => {
@@ -40,15 +43,31 @@ describe('section / market view preferences', () => {
     const storage = new MemoryStorage()
     storage.setItem('dsh-mcp-manager:section-mode', 'nonsense')
     storage.setItem('dsh-mcp-manager:market-view', 'grid')
+    storage.setItem('dsh-mcp-manager:installed-view', 'grid')
     expect(loadSectionMode(storage)).toBe('installed')
     expect(loadMarketView(storage)).toBe('list')
+    expect(loadInstalledView(storage)).toBe('list')
   })
 
   it('tolerates a storage that throws', () => {
     const storage = new ThrowingStorage()
     expect(loadSectionMode(storage)).toBe('installed')
     expect(loadMarketView(storage)).toBe('list')
+    expect(loadInstalledView(storage)).toBe('list')
     expect(() => saveSectionMode(storage, 'market')).not.toThrow()
     expect(() => saveMarketView(storage, 'card')).not.toThrow()
+    expect(() => saveInstalledView(storage, 'card')).not.toThrow()
+  })
+})
+
+describe('installed view preference (independent from the market view)', () => {
+  it('round-trips the card view under its own key', () => {
+    const storage = new MemoryStorage()
+    saveInstalledView(storage, 'card')
+    saveMarketView(storage, 'list')
+    expect(storage.getItem('dsh-mcp-manager:installed-view')).toBe('card')
+    expect(storage.getItem('dsh-mcp-manager:market-view')).toBe('list')
+    expect(loadInstalledView(storage)).toBe('card')
+    expect(loadMarketView(storage)).toBe('list')
   })
 })

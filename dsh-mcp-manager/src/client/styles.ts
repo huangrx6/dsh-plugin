@@ -18,8 +18,8 @@ const STYLE_ID = 'dsh-mcp-manager-styles'
  *     --dsh-layout-glass-base / --dsh-layout-line: groups 34% /
  *     panels 46%, line borders 45–55%
  *   - the only motion is background/color 120ms transitions (plus the
- *     switch knob slide and the loading spinners, both disabled under
- *     prefers-reduced-motion)
+ *     switch knob slide, the loading spinners and the modal shell's
+ *     160ms slide-up entry, all disabled under prefers-reduced-motion)
  */
 const CSS = `
 /* ── shell ──────────────────────────────────────────────────────────────── */
@@ -36,11 +36,12 @@ const CSS = `
 
 /* ── grouped container recipe ───────────────────────────────────────────── */
 /* Flat translucent fill + 8% hairline + the user's large radius; rows sit
-   on 6% hairlines (first row carries none). Shared by the master nav, the
-   detail field list, the tool list and the market list. */
-.dshmcp-nav,
+   on 6% hairlines (first row carries none). Shared by the installed list,
+   the detail field list, the tool list and the market list. */
+.dshmcp-list,
 .dshmcp-fields,
 .dshmcp-toolList,
+.dshmcp-detailTools,
 .dshmcp-mkt-list {
   margin: 0; padding: 6px; list-style: none;
   background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03));
@@ -92,35 +93,81 @@ const CSS = `
 .dshmcp-emptyTitle { font-size: 13px; font-weight: 600; color: var(--dsw-alias-label-primary, #f4f4f5); margin: 0; }
 .dshmcp-empty p { font-size: 12px; color: var(--dsw-alias-label-tertiary, #8a8a8e); margin: 0; line-height: 1.55; }
 
-/* ── master–detail split ────────────────────────────────────────────────── */
-.dshmcp-split { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 12px; align-items: start; }
-@media (max-width: 767px) {
-  .dshmcp-split { grid-template-columns: minmax(0, 1fr); }
-  .dshmcp-nav { max-height: 40vh; overflow-y: auto; }
+/* ── installed pane: full-width list ⇄ card dual view ───────────────────── */
+/* Compact row: 32px tile / name + transport & tool-count meta / command or
+   URL line (flex, ellipsized) / enable switch + 详情/编辑/删除. */
+.dshmcp-instRow {
+  margin: 0; display: flex; align-items: center; gap: 10px;
+  min-height: 48px; padding: 5px 6px;
+  border-radius: var(--dsh-layout-radius-user, 8px);
+  transition: background-color 120ms var(--ds-ease-in-out, ease);
+}
+.dshmcp-instRow + .dshmcp-instRow { border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
+.dshmcp-instRow:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
+.dshmcp-instTile {
+  flex: none; width: 32px; height: 32px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--dsh-layout-radius-user, 8px);
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent);
+  color: var(--dsw-alias-label-secondary, #b3b3b8);
+}
+.dshmcp-instTile svg { width: 16px; height: 16px; }
+.dshmcp-instId { flex: 0 0 clamp(150px, 26%, 230px); min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.dshmcp-instName { font-size: 13px; font-weight: 600; line-height: 17px; color: var(--dsw-alias-label-primary, #f4f4f5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshmcp-instName.is-muted { color: var(--dsw-alias-label-tertiary, #8a8a8e); font-weight: 500; }
+.dshmcp-instMeta { min-width: 0; display: inline-flex; align-items: center; gap: 5px; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 11px; line-height: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshmcp-instDesc { flex: 1; min-width: 0; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11.5px; line-height: 16px; color: var(--dsw-alias-label-secondary, #b3b3b8); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshmcp-instSide { flex: none; display: inline-flex; align-items: center; gap: 6px; }
+
+/* Card grid: quiet cards in one grouped container, auto-fill ≥240px. */
+.dshmcp-instCards {
+  margin: 0; padding: 6px; list-style: none;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px;
+  background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03));
+  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
+  border-radius: var(--dsh-layout-radius-user-lg, 12px);
+}
+.dshmcp-instCard {
+  min-width: 0; box-sizing: border-box;
+  display: flex; flex-direction: column; gap: 8px; padding: 11px;
+  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent);
+  border-radius: var(--dsh-layout-radius-user, 8px);
+  transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease);
+}
+.dshmcp-instCard:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); }
+.dshmcp-instCardHead { display: flex; align-items: flex-start; gap: 10px; }
+.dshmcp-instCardTile {
+  flex: none; width: 40px; height: 40px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--dsh-layout-radius-user, 8px);
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent);
+  color: var(--dsw-alias-label-secondary, #b3b3b8);
+}
+.dshmcp-instCardTile svg { width: 18px; height: 18px; }
+.dshmcp-instCardId { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.dshmcp-instCardNameLine { min-width: 0; display: flex; align-items: center; gap: 7px; }
+.dshmcp-instCardDesc {
+  margin: 0; font-size: 12px; line-height: 1.5; color: var(--dsw-alias-label-secondary, #b3b3b8);
+  overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+.dshmcp-instCardFoot {
+  margin-top: auto; padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent);
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
 }
 
-/* ── master list: compact rows (dot + name / meta) ──────────────────────── */
-.dshmcp-navRow { margin: 0; }
-.dshmcp-navRow + .dshmcp-navRow { border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
-.dshmcp-navBtn { box-sizing: border-box; width: 100%; min-width: 0; min-height: 46px; padding: 7px 8px 7px 10px; display: flex; flex-direction: column; gap: 2px; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: var(--dsh-layout-radius-user, 8px); transition: background-color 120ms var(--ds-ease-in-out, ease); }
-.dshmcp-navBtn:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
-.dshmcp-navBtn:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #ffb74d); outline-offset: -2px; }
-.dshmcp-navRow[data-selected=true] .dshmcp-navBtn { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 7%, transparent); }
-.dshmcp-navLine { min-width: 0; display: flex; align-items: center; gap: 7px; }
-.dshmcp-navName { font-size: 13px; font-weight: 600; line-height: 17px; color: var(--dsw-alias-label-primary, #f4f4f5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dshmcp-navName.is-muted { color: var(--dsw-alias-label-tertiary, #8a8a8e); font-weight: 500; }
-.dshmcp-navMeta { min-width: 0; display: inline-flex; align-items: center; gap: 5px; padding-left: 13px; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 11px; line-height: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* ── detail modal tool rows (read-only, hairline separated) ─────────────── */
+.dshmcp-detailTools { display: flex; flex-direction: column; }
+.dshmcp-detailTools li {
+  display: flex; flex-direction: column; gap: 1px; min-width: 0;
+  padding: 6px 8px 6px 10px; border-radius: var(--dsh-layout-radius-user, 8px);
+}
+.dshmcp-detailTools li + li { border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
+.dshmcp-detailToolName { font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 12px; font-weight: 600; color: var(--dsw-alias-label-primary, #f4f4f5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshmcp-detailToolDesc { color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 11px; line-height: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* ── detail panel ───────────────────────────────────────────────────────── */
-.dshmcp-detail { background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.dshmcp-detailHead { display: flex; flex-direction: column; gap: 4px; }
-.dshmcp-detailTitleLine { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.dshmcp-detailTitle { font-size: 14px; font-weight: 600; line-height: 19px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dshmcp-detailTitle.is-muted { color: var(--dsw-alias-label-tertiary, #8a8a8e); }
-.dshmcp-detailTitle.is-error { color: var(--dsw-alias-state-error-primary, #ef5350); }
-.dshmcp-detailTag { flex: none; height: 18px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 500; line-height: 16px; display: inline-flex; align-items: center; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); color: var(--dsw-alias-label-tertiary, #8a8a8e); }
-.dshmcp-detailMeta { color: var(--dsw-alias-label-tertiary, #8a8a8e); font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; line-height: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dshmcp-detailActions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 4px; }
+/* ── grouped blocks (detail modal, editor) ──────────────────────────────── */
 .dshmcp-block { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .dshmcp-blockHead { display: flex; align-items: center; gap: 8px; min-height: 20px; flex-wrap: wrap; }
 
@@ -255,12 +302,51 @@ const CSS = `
 .dshmcp-paramOptional { color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 11px; }
 
 /* ── enable/disable switch ──────────────────────────────────────────────── */
+/* OFF stays neutral (6% fill); ON pours the success state at 45% so the
+   track reads as "enabled" at a glance; the knob stays white either way. */
 .dshmcp-switch { flex: none; width: 30px; height: 18px; padding: 0; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); cursor: pointer; position: relative; transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease); }
-.dshmcp-switch.is-on { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 26%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 32%, transparent); }
+.dshmcp-switch.is-on { background: color-mix(in srgb, var(--dsw-alias-state-success-primary, #4caf50) 45%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-state-success-primary, #4caf50) 55%, transparent); }
 .dshmcp-switch:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #ffb74d); outline-offset: 2px; }
 .dshmcp-switch[disabled] { opacity: .5; cursor: default; }
 .dshmcp-switchKnob { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 999px; background: #fff; transition: transform 120ms var(--ds-ease-in-out, ease); display: block; }
 .dshmcp-switch.is-on .dshmcp-switchKnob { transform: translateX(12px); }
+
+/* ── shared modal shell (edit + 详情 dialogs) ───────────────────────────── */
+/* The platform Modal primitive is mounted headless (portal, Escape, mask
+   click, aria); we pour the Quiet Structure chrome over its structural
+   roles: a 32% label-primary mask above a 4px blur, a bg-layer-1 card
+   with an 8% hairline and the user's large radius, and a 160ms slide-up
+   entry (the only transform anywhere — hover stays background-only). */
+[role="presentation"]:has(> [role="dialog"].dshmcp-modal) { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; padding: 24px; }
+[role="presentation"]:has(> [role="dialog"].dshmcp-toolModal) { z-index: 10001; }
+[role="presentation"]:has(> [role="dialog"].dshmcp-modal) > [aria-hidden="true"] { position: absolute; inset: 0; background: color-mix(in srgb, var(--dsw-alias-label-primary, #f4f4f5) 32%, transparent); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); animation: dshmcp-modalFade 160ms var(--ds-ease-in-out, ease); }
+@keyframes dshmcp-modalFade { from { opacity: 0; } }
+.dshmcp-modal {
+  position: relative; box-sizing: border-box; min-width: 0;
+  width: min(560px, 100%); max-height: calc(100dvh - 48px);
+  display: flex; flex-direction: column;
+  background: var(--dsw-alias-bg-layer-1, #1c1c1f);
+  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
+  border-radius: var(--dsh-layout-radius-user-lg, 12px);
+  overflow: hidden;
+  animation: dshmcp-modalUp 160ms var(--ds-ease-in-out, ease);
+}
+.dshmcp-modal.is-lg { width: min(640px, 100%); }
+@keyframes dshmcp-modalUp { from { opacity: 0; transform: translateY(10px); } }
+@media (prefers-reduced-motion: reduce) { .dshmcp-modal, [role="presentation"]:has(> [role="dialog"].dshmcp-modal) > [aria-hidden="true"] { animation: none !important; } }
+.dshmcp-modalInner { display: flex; flex-direction: column; min-height: 0; max-height: calc(100dvh - 48px); }
+.dshmcp-modalHead { flex: none; display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
+.dshmcp-modalTitle { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; line-height: 19px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshmcp-modalClose { flex: none; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 1px solid transparent; border-radius: var(--dsh-layout-radius-user, 8px); background: transparent; color: var(--dsw-alias-label-tertiary, #8a8a8e); cursor: pointer; transition: color 120ms var(--ds-ease-in-out, ease), background-color 120ms var(--ds-ease-in-out, ease); }
+.dshmcp-modalClose:hover { color: var(--dsw-alias-label-primary, #f4f4f5); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
+.dshmcp-modalClose:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #ffb74d); outline-offset: -2px; }
+.dshmcp-modalBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.dshmcp-modalFoot { flex: none; display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
+/* the editor mounts flush inside the shell: its own head/foot act as the
+   dialog chrome, so its card borders melt into the bg-layer-1 dialog */
+.dshmcp-modal .dshmcp-modalBody:has(> .dshmcp-editor) { padding: 0; gap: 0; }
+.dshmcp-modal .dshmcp-editor { border: 0; border-radius: 0; background: transparent; }
+.dshmcp-modal .dshmcp-editorFoot { background: var(--dsw-alias-bg-layer-1, #1c1c1f); }
 
 /* ── spinner ────────────────────────────────────────────────────────────── */
 .dshmcp-spin { animation: dshmcp-rotate 1s linear infinite; }
@@ -712,10 +798,12 @@ const CSS = `
 /* Groups pour 34% glass, panels 46%, with --dsh-layout-line borders
    (45–55%) so the quiet containers sit on the canvas like native
    chrome when the workspace material is on. */
-html[data-dsh-layout-material='on'] .dshmcp-nav,
+html[data-dsh-layout-material='on'] .dshmcp-list,
 html[data-dsh-layout-material='on'] .dshmcp-fields,
 html[data-dsh-layout-material='on'] .dshmcp-toolList,
+html[data-dsh-layout-material='on'] .dshmcp-detailTools,
 html[data-dsh-layout-material='on'] .dshmcp-kvList,
+html[data-dsh-layout-material='on'] .dshmcp-instCards,
 html[data-dsh-layout-material='on'] .dshmcp-mkt-list,
 html[data-dsh-layout-material='on'] .dshmcp-mkt-cards,
 html[data-dsh-layout-material='on'] .dshmcp-mkt-manage,
@@ -724,20 +812,22 @@ html[data-dsh-layout-material='on'] .dshmcp-mkt-empty {
   background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 34%, transparent);
   border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 45%, transparent);
 }
-html[data-dsh-layout-material='on'] .dshmcp-detail,
+html[data-dsh-layout-material='on'] [role="dialog"].dshmcp-modal,
 html[data-dsh-layout-material='on'] .dshmcp-editor,
 html[data-dsh-layout-material='on'] .dshmcp-testPanel {
   background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 46%, transparent);
   border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 55%, transparent);
 }
 html[data-dsh-layout-material='on'] .dshmcp-editorFoot { background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 55%, transparent); border-top-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 50%, transparent); }
+html[data-dsh-layout-material='on'] .dshmcp-modalFoot { border-top-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 50%, transparent); }
 
 /* ── motion safety ──────────────────────────────────────────────────────── */
 /* Quiet Structure only animates background/color; under reduced motion
    every transition switches off (the spinners / pulse / breathe are
    already guarded per-section above). */
 @media (prefers-reduced-motion: reduce) {
-  .dshmcp-navBtn,
+  .dshmcp-instRow,
+  .dshmcp-instCard,
   .dshmcp-button,
   .dshmcp-failure button,
   .dshmcp-mkt-rowInner,
@@ -764,9 +854,13 @@ html[data-dsh-layout-material='on'] .dshmcp-editorFoot { background: color-mix(i
   .dshmcp-mkt-rowDesc { display: none; }
   .dshmcp-mkt-rowId { flex-basis: auto; flex: 1; }
   .dshmcp-mkt-cards { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); }
+  .dshmcp-instDesc { display: none; }
+  .dshmcp-instId { flex-basis: auto; flex: 1; }
+  .dshmcp-instCards { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); }
 }
 @media (max-width: 480px) {
   .dshmcp-mkt-rowSide { flex-direction: column; align-items: flex-end; gap: 4px; }
+  .dshmcp-instSide { flex-direction: column; align-items: flex-end; gap: 4px; }
 }
 `
 

@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { IconApiOutline14, IconLoadingOutline16, IconPlusOutline16, IconRefreshOutline16, IconSearchOutline16, IconTrashOutline16, IconWarningOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { McpListResponse, McpServerView, McpTestResponse } from '../contracts.ts'
+import { IconApiOutline14, IconLoadingOutline16, IconPlusOutline16, IconRefreshOutline16, IconTrashOutline16, IconWarningOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { McpListResponse, McpServerView } from '../contracts.ts'
 import type { McpManagerApi } from './api.ts'
 import type { McpManagerLocaleKey } from './locales.ts'
+import type { CachedTest } from './tool-cache.ts'
 import { McpEditor } from './McpEditor.tsx'
-import { cachedToolsToRows, ToolList } from './ToolList.tsx'
-import { clearCachedTest, loadCachedTest, saveCachedTest, type CachedTest } from './tool-cache.ts'
+import { ModalShell } from './ModalShell.tsx'
+import { cachedToolsToRows } from './ToolList.tsx'
+import { clearCachedTest, loadCachedTest, saveCachedTest } from './tool-cache.ts'
+import { loadInstalledView, saveInstalledView, type InstalledView } from './preferences.ts'
+import { IconGrid, IconList, IconMcp, IconRemote } from './market/icons.tsx'
 
 export interface McpManagerSectionProps {
   readonly t: (key: McpManagerLocaleKey) => string
@@ -19,18 +23,19 @@ interface ListState {
 }
 
 /**
- * Plugins tab, master–detail shape (macOS Settings style): a 280px
- * compact server list on the left (name + status dot + meta), the
- * selected server's config / tools as grouped rows on the right.
- * Below 768px the two columns collapse into one. No section repeats a
- * large title — the workspace shell already renders one — only 11px
- * block labels.
+ * 已安装 pane: the full-width server catalog with a list ⇄ card view
+ * toggle (persisted independently from the market view). Every row and
+ * card carries the same action cluster — enable switch, 详情 (read-only
+ * modal), 编辑 (the McpEditor form inside a modal shell) and 删除
+ * (confirm-first). Enabled servers get one background auto-probe so tool
+ * counts / versions appear without anyone clicking 测试连接.
  */
 export function McpManagerSection({ t, api }: McpManagerSectionProps) {
   const [state, setState] = useState<ListState>({ status: 'loading' })
   const [request, setRequest] = useState(0)
-  const [selected, setSelected] = useState<string | undefined>(undefined)
+  const [view, setView] = useState<InstalledView>(() => loadInstalledView(window.localStorage))
   const [editing, setEditing] = useState<McpServerView | undefined | 'add'>(undefined)
+  const [detailId, setDetailId] = useState<string | undefined>(undefined)
   const [busy, setBusy] = useState<string | undefined>(undefined)
   const [actionError, setActionError] = useState<string | undefined>(undefined)
   const [cache, setCache] = useState<Record<string, CachedTest>>({})
@@ -111,18 +116,6 @@ export function McpManagerSection({ t, api }: McpManagerSectionProps) {
       })
   }, [servers, cache, autoTesting, runProbe])
 
-  /** Keep a valid selection: follow the list, fall back to the first row. */
-  useEffect(() => {
-    if (servers.length === 0) {
-      if (selected !== undefined) setSelected(undefined)
-      return
-    }
-    if (!servers.some(server => server.entryId === selected)) {
-      const first = servers[0]
-      if (first !== undefined) setSelected(first.entryId)
-    }
-  }, [servers, selected])
-
   /** Writes go through HMR; poll a few times so status settles visibly. */
   const settleRefresh = useCallback(() => {
     let round = 0
@@ -148,19 +141,36 @@ export function McpManagerSection({ t, api }: McpManagerSectionProps) {
     }
   }
 
-  if (editing !== undefined) {
-    return (
-      <McpEditor
-        t={t}
-        api={api}
-        original={editing === 'add' ? undefined : editing}
-        onSaved={() => { setEditing(undefined); settleRefresh() }}
-        onCancel={() => { setEditing(undefined) }}
-      />
-    )
+  const pickView = useCallback((next: InstalledView) => {
+    setView(next)
+    saveInstalledView(window.localStorage, next)
+  }, [])
+
+  /** Shared per-server actions, wired identically from rows and cards.
+      Deliberately not memoized — withGuard must see the current busy
+      flag to keep row actions serialized. */
+  const handleToggle = (server: McpServerView) => {
+    void withGuard(server.entryId, async () => {
+      const enabling = server.disabled
+      await api.toggle(server.entryId, !server.disabled)
+      // re-verify freshly enabled servers instead of showing stale data
+      if (enabling) {
+        clearCachedTest(window.localStorage, server.serverName)
+        setCache(current => {
+          const next = { ...current }
+          delete next[server.serverName]
+          return next
+        })
+      }
+    })
   }
 
-  const activeServer = servers.find(server => server.entryId === selected)
+  const handleDelete = (server: McpServerView) => {
+    if (!window.confirm(t('deleteConfirm'))) return
+    void withGuard(server.entryId, async () => { await api.deleteServer(server.entryId) })
+  }
+
+  const detail = detailId === undefined ? undefined : servers.find(server => server.entryId === detailId)
 
   return (
     <div className="dshmcp-tab" aria-busy={state.status === 'loading'}>
@@ -189,6 +199,26 @@ export function McpManagerSection({ t, api }: McpManagerSectionProps) {
               <span className="dshmcp-barLabel">{t('catalog')}</span>
               <span className="dshmcp-count" data-server-count={servers.length}>{servers.length}</span>
               <span className="dshmcp-spacer" />
+              <div className="dshmcp-mkt-viewseg" role="group" aria-label={t('installedViewList')}>
+                <button
+                  type="button"
+                  aria-pressed={view === 'list'}
+                  title={t('installedViewList')}
+                  aria-label={t('installedViewList')}
+                  onClick={() => { pickView('list') }}
+                >
+                  <IconList size={14} />
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={view === 'card'}
+                  title={t('installedViewCard')}
+                  aria-label={t('installedViewCard')}
+                  onClick={() => { pickView('card') }}
+                >
+                  <IconGrid size={14} />
+                </button>
+              </div>
               <button type="button" className="dshmcp-button dshmcp-buttonIcon" onClick={() => { setRequest(value => value + 1) }} title={t('refresh')} aria-label={t('refresh')}>
                 <IconRefreshOutline16 size={14} aria-hidden="true" />
               </button>
@@ -197,6 +227,7 @@ export function McpManagerSection({ t, api }: McpManagerSectionProps) {
                 {t('addButton')}
               </button>
             </div>
+            {actionError !== undefined ? <p className="dshmcp-callout dshmcp-calloutError" role="alert">{actionError}</p> : null}
             {servers.length === 0
               ? (
                 <div className="dshmcp-empty">
@@ -205,189 +236,288 @@ export function McpManagerSection({ t, api }: McpManagerSectionProps) {
                   <p>{t('empty')}</p>
                 </div>
               )
-              : (
-                <div className="dshmcp-split">
-                  <ul className="dshmcp-nav">
+              : view === 'card'
+                ? (
+                  <ul className="dshmcp-instCards">
                     {servers.map(server => (
-                      <li key={server.entryId} className="dshmcp-navRow" data-selected={server.entryId === selected ? 'true' : undefined}>
-                        <ServerNavRow
-                          t={t}
-                          server={server}
-                          cache={cache[server.serverName]}
-                          autoTesting={autoTesting[server.serverName] === true}
-                          selectedEntryId={selected}
-                          onSelect={() => { setSelected(server.entryId) }}
-                        />
-                      </li>
+                      <InstalledCard
+                        key={server.entryId}
+                        t={t}
+                        server={server}
+                        cache={cache[server.serverName]}
+                        autoTesting={autoTesting[server.serverName] === true}
+                        busy={busy !== undefined}
+                        onToggle={() => { handleToggle(server) }}
+                        onDetail={() => { setDetailId(server.entryId) }}
+                        onEdit={() => { setEditing(server) }}
+                        onDelete={() => { handleDelete(server) }}
+                      />
                     ))}
                   </ul>
-                  {activeServer === undefined ? null : (
-                    <ServerDetail
-                      key={activeServer.entryId}
-                      t={t}
-                      server={activeServer}
-                      busy={busy}
-                      cache={cache[activeServer.serverName]}
-                      autoTesting={autoTesting[activeServer.serverName] === true}
-                      actionError={actionError}
-                      onEdit={() => { setEditing(activeServer) }}
-                      onToggle={() => {
-                        void withGuard(activeServer.entryId, async () => {
-                          const enabling = activeServer.disabled
-                          await api.toggle(activeServer.entryId, !activeServer.disabled)
-                          // re-verify freshly enabled servers instead of showing stale data
-                          if (enabling) {
-                            clearCachedTest(window.localStorage, activeServer.serverName)
-                            setCache(current => {
-                              const next = { ...current }
-                              delete next[activeServer.serverName]
-                              return next
-                            })
-                          }
-                        })
-                      }}
-                      onDelete={() => {
-                        if (!window.confirm(t('deleteConfirm'))) return
-                        void withGuard(activeServer.entryId, async () => { await api.deleteServer(activeServer.entryId) })
-                      }}
-                      onTest={async () => {
-                        if (activeServer.config === undefined) return
-                        setBusy(`${activeServer.entryId}:test`)
-                        try {
-                          const result = await api.test(activeServer.config)
-                          const saved = saveCachedTest(window.localStorage, activeServer.serverName, result)
-                          if (saved !== undefined) setCache(current => ({ ...current, [activeServer.serverName]: saved }))
-                        } catch (error) {
-                          setCache(current => ({ ...current, [activeServer.serverName]: { ok: false, durationMs: 0, error: error instanceof Error ? error.message : String(error), tools: [], testedAt: Date.now() } }))
-                        } finally {
-                          setBusy(undefined)
-                        }
-                      }}
-                    />
-                  )}
-                </div>
-              )}
+                )
+                : (
+                  <ul className="dshmcp-list">
+                    {servers.map(server => (
+                      <InstalledRow
+                        key={server.entryId}
+                        t={t}
+                        server={server}
+                        cache={cache[server.serverName]}
+                        autoTesting={autoTesting[server.serverName] === true}
+                        busy={busy !== undefined}
+                        onToggle={() => { handleToggle(server) }}
+                        onDetail={() => { setDetailId(server.entryId) }}
+                        onEdit={() => { setEditing(server) }}
+                        onDelete={() => { handleDelete(server) }}
+                      />
+                    ))}
+                  </ul>
+                )}
           </>
+        )
+        : null}
+      {editing !== undefined
+        ? (
+          <ModalShell open t={t} onClose={() => { setEditing(undefined) }}>
+            <McpEditor
+              key={editing === 'add' ? 'new' : editing.entryId}
+              t={t}
+              api={api}
+              original={editing === 'add' ? undefined : editing}
+              onSaved={() => { setEditing(undefined); settleRefresh() }}
+              onCancel={() => { setEditing(undefined) }}
+            />
+          </ModalShell>
+        )
+        : null}
+      {detail !== undefined
+        ? (
+          <ServerDetailModal
+            key={detail.entryId}
+            t={t}
+            server={detail}
+            cache={cache[detail.serverName]}
+            autoTesting={autoTesting[detail.serverName] === true}
+            onClose={() => { setDetailId(undefined) }}
+          />
         )
         : null}
     </div>
   )
 }
 
-/** One compact master row: status dot + name, meta line underneath. */
-function ServerNavRow({ t, server, cache, autoTesting, selectedEntryId, onSelect }: {
+/** Tile icon by transport, shared by the list row and the card. */
+function TransportIcon({ transport }: { readonly transport: 'stdio' | 'streamable-http' }): JSX.Element {
+  return transport === 'streamable-http' ? <IconRemote size={16} /> : <IconMcp size={16} />
+}
+
+/** The enable switch (success-tinted when on), shared by the row and card. */
+function EnableSwitch({ t, server, busy, onToggle }: {
   readonly t: (key: McpManagerLocaleKey) => string
   readonly server: McpServerView
-  readonly cache: CachedTest | undefined
-  readonly autoTesting: boolean
-  readonly selectedEntryId: string | undefined
-  readonly onSelect: () => void
+  readonly busy: boolean
+  readonly onToggle: () => void
 }) {
-  const phase = server.fiberPhase
-  const liveCount = server.tools.length
-  const cachedCount = cache?.toolCount ?? cache?.tools.length ?? 0
-  const shownCount = liveCount > 0 ? liveCount : cachedCount
-  const metaParts = [
-    server.config?.transport === 'streamable-http' ? t('transportHttp') : t('transportStdio'),
-    shownCount > 0 ? (shownCount === 1 ? t('toolsCountOne') : t('toolsCountMany').replace('{n}', String(shownCount))) : '',
-  ].filter(part => part !== '')
   return (
     <button
       type="button"
-      className="dshmcp-navBtn"
-      aria-current={server.entryId === selectedEntryId ? 'true' : undefined}
-      title={server.serverName}
-      onClick={onSelect}
+      role="switch"
+      aria-checked={!server.disabled}
+      aria-label={server.disabled ? t('enableButton') : t('disableButton')}
+      title={server.disabled ? t('enableButton') : t('disableButton')}
+      className={`dshmcp-switch${server.disabled ? '' : ' is-on'}`}
+      disabled={busy}
+      onClick={onToggle}
     >
-      <span className="dshmcp-navLine">
-        {server.disabled
-          ? <span className="dshmcp-statusDot" data-phase="disabled" aria-hidden="true" />
-          : <span className="dshmcp-statusDot" data-phase={phase ?? 'unobserved'} role="img" aria-label={phaseLabel(t, phase)} title={phaseLabel(t, phase)} />}
-        <span className={`dshmcp-navName${server.disabled ? ' is-muted' : ''}`}>{server.serverName}</span>
-      </span>
-      <span className="dshmcp-navMeta">
-        {server.disabled ? t('disabledTag') : metaParts.join(' · ')}
-        {autoTesting ? <IconLoadingOutline16 size={11} className="dshmcp-spin" aria-hidden="true" /> : null}
-      </span>
+      <span className="dshmcp-switchKnob" />
     </button>
   )
 }
 
-/** Right-hand detail: grouped config rows + grouped tool rows + actions. */
-function ServerDetail({ t, server, busy, cache, autoTesting, actionError, onEdit, onToggle, onDelete, onTest }: {
+/** 详情 / 编辑 / 删除 cluster, shared by the row side and the card foot. */
+function RowActions({ t, server, busy, onDetail, onEdit, onDelete }: {
   readonly t: (key: McpManagerLocaleKey) => string
   readonly server: McpServerView
-  readonly busy: string | undefined
-  readonly cache: CachedTest | undefined
-  readonly autoTesting: boolean
-  readonly actionError: string | undefined
+  readonly busy: boolean
+  readonly onDetail: () => void
   readonly onEdit: () => void
-  readonly onToggle: () => void
   readonly onDelete: () => void
-  readonly onTest: () => Promise<void>
 }) {
-  const [toolQuery, setToolQuery] = useState('')
-  const phase = server.fiberPhase
-  const summary = server.config === undefined
-    ? '—'
-    : server.config.transport === 'stdio'
-      ? `${server.config.command ?? ''} ${(server.config.args ?? []).join(' ')}`.trim()
-      : server.config.url ?? ''
+  return (
+    <>
+      <button type="button" className="dshmcp-button dshmcp-buttonGhostSm" disabled={busy} onClick={onDetail}>{t('detailButton')}</button>
+      <button type="button" className="dshmcp-button dshmcp-buttonGhostSm" disabled={server.config === undefined || busy} onClick={onEdit}>{t('editButton')}</button>
+      <button
+        type="button"
+        className="dshmcp-button dshmcp-buttonGhostSm dshmcp-buttonDanger"
+        disabled={!server.removable || busy}
+        onClick={onDelete}
+        title={server.removable ? undefined : t('notRemovable')}
+      >
+        <IconTrashOutline16 size={12} aria-hidden="true" />
+        {t('deleteButton')}
+      </button>
+    </>
+  )
+}
+
+/** Meta fragments shared by the row meta line and the card meta line. */
+function metaPartsOf(t: (key: McpManagerLocaleKey) => string, server: McpServerView, cache: CachedTest | undefined): readonly string[] {
   const liveCount = server.tools.length
   const cachedCount = cache?.toolCount ?? cache?.tools.length ?? 0
   const shownCount = liveCount > 0 ? liveCount : cachedCount
-  const testedAtLabel = cache !== undefined ? formatTime(cache.testedAt) : undefined
-  const unhealthy = phase === 'failed'
-  const toolRows = liveCount > 0
-    ? server.tools.map(tool => ({ name: tool.publicName, description: tool.description, schema: tool.parameters as Record<string, unknown> | undefined }))
-    : cache !== undefined && cache.ok ? cachedToolsToRows(cache.tools) : []
+  return [
+    server.config?.transport === 'streamable-http' ? t('transportHttp') : t('transportStdio'),
+    shownCount > 0 ? (shownCount === 1 ? t('toolsCountOne') : t('toolsCountMany').replace('{n}', String(shownCount))) : '',
+  ].filter(part => part !== '')
+}
+
+function autoTestIndicator(autoTesting: boolean): JSX.Element | null {
+  return autoTesting
+    ? <IconLoadingOutline16 size={11} className="dshmcp-spin" aria-hidden="true" />
+    : null
+}
+
+/** Command (stdio) or URL (http) summary, single-line. */
+function configSummary(server: McpServerView): string {
+  if (server.config === undefined) return ''
+  return server.config.transport === 'stdio'
+    ? `${server.config.command ?? ''} ${(server.config.args ?? []).join(' ')}`.trim()
+    : server.config.url ?? ''
+}
+
+/**
+ * One compact list row: 32px tile / name + transport & tool-count meta /
+ * command-or-url line (flex, ellipsized) / switch + detail, edit, delete.
+ */
+function InstalledRow({ t, server, cache, autoTesting, busy, onToggle, onDetail, onEdit, onDelete }: {
+  readonly t: (key: McpManagerLocaleKey) => string
+  readonly server: McpServerView
+  readonly cache: CachedTest | undefined
+  readonly autoTesting: boolean
+  readonly busy: boolean
+  readonly onToggle: () => void
+  readonly onDetail: () => void
+  readonly onEdit: () => void
+  readonly onDelete: () => void
+}) {
+  const meta = metaPartsOf(t, server, cache)
+  const summary = configSummary(server)
   return (
-    <div className="dshmcp-detail" data-server={server.serverName}>
-      <div className="dshmcp-detailHead">
-        <span className="dshmcp-detailTitleLine">
-          {server.disabled
-            ? <span className="dshmcp-statusDot" data-phase="disabled" aria-hidden="true" />
-            : <span className="dshmcp-statusDot" data-phase={phase ?? 'unobserved'} role="img" aria-label={phaseLabel(t, phase)} title={phaseLabel(t, phase)} />}
-          <h3 className={`dshmcp-detailTitle${server.disabled ? ' is-muted' : ''}${unhealthy ? ' is-error' : ''}`}>{server.serverName}</h3>
-          {server.disabled ? <span className="dshmcp-detailTag">{t('disabledTag')}</span> : null}
+    <li className="dshmcp-instRow">
+      <span className="dshmcp-instTile" aria-hidden="true">
+        <TransportIcon transport={server.config?.transport === 'streamable-http' ? 'streamable-http' : 'stdio'} />
+      </span>
+      <span className="dshmcp-instId">
+        <span className={`dshmcp-instName${server.disabled ? ' is-muted' : ''}`}>{server.serverName}</span>
+        <span className="dshmcp-instMeta">
+          {server.disabled ? t('disabledTag') : meta.join(' · ')}
+          {autoTestIndicator(autoTesting)}
         </span>
-        <span className="dshmcp-detailMeta">
-          {server.config?.transport === 'streamable-http' ? t('transportHttp') : t('transportStdio')}
-          {' · '}
-          {summary === '' ? '—' : summary}
+      </span>
+      <span className="dshmcp-instDesc" title={summary}>{summary === '' ? '—' : summary}</span>
+      <span className="dshmcp-instSide">
+        <EnableSwitch t={t} server={server} busy={busy} onToggle={onToggle} />
+        <RowActions t={t} server={server} busy={busy} onDetail={onDetail} onEdit={onEdit} onDelete={onDelete} />
+      </span>
+    </li>
+  )
+}
+
+/**
+ * One installed card: 40px plinth + name + status dot with the enable
+ * switch in the top-right corner, two-line clamped command/URL, transport
+ * · tools · version meta, and a hairline-separated action foot.
+ */
+function InstalledCard({ t, server, cache, autoTesting, busy, onToggle, onDetail, onEdit, onDelete }: {
+  readonly t: (key: McpManagerLocaleKey) => string
+  readonly server: McpServerView
+  readonly cache: CachedTest | undefined
+  readonly autoTesting: boolean
+  readonly busy: boolean
+  readonly onToggle: () => void
+  readonly onDetail: () => void
+  readonly onEdit: () => void
+  readonly onDelete: () => void
+}) {
+  const meta = metaPartsOf(t, server, cache)
+  const summary = configSummary(server)
+  const version = cache?.serverVersion
+  const phase = server.fiberPhase
+  return (
+    <li className="dshmcp-instCard">
+      <div className="dshmcp-instCardHead">
+        <span className="dshmcp-instCardTile" aria-hidden="true">
+          <TransportIcon transport={server.config?.transport === 'streamable-http' ? 'streamable-http' : 'stdio'} />
         </span>
-        <span className="dshmcp-detailActions">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={!server.disabled}
-            aria-label={server.disabled ? t('enableButton') : t('disableButton')}
-            title={server.disabled ? t('enableButton') : t('disableButton')}
-            className={`dshmcp-switch${server.disabled ? '' : ' is-on'}`}
-            disabled={busy !== undefined}
-            onClick={onToggle}
-          >
-            <span className="dshmcp-switchKnob" />
-          </button>
-          <button type="button" className="dshmcp-button" disabled={server.config === undefined || busy !== undefined} onClick={onEdit}>{t('editButton')}</button>
-          <button type="button" className="dshmcp-button dshmcp-buttonDanger" disabled={!server.removable || busy !== undefined} onClick={onDelete} title={server.removable ? undefined : t('notRemovable')}>
-            <IconTrashOutline16 size={13} aria-hidden="true" />
-            {t('deleteButton')}
-          </button>
+        <span className="dshmcp-instCardId">
+          <span className="dshmcp-instCardNameLine">
+            <span className={`dshmcp-instName${server.disabled ? ' is-muted' : ''}`}>{server.serverName}</span>
+            {server.disabled
+              ? <span className="dshmcp-statusDot" data-phase="disabled" aria-hidden="true" />
+              : <span className="dshmcp-statusDot" data-phase={phase ?? 'unobserved'} role="img" aria-label={phaseLabel(t, phase)} title={phaseLabel(t, phase)} />}
+          </span>
+          <span className="dshmcp-instMeta">
+            {server.disabled ? t('disabledTag') : meta.join(' · ')}
+            {version !== undefined ? ` · v${version}` : ''}
+            {autoTestIndicator(autoTesting)}
+          </span>
         </span>
+        <EnableSwitch t={t} server={server} busy={busy} onToggle={onToggle} />
       </div>
+      <p className="dshmcp-instCardDesc" title={summary}>{summary === '' ? '—' : summary}</p>
+      <div className="dshmcp-instCardFoot">
+        <RowActions t={t} server={server} busy={busy} onDetail={onDetail} onEdit={onEdit} onDelete={onDelete} />
+      </div>
+    </li>
+  )
+}
+
+/**
+ * Read-only 详情 dialog: grouped basic-info rows (name, transport,
+ * command, env count, version, patch layer …) plus a grouped tool list
+ * (name + one-line description). Shares the modal shell with the editor.
+ */
+function ServerDetailModal({ t, server, cache, autoTesting, onClose }: {
+  readonly t: (key: McpManagerLocaleKey) => string
+  readonly server: McpServerView
+  readonly cache: CachedTest | undefined
+  readonly autoTesting: boolean
+  readonly onClose: () => void
+}) {
+  const phase = server.fiberPhase
+  const liveCount = server.tools.length
+  const cachedCount = cache?.toolCount ?? cache?.tools.length ?? 0
+  const shownCount = liveCount > 0 ? liveCount : cachedCount
+  const toolRows = liveCount > 0
+    ? server.tools.map(tool => ({ name: tool.publicName, description: tool.description }))
+    : cache !== undefined && cache.ok ? cachedToolsToRows(cache.tools) : []
+  const envCount = Object.keys(server.config?.env ?? {}).length
+  const version = cache?.serverVersion
+  return (
+    <ModalShell
+      open
+      t={t}
+      size="lg"
+      title={server.serverName}
+      onClose={onClose}
+      footer={<button type="button" className="dshmcp-button dshmcp-buttonPrimary" onClick={onClose}>{t('drawerClose')}</button>}
+    >
       {server.config === undefined ? <p className="dshmcp-status">{t('notRemovable')}</p> : null}
-      {actionError !== undefined ? <p className="dshmcp-callout dshmcp-calloutError" role="alert">{actionError}</p> : null}
       <div className="dshmcp-block">
         <div className="dshmcp-blockHead">
           <span className="dshmcp-label">{t('basicInfo')}</span>
         </div>
         <dl className="dshmcp-fields">
-          <div><dt>{t('detailEntryId')}</dt><dd className="dshmcp-path">{server.entryId}</dd></div>
-          <div><dt>{t('detailOrigin')}</dt><dd>{originLabel(t, server.origin)}</dd></div>
+          <div><dt>{t('fieldTransport')}</dt><dd>{server.config?.transport === 'streamable-http' ? t('transportHttp') : t('transportStdio')}</dd></div>
+          <div><dt>{t('detailStatus')}</dt><dd>{server.disabled ? t('disabledTag') : phaseLabel(t, phase)}</dd></div>
           {server.config?.command !== undefined ? <div><dt>{t('detailCommand')}</dt><dd className="dshmcp-path">{server.config.command}</dd></div> : null}
           {server.config?.args !== undefined && server.config.args.length > 0 ? <div><dt>{t('detailArgs')}</dt><dd className="dshmcp-path">{server.config.args.join(' ')}</dd></div> : null}
           {server.config?.url !== undefined ? <div><dt>{t('detailUrl')}</dt><dd className="dshmcp-path">{server.config.url}</dd></div> : null}
+          <div><dt>{t('detailEnv')}</dt><dd>{t('detailEnvCount').replace('{n}', String(envCount))}</dd></div>
+          {version !== undefined ? <div><dt>{t('detailVersion')}</dt><dd className="dshmcp-path">v{version}</dd></div> : null}
+          <div><dt>{t('detailEntryId')}</dt><dd className="dshmcp-path">{server.entryId}</dd></div>
+          <div><dt>{t('detailOrigin')}</dt><dd>{originLabel(t, server.origin)}</dd></div>
           {server.config?.toolCallTimeoutMs !== undefined ? <div><dt>{t('detailTimeout')}</dt><dd>{server.config.toolCallTimeoutMs} ms</dd></div> : null}
           {server.config?.reconnect !== undefined ? <div><dt>{t('detailReconnect')}</dt><dd>{server.config.reconnect.enabled === false ? '✕' : '✓'}</dd></div> : null}
           {server.config?.failOnStartupError === true ? <div><dt>{t('detailStartup')}</dt><dd>✓</dd></div> : null}
@@ -398,59 +528,23 @@ function ServerDetail({ t, server, busy, cache, autoTesting, actionError, onEdit
         <div className="dshmcp-blockHead">
           <span className="dshmcp-label">{t('toolsHeading')}</span>
           {shownCount > 0 ? <span className="dshmcp-count">{shownCount}</span> : null}
-          <span className="dshmcp-spacer" />
-          <button type="button" className="dshmcp-button dshmcp-buttonGhostSm" disabled={server.config === undefined || busy !== undefined} onClick={() => { void onTest() }}>
-            {busy === `${server.entryId}:test` ? t('testRunning') : t('retestButton')}
-          </button>
+          {autoTesting ? <span className="dshmcp-toolsMeta dshmcp-autoTest"><IconLoadingOutline16 size={11} className="dshmcp-spin" aria-hidden="true" />{t('autoTesting')}</span> : null}
         </div>
-        <div className="dshmcp-toolsBar">
-          {autoTesting
-            ? <span className="dshmcp-toolsMeta dshmcp-autoTest"><IconLoadingOutline16 size={11} className="dshmcp-spin" aria-hidden="true" />{t('autoTesting')}</span>
-            : cache !== undefined
-              ? (
-                <>
-                  <span className={`dshmcp-chipStatus${cache.ok ? ' is-ok' : ' is-fail'}`}>
-                    <span className="dshmcp-chipDot" aria-hidden="true" />
-                    {cache.ok ? t('chipConnected') : t('chipFailed')}
-                  </span>
-                  {testedAtLabel !== undefined ? <span className="dshmcp-toolsMeta">{t('lastTestAt').replace('{time}', testedAtLabel)}</span> : null}
-                </>
-              )
-              : null}
-          {toolRows.length > 1
-            ? (
-              <>
-                <span className="dshmcp-spacer" />
-                <span className="dshmcp-toolSearch">
-                  <IconSearchOutline16 size={12} aria-hidden="true" />
-                  <input
-                    type="search"
-                    value={toolQuery}
-                    placeholder={t('toolSearch')}
-                    aria-label={t('toolSearch')}
-                    onChange={event => { setToolQuery(event.currentTarget.value) }}
-                  />
-                  {toolQuery.trim() !== '' ? <span className="dshmcp-toolSearchCount">{toolRows.filter(tool => tool.name.toLowerCase().includes(toolQuery.trim().toLowerCase()) || tool.description.toLowerCase().includes(toolQuery.trim().toLowerCase())).length}/{toolRows.length}</span> : null}
-                </span>
-              </>
-            )
-            : null}
-        </div>
-        {cache !== undefined && !cache.ok && !autoTesting
-          ? <p className="dshmcp-callout dshmcp-calloutError" role="alert">{cache.error !== undefined ? cache.error : t('testFailed')}</p>
-          : null}
-        {autoTesting
-          ? null
-          : toolRows.length > 0
-            ? <ToolList t={t} tools={toolRows} query={toolQuery} />
-            : <p className="dshmcp-status">{t('toolNone')}</p>}
+        {toolRows.length > 0
+          ? (
+            <ul className="dshmcp-detailTools">
+              {toolRows.map(tool => (
+                <li key={tool.name}>
+                  <span className="dshmcp-detailToolName">{tool.name}</span>
+                  {tool.description.trim() !== '' ? <span className="dshmcp-detailToolDesc" title={tool.description}>{tool.description}</span> : null}
+                </li>
+              ))}
+            </ul>
+          )
+          : <p className="dshmcp-status">{t('toolNone')}</p>}
       </div>
-    </div>
+    </ModalShell>
   )
-}
-
-function formatTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
 function phaseLabel(t: (key: McpManagerLocaleKey) => string, phase: string | null): string {
