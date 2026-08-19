@@ -690,7 +690,6 @@ html[data-dsh-layout-scrollbar='hidden'] .dshm-tableWrap::-webkit-scrollbar { di
   .dshm-mkt-toolbar > * + * { margin-top: 10px; }
   .dshm-mkt-tools { gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
   .dshm-instToolbar { gap: 10px; }
-  .dshm-mkt-seg, .dshm-seg { min-height: 38px; }
   .dshm-mkt-search, .dshm-search { min-height: 38px; }
   .dshm-mkt-iconBtn, .dshm-iconBtn { width: 36px; height: 36px; }
   .dshm-instList, .dshm-mkt-list { padding: 8px; }
