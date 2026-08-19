@@ -1,9 +1,8 @@
 /**
- * Launcher styles. All launcher-owned selectors live under the
- * `dsh-launcher-` prefix; market card / shelf selectors live under
- * `dsh-launcher-mkt-`. The dsh-* market slots (skill / mcp) reach into this
- * file via a stable class contract; any rename here is a breaking change for
- * the marketplace cards.
+ * Launcher styles — the workspace shell only (panel, FAB, canvas,
+ * rail trigger). Marketplace card / shelf styles do NOT live here: each
+ * manager plugin (dsh-skill-manager, dsh-mcp-manager) ships its own
+ * copy under its own prefix.
  *
  * Two breakpoint fences handle phone vs desktop:
  *   - H5 (≤ 767px): the workspace collapses its left rail into a horizontal
@@ -50,7 +49,22 @@ export const LAUNCHER_STYLES = `
 }
 .dsh-launcher-trigger-icon svg { width: 100%; height: 100%; }
 .dsh-launcher-trigger-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dsh-launcher-trigger.collapsed .dsh-launcher-trigger-label { display: none; }
+/* Collapsed rail (icon-only, set by rail-button.ts when the sidebar
+   column narrows): match the native rail buttons above — a centered
+   square with the same 20px glyph, no label, no side padding (the
+   narrow rail carries its own). */
+.dsh-launcher-rail.is-collapsed { padding: 0; }
+.dsh-launcher-rail.is-collapsed .dsh-launcher-trigger {
+  justify-content: center;
+  padding: 8px 0;
+  gap: 0;
+}
+.dsh-launcher-rail.is-collapsed .dsh-launcher-trigger-label { display: none; }
+.dsh-launcher-rail.is-collapsed .dsh-launcher-trigger-icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+}
 
 /* ─── Launcher panel (floating launcher) ─── */
 .dsh-launcher-panel-mask {
@@ -311,7 +325,8 @@ export const LAUNCHER_STYLES = `
   align-items: center;
   justify-content: center;
   border-radius: var(--dsh-layout-radius-user-lg, 12px);
-  background: var(--dsw-alias-bg-module-platform, rgba(255, 255, 255, 0.06));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent), 0 6px 18px color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent);
   color: var(--dsw-alias-label-primary, #f4f4f5);
   flex: 0 0 44px;
 }
@@ -339,230 +354,6 @@ export const LAUNCHER_STYLES = `
 @keyframes dsh-launcher-tab-item-in { from { opacity: 0; transform: translateY(-8px) } to { opacity: 1; transform: translateY(0) } }
 @keyframes dsh-launcher-content-in { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: translateY(0) } }
 
-/* ─── Marketplace shared — also imported by dsh-skill-manager / dsh-mcp-manager ─── */
-.dsh-launcher-mkt-sources {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 14px;
-  align-items: center;
-}
-.dsh-launcher-mkt-sources-label {
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--dsw-alias-label-tertiary, #8a8a8e);
-  margin-right: 4px;
-}
-.dsh-launcher-mkt-source-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
-  background: transparent;
-  color: var(--dsw-alias-label-secondary, #b3b3b8);
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease);
-}
-.dsh-launcher-mkt-source-chip:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(255, 255, 255, 0.06)); color: var(--dsw-alias-label-primary, #f4f4f5); }
-.dsh-launcher-mkt-source-chip.is-active { background: var(--dsw-alias-bg-module-platform, rgba(255, 255, 255, 0.1)); color: var(--dsw-alias-label-primary, #f4f4f5); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent); }
-.dsh-launcher-mkt-source-chip .dsh-launcher-mkt-source-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--dsw-alias-state-success-primary, #4caf50);
-}
-.dsh-launcher-mkt-source-chip.is-down .dsh-launcher-mkt-source-dot { background: var(--dsw-alias-state-error-primary, #ef5350); }
-.dsh-launcher-mkt-source-chip.is-invalid .dsh-launcher-mkt-source-dot { background: var(--dsw-alias-state-business-primary, #ffb74d); }
-.dsh-launcher-mkt-source-add {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px dashed color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent);
-  background: transparent;
-  color: var(--dsw-alias-label-tertiary, #8a8a8e);
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-}
-.dsh-launcher-mkt-source-add:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 30%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
-
-.dsh-launcher-mkt-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-  flex-wrap: wrap;
-}
-.dsh-launcher-mkt-search {
-  flex: 1;
-  min-width: 220px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
-  border-radius: var(--dsh-layout-radius-user, 10px);
-  background: var(--dsw-alias-bg-layer-3, rgba(255, 255, 255, 0.04));
-  color: var(--dsw-alias-label-primary, #f4f4f5);
-}
-.dsh-launcher-mkt-search input {
-  flex: 1;
-  background: transparent;
-  border: 0;
-  outline: 0;
-  color: var(--dsw-alias-label-primary, #f4f4f5);
-  font: inherit;
-  font-size: 13px;
-  min-width: 0;
-}
-.dsh-launcher-mkt-search input::placeholder { color: var(--dsw-alias-label-tertiary, #8a8a8e); }
-.dsh-launcher-mkt-search svg { width: 14px; height: 14px; flex: 0 0 14px; color: var(--dsw-alias-label-tertiary, #8a8a8e); }
-.dsh-launcher-mkt-toolbar-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
-  border-radius: var(--dsh-layout-radius-user, 10px);
-  background: transparent;
-  color: var(--dsw-alias-label-primary, #f4f4f5);
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-}
-.dsh-launcher-mkt-toolbar-btn:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(255, 255, 255, 0.06)); }
-.dsh-launcher-mkt-toolbar-btn svg { width: 14px; height: 14px; }
-.dsh-launcher-mkt-toolbar-btn.is-spin svg { animation: dsh-launcher-spin 1.2s linear infinite; }
-
-.dsh-launcher-mkt-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-}
-.dsh-launcher-mkt-card {
-  display: flex;
-  flex-direction: column;
-  background: var(--dsw-alias-bg-layer-3, rgba(255, 255, 255, 0.04));
-  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
-  border-radius: var(--dsh-layout-radius-user-lg, 14px);
-  padding: 16px;
-  transition: border-color 120ms var(--ds-ease-in-out, ease), transform 120ms var(--ds-ease-in-out, ease);
-  position: relative;
-  overflow: hidden;
-}
-.dsh-launcher-mkt-card:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent); transform: translateY(-1px); }
-.dsh-launcher-mkt-card-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
-.dsh-launcher-mkt-card-tile {
-  display: inline-flex;
-  width: 36px;
-  height: 36px;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--dsh-layout-radius-user, 10px);
-  background: var(--dsw-alias-bg-module-platform, rgba(255, 255, 255, 0.06));
-  color: var(--dsw-alias-label-primary, #f4f4f5);
-  flex: 0 0 36px;
-}
-.dsh-launcher-mkt-card-tile svg { width: 18px; height: 18px; }
-.dsh-launcher-mkt-card-titleline { flex: 1; min-width: 0; }
-.dsh-launcher-mkt-card-title { font-size: 14px; font-weight: 600; color: var(--dsw-alias-label-primary, #f4f4f5); margin: 0; }
-.dsh-launcher-mkt-card-meta { font-size: 11px; color: var(--dsw-alias-label-tertiary, #8a8a8e); margin-top: 2px; }
-.dsh-launcher-mkt-card-desc { font-size: 12px; color: var(--dsw-alias-label-secondary, #b3b3b8); line-height: 1.5; margin: 0 0 12px; min-height: 36px; }
-.dsh-launcher-mkt-card-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
-.dsh-launcher-mkt-tag {
-  font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--dsw-alias-bg-module-platform, rgba(255, 255, 255, 0.06));
-  color: var(--dsw-alias-label-secondary, #b3b3b8);
-}
-.dsh-launcher-mkt-tag-source { color: var(--dsw-alias-label-tertiary, #8a8a8e); }
-.dsh-launcher-mkt-card-foot {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: auto;
-  padding-top: 8px;
-  border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent);
-}
-.dsh-launcher-mkt-card-installed {
-  font-size: 11px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--dsw-alias-state-success-primary, #4caf50) 14%, transparent);
-  color: var(--dsw-alias-state-success-primary, #4caf50);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.dsh-launcher-mkt-card-action {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent);
-  border-radius: var(--dsh-layout-radius-user, 8px);
-  background: transparent;
-  color: var(--dsw-alias-label-primary, #f4f4f5);
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-}
-.dsh-launcher-mkt-card-action:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(255, 255, 255, 0.06)); }
-.dsh-launcher-mkt-card-action.is-primary {
-  background: var(--dsw-alias-bg-module-platform, rgba(255, 255, 255, 0.18));
-  border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 32%, transparent);
-}
-.dsh-launcher-mkt-card-action.is-danger { color: var(--dsw-alias-state-error-primary, #ef5350); border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 32%, transparent); }
-.dsh-launcher-mkt-card-action.is-danger:hover { background: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 12%, transparent); }
-.dsh-launcher-mkt-card-action:disabled { opacity: 0.55; cursor: not-allowed; }
-.dsh-launcher-mkt-card-action.is-spin svg { animation: dsh-launcher-spin 1.2s linear infinite; }
-
-.dsh-launcher-mkt-empty {
-  text-align: center;
-  padding: 48px 0;
-  color: var(--dsw-alias-label-tertiary, #8a8a8e);
-}
-.dsh-launcher-mkt-error {
-  color: var(--dsw-alias-state-error-primary, #ef5350);
-  font-size: 12px;
-  padding: 8px 12px;
-  background: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 10%, transparent);
-  border-radius: var(--dsh-layout-radius-user, 8px);
-  margin-bottom: 12px;
-}
-
-/* ─── Add-source form: wraps to clean rows on mobile ─── */
-.dsh-launcher-mkt-addrow {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-}
-.dsh-launcher-mkt-addrow input {
-  flex: 1 1 220px;
-  min-width: 0;
-  padding: 8px 12px;
-  border-radius: var(--dsh-layout-radius-user, 8px);
-  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
-  background: var(--dsw-alias-bg-layer-3, rgba(255, 255, 255, 0.04));
-  color: var(--dsw-alias-label-primary, #f4f4f5);
-  font: inherit;
-  font-size: 13px;
-  outline: 0;
-}
-.dsh-launcher-mkt-addrow input::placeholder { color: var(--dsw-alias-label-tertiary, #8a8a8e); }
-
-@keyframes dsh-launcher-spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
 
 /* ─── dsh-layout material + radius bridge ───
    The dsh-layout plugin publishes its frosted-material state on <html>:
@@ -591,12 +382,6 @@ html[data-dsh-layout-material='on'] .dsh-launcher-canvas-menu {
   background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 46%, transparent);
   border-right-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 55%, transparent);
 }
-html[data-dsh-layout-material='on'] .dsh-launcher-mkt-card,
-html[data-dsh-layout-material='on'] .dsh-launcher-mkt-search {
-  background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 34%, transparent);
-  border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 45%, transparent);
-}
-html[data-dsh-layout-material='on'] .dsh-launcher-mkt-card-tile,
 html[data-dsh-layout-material='on'] .dsh-launcher-panel-item-icon {
   background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 52%, transparent);
 }
@@ -723,31 +508,6 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
   .dsh-launcher-section-header-title { font-size: 17px; }
   .dsh-launcher-section-header-subtitle { font-size: 11px; }
 
-  .dsh-launcher-mkt-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  .dsh-launcher-mkt-card { padding: 14px; border-radius: var(--dsh-layout-radius-user-lg, 12px); }
-  .dsh-launcher-mkt-card-tile { width: 32px; height: 32px; flex: 0 0 32px; }
-  .dsh-launcher-mkt-card-tile svg { width: 16px; height: 16px; }
-  .dsh-launcher-mkt-card-title { font-size: 13px; }
-  .dsh-launcher-mkt-card-desc { font-size: 11px; min-height: 0; }
-
-  .dsh-launcher-mkt-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-  .dsh-launcher-mkt-search { min-width: 0; }
-  .dsh-launcher-mkt-toolbar-btn { width: 100%; justify-content: center; }
-
-  .dsh-launcher-mkt-sources { gap: 4px; }
-  .dsh-launcher-mkt-source-chip { padding: 5px 10px; font-size: 11px; }
-  .dsh-launcher-mkt-source-add { padding: 5px 10px; font-size: 11px; }
-
-  .dsh-launcher-mkt-addrow { flex-direction: column; }
-  .dsh-launcher-mkt-addrow input { flex: 1 1 auto; }
-
   .dsh-launcher-panel-mask {
     padding: 0;
     align-items: stretch;
@@ -775,10 +535,6 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
 /* ─── Tiny phone (≤ 480px) ─── */
 @media (max-width: 480px) {
   .dsh-launcher-canvas-content { padding: 12px 10px 80px; }
-  .dsh-launcher-mkt-grid { gap: 10px; }
-  .dsh-launcher-mkt-card { padding: 12px; }
-  .dsh-launcher-mkt-card-foot { flex-wrap: wrap; }
-  .dsh-launcher-mkt-card-action { margin-left: 0; flex: 1 1 100%; justify-content: center; }
   .dsh-launcher-section-header-title { font-size: 15px; }
   .dsh-launcher-fab { bottom: 16px; left: 16px; width: 48px; height: 48px; }
 }
@@ -794,6 +550,7 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
 }
 .dsh-launcher-rail {
   width: 100%;
+  min-width: 0;
   box-sizing: border-box;
   padding: 0 8px;
   margin: 2px 0;

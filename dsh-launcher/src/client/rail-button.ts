@@ -17,8 +17,11 @@
  * A MutationObserver reconciles after platform re-renders (wide/narrow
  * toggle, settings modal open/close): the replacement flag is re-applied
  * every pass because a re-render recreates the trigger without it, and
- * the button is re-anchored if the rail moved it. All nodes are built
- * with DOM APIs (createElementNS for the SVG) — no innerHTML anywhere.
+ * the button is re-anchored if the rail moved. A ResizeObserver on the
+ * sidebar column tracks the collapsed (icon-only) rail and switches the
+ * trigger to a centered square icon the size of the native rail buttons.
+ * All nodes are built with DOM APIs (createElementNS for the SVG) — no
+ * innerHTML anywhere.
  */
 import {
  findNativeSettingsTrigger,
@@ -34,16 +37,49 @@ const REPLACED_FLAG = "data-dsh-launcher-replaced";
 /** Set on <body> while the rail button owns the footer slot. Hides the
     replaced native trigger (desktop) and the FAB (see styles.ts). */
 const RAIL_FLAG = "data-dsh-launcher-rail";
+/** Below this sidebar width the rail is icon-only (collapsed): the
+    launcher trigger drops its label and centers a square icon to match
+    the native rail buttons above it. Wide rails are ~256px, collapsed
+    ones ~56–68px, so 120px splits them with room to spare. */
+const COLLAPSED_THRESHOLD = 120;
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 export function installRailButton(target: Document): () => void {
+ // The rail's wide↔narrow toggle is a resize, not a DOM mutation — the
+ // MutationObserver never sees it. ResizeObservers on the sidebar
+ // column AND the footer slot we occupy flip the trigger's
+ // is-collapsed class (icon-only square, the size of the native rail
+ // buttons). Watching both matters because the collapse can shrink
+ // either element depending on the layout: the column in the native
+ // frame, the footer in dsh-layout's nested rail.
+ let column: HTMLElement | undefined;
+ const sync = (): void => {
+  syncCollapsed(target, column);
+ };
+ let resizes: ResizeObserver | undefined;
+ const watchSizes = (...elements: HTMLElement[]): void => {
+  resizes?.disconnect();
+  if (typeof ResizeObserver === "function") {
+   resizes = new ResizeObserver(sync);
+   for (const element of elements) resizes.observe(element);
+  }
+  sync();
+ };
+
  const watcher = watchDocument(target, () => {
-  reconcile(target);
+  reconcile(target, (sidebar, ...elements) => {
+   column = sidebar;
+   watchSizes(sidebar, ...elements);
+  });
  });
- reconcile(target);
+ reconcile(target, (sidebar, ...elements) => {
+  column = sidebar;
+  watchSizes(sidebar, ...elements);
+ });
 
  return () => {
   watcher.dispose();
+  resizes?.disconnect();
   target.getElementById(RAIL_BTN_ID)?.remove();
   target.body.removeAttribute(RAIL_FLAG);
   // Restore any trigger we replaced. Removing RAIL_FLAG alone already
@@ -55,7 +91,28 @@ export function installRailButton(target: Document): () => void {
  };
 }
 
-function reconcile(target: Document): void {
+/** Collapsed when the narrowest observed footprint is icon-rail width:
+    whichever element actually shrinks on collapse (column or footer),
+    the minimum catches it. */
+function syncCollapsed(
+ target: Document,
+ column?: HTMLElement,
+): void {
+ const wrap = target.getElementById(RAIL_BTN_ID);
+ if (wrap === null) return;
+ const host = wrap.parentElement;
+ const width = Math.min(
+  wrap.offsetWidth,
+  host instanceof HTMLElement ? host.offsetWidth : Number.POSITIVE_INFINITY,
+  column?.offsetWidth ?? Number.POSITIVE_INFINITY,
+ );
+ wrap.classList.toggle("is-collapsed", width < COLLAPSED_THRESHOLD);
+}
+
+function reconcile(
+ target: Document,
+ watchSizes: (...elements: HTMLElement[]) => void,
+): void {
  const sidebar = findSidebarColumn(target);
  if (sidebar === null) return;
  const nativeTrigger = findNativeSettingsTrigger(target);
@@ -79,6 +136,13 @@ function reconcile(target: Document): void {
   nativeTrigger.parentElement.insertBefore(existing, nativeTrigger);
  }
 
+ const wrap = target.getElementById(RAIL_BTN_ID);
+ if (wrap !== null) {
+  const host = wrap.parentElement;
+  const observed = [sidebar, wrap];
+  if (host instanceof HTMLElement && host !== sidebar) observed.push(host);
+  watchSizes(...observed);
+ }
  target.body.setAttribute(RAIL_FLAG, "");
 }
 
