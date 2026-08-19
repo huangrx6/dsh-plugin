@@ -6,20 +6,31 @@ const STYLE_ID = 'dsh-mcp-manager-styles'
  *     (bg-layer-2) with an 8% hairline and the user's large radius —
  *     holding compact rows separated by 6% hairlines
  *   - hover is background-only (4% brighten, 120ms); no translateY,
- *     no drop shadows, no gradients, no glow, anywhere
+ *     no drop shadows, no gradients, no glow, anywhere — except cards
+ *   - cards (installed + market) carry the only "texture": a per-item
+ *     hue (djb2 of the name → --dshmcp-hue) tints the 46px icon plinth
+ *     with a 14%→7% gradient and a same-hue bright icon, the surface is
+ *     a 5%→2% vertical gradient with an inset top highlight and a light
+ *     ambient shadow; hover only lifts the border to 18% and deepens the
+ *     shadow — still no motion
  *   - buttons are small (26–28px): primary = 14% fill + 24% border,
  *     secondary = 10% border, press feedback via scale(.97)
- *   - status is a 6px dot in the status color; icons sit on 32px plinths
- *     filled 6%; type scale: names 13/600, meta 11 tertiary,
- *     descriptions 12 secondary, block labels 11/500 +0.05em
+ *   - status is a 6px dot in the status color (online adds a 6px halo);
+ *     row icons sit on 32px plinths filled 6%; type scale: names 13/600,
+ *     meta 11 tertiary, descriptions 12 secondary, block labels
+ *     11/500 +0.05em
+ *   - modal masks darken with black at 45% over a 4px blur (dark and
+ *     light alike) so dialogs read as normal modals, and dialog surfaces
+ *     are opaque bg-layer-1 (88% glass under the material linkage)
  *   - every color rides a --dsw-alias-* token with a dark hex fallback;
  *     radii bridge onto --dsh-layout-radius-user / -lg
  *   - html[data-dsh-layout-material='on'] pours glass keyed off
  *     --dsh-layout-glass-base / --dsh-layout-line: groups 34% /
- *     panels 46%, line borders 45–55%
+ *     panels 46% / modal dialogs 88%, line borders 45–55%
  *   - the only motion is background/color 120ms transitions (plus the
- *     switch knob slide, the loading spinners and the modal shell's
- *     160ms slide-up entry, all disabled under prefers-reduced-motion)
+ *     switch knob slide, the loading spinners, the detail chevron turn
+ *     and the modal shell's 160ms slide-up entry, all disabled under
+ *     prefers-reduced-motion)
  */
 const CSS = `
 /* ── shell ──────────────────────────────────────────────────────────────── */
@@ -50,8 +61,10 @@ const CSS = `
 }
 
 /* ── buttons ────────────────────────────────────────────────────────────── */
-/* 26–28px controls. Primary: 14% fill + 24% border. Secondary: 10% border.
-   Press = scale(.97); hover brightens the fill only. */
+/* One recipe, everywhere (toolbar, text, market, modal feet): 26–28px
+   controls. Secondary: transparent fill + 10% border, hover fills 5%.
+   Primary: 9% fill + 24% border + an inset top highlight, hover 13%.
+   Danger rides the same weights in the error hue. Press = scale(.97). */
 .dshmcp-button {
   height: 28px; padding: 0 10px;
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
@@ -62,15 +75,19 @@ const CSS = `
   cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
   transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease);
 }
-.dshmcp-button:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent); }
+.dshmcp-button:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent); }
 .dshmcp-button:active { transform: scale(0.97); }
 .dshmcp-button:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #ffb74d); outline-offset: -2px; }
 .dshmcp-button[disabled] { opacity: .5; cursor: default; }
 .dshmcp-buttonIcon { width: 28px; height: 28px; padding: 0; justify-content: center; }
-.dshmcp-buttonPrimary { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 24%, transparent); }
-.dshmcp-buttonPrimary:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 28%, transparent); }
-.dshmcp-buttonDanger { color: var(--dsw-alias-state-error-primary, #ef5350); border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 24%, transparent); }
-.dshmcp-buttonDanger:hover { background: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 8%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 32%, transparent); }
+.dshmcp-buttonPrimary {
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 9%, transparent);
+  border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 24%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
+}
+.dshmcp-buttonPrimary:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 13%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 28%, transparent); }
+.dshmcp-buttonDanger { color: var(--dsw-alias-state-error-primary, #ef5350); border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 20%, transparent); }
+.dshmcp-buttonDanger:hover { background: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 6%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 30%, transparent); }
 .dshmcp-buttonGhostSm { height: 26px; padding: 0 9px; font-size: 12px; }
 
 /* ── status text / failure ──────────────────────────────────────────────── */
@@ -78,7 +95,7 @@ const CSS = `
 .dshmcp-failure { color: var(--dsw-alias-state-error-primary, #ef5350); font-size: 12.5px; line-height: 1.55; display: flex; align-items: center; gap: 10px; }
 .dshmcp-failure p { margin: 0; }
 .dshmcp-failure button { height: 26px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); font: inherit; font-size: 12px; cursor: pointer; background: transparent; border-radius: var(--dsh-layout-radius-user, 8px); padding: 0 10px; transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease); }
-.dshmcp-failure button:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
+.dshmcp-failure button:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); }
 
 /* ── loading skeleton: grouped rows with a soft opacity pulse ───────────── */
 .dshmcp-skeleton { padding: 6px; background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); }
@@ -119,53 +136,79 @@ const CSS = `
 .dshmcp-instDesc { flex: 1; min-width: 0; font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11.5px; line-height: 16px; color: var(--dsw-alias-label-secondary, #b3b3b8); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dshmcp-instSide { flex: none; display: inline-flex; align-items: center; gap: 6px; }
 
-/* Card grid: quiet cards in one grouped container, auto-fill ≥240px. */
+/* Card grid: textured cards in one grouped container, auto-fill ≥300px. */
 .dshmcp-instCards {
   margin: 0; padding: 6px; list-style: none;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px;
   background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03));
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
   border-radius: var(--dsh-layout-radius-user-lg, 12px);
 }
 .dshmcp-instCard {
-  min-width: 0; box-sizing: border-box;
-  display: flex; flex-direction: column; gap: 8px; padding: 11px;
+  min-width: 0; min-height: 160px; box-sizing: border-box;
+  display: flex; flex-direction: column; gap: 13px; padding: 18px;
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent);
   border-radius: var(--dsh-layout-radius-user, 8px);
-  transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease);
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent),
+    color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 2%, transparent));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent), 0 4px 16px rgba(0, 0, 0, 0.18);
+  transition: border-color 120ms var(--ds-ease-in-out, ease), box-shadow 120ms var(--ds-ease-in-out, ease);
 }
-.dshmcp-instCard:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); }
-.dshmcp-instCardHead { display: flex; align-items: flex-start; gap: 10px; }
+.dshmcp-instCard:hover {
+  border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent), 0 8px 24px rgba(0, 0, 0, 0.26);
+}
+.dshmcp-instCardHead { display: flex; align-items: flex-start; gap: 12px; }
 .dshmcp-instCardTile {
-  flex: none; width: 40px; height: 40px;
+  flex: none; width: 46px; height: 46px;
   display: inline-flex; align-items: center; justify-content: center;
   border-radius: var(--dsh-layout-radius-user, 8px);
-  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent);
-  color: var(--dsw-alias-label-secondary, #b3b3b8);
+  background: linear-gradient(180deg,
+    hsl(var(--dshmcp-hue, 220) 55% 55% / 14%),
+    hsl(var(--dshmcp-hue, 220) 55% 55% / 7%));
+  color: hsl(var(--dshmcp-hue, 220) 70% 74%);
 }
-.dshmcp-instCardTile svg { width: 18px; height: 18px; }
-.dshmcp-instCardId { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.dshmcp-instCardNameLine { min-width: 0; display: flex; align-items: center; gap: 7px; }
+.dshmcp-instCardTile svg { width: 20px; height: 20px; }
+.dshmcp-instCardId { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dshmcp-instCardNameLine { min-width: 0; display: flex; align-items: center; gap: 8px; }
+.dshmcp-instCard .dshmcp-instName { font-size: 14px; line-height: 19px; }
 .dshmcp-instCardDesc {
-  margin: 0; font-size: 12px; line-height: 1.5; color: var(--dsw-alias-label-secondary, #b3b3b8);
+  margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--dsw-alias-label-secondary, #b3b3b8);
   overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
   overflow-wrap: anywhere;
 }
 .dshmcp-instCardFoot {
-  margin-top: auto; padding-top: 8px;
+  margin-top: auto; padding-top: 10px;
   border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent);
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
 }
 
-/* ── detail modal tool rows (read-only, hairline separated) ─────────────── */
+/* ── detail modal tool rows (expandable: description + schema) ──────────── */
 .dshmcp-detailTools { display: flex; flex-direction: column; }
 .dshmcp-detailTools li {
-  display: flex; flex-direction: column; gap: 1px; min-width: 0;
-  padding: 6px 8px 6px 10px; border-radius: var(--dsh-layout-radius-user, 8px);
+  display: flex; flex-direction: column; min-width: 0;
+  border-radius: var(--dsh-layout-radius-user, 8px);
 }
 .dshmcp-detailTools li + li { border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
+.dshmcp-detailToolHead {
+  width: 100%; box-sizing: border-box; display: flex; align-items: center; gap: 8px;
+  min-height: 40px; padding: 6px 8px 6px 10px;
+  background: none; border: 0; border-radius: var(--dsh-layout-radius-user, 8px);
+  color: inherit; font: inherit; text-align: left; cursor: pointer;
+  transition: background-color 120ms var(--ds-ease-in-out, ease);
+}
+.dshmcp-detailToolHead:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
+.dshmcp-detailToolHead:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #ffb74d); outline-offset: -2px; }
+.dshmcp-detailToolMain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .dshmcp-detailToolName { font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 12px; font-weight: 600; color: var(--dsw-alias-label-primary, #f4f4f5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dshmcp-detailToolDesc { color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 11px; line-height: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshmcp-detailToolChevron { flex: none; display: inline-flex; color: var(--dsw-alias-label-tertiary, #8a8a8e); transition: transform 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease); }
+.dshmcp-detailToolHead:hover .dshmcp-detailToolChevron { color: var(--dsw-alias-label-secondary, #b3b3b8); }
+.dshmcp-detailToolHead[aria-expanded=true] .dshmcp-detailToolChevron { transform: rotate(90deg); color: var(--dsw-alias-label-secondary, #b3b3b8); }
+.dshmcp-detailToolBody { padding: 2px 8px 10px 26px; display: flex; flex-direction: column; gap: 8px; }
+.dshmcp-detailToolFull { margin: 0; font-size: 12px; line-height: 1.55; color: var(--dsw-alias-label-secondary, #b3b3b8); white-space: normal; overflow-wrap: anywhere; }
+.dshmcp-paramDesc { color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 11.5px; }
 
 /* ── grouped blocks (detail modal, editor) ──────────────────────────────── */
 .dshmcp-block { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
@@ -179,9 +222,9 @@ const CSS = `
 .dshmcp-fields dd { overflow-wrap: anywhere; min-width: 0; color: var(--dsw-alias-label-secondary, #b3b3b8); margin: 0; font-size: 12px; line-height: 1.5; display: inline-flex; align-items: center; gap: 5px; }
 .dshmcp-path { font-family: var(--ds-font-family-code, ui-monospace, monospace); font-size: 11px; }
 
-/* ── status dots: 6px, flat status color, no glow ───────────────────────── */
+/* ── status dots: 6px, status color; online adds a soft 6px halo ────────── */
 .dshmcp-statusDot { flex: none; width: 6px; height: 6px; border-radius: 999px; background: var(--dsw-alias-label-tertiary, #8a8a8e); display: inline-block; }
-.dshmcp-statusDot[data-phase=active] { background: var(--dsw-alias-state-success-primary, #4caf50); }
+.dshmcp-statusDot[data-phase=active] { background: var(--dsw-alias-state-success-primary, #4caf50); box-shadow: 0 0 6px color-mix(in srgb, var(--dsw-alias-state-success-primary, #4caf50) 55%, transparent); }
 .dshmcp-statusDot[data-phase=failed] { background: var(--dsw-alias-state-error-primary, #ef5350); }
 .dshmcp-statusDot[data-phase=loading], .dshmcp-statusDot[data-phase=pending] { background: var(--dsw-alias-state-business-primary, #ffb74d); }
 .dshmcp-statusDot[data-phase=disabled] { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent); }
@@ -219,7 +262,7 @@ const CSS = `
 /* ── segmented control (editor modes) ───────────────────────────────────── */
 .dshmcp-seg { display: inline-flex; gap: 2px; padding: 3px; background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user, 8px); }
 .dshmcp-seg button { height: 26px; padding: 0 12px; border: 0; background: transparent; color: var(--dsw-alias-label-tertiary, #8a8a8e); font: inherit; font-size: 12px; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 3px); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background-color 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease); }
-.dshmcp-seg button:hover { color: var(--dsw-alias-label-primary, #f4f4f5); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
+.dshmcp-seg button:hover { color: var(--dsw-alias-label-primary, #f4f4f5); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); }
 .dshmcp-seg button[aria-pressed=true] { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); font-weight: 500; }
 .dshmcp-seg button:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #ffb74d); outline-offset: -2px; }
 
@@ -231,7 +274,7 @@ const CSS = `
 .dshmcp-kvRow input:focus-visible { border-color: color-mix(in srgb, var(--dsw-alias-state-business-primary, #ffb74d) 55%, transparent); }
 .dshmcp-kvRow input[disabled] { color: var(--dsw-alias-state-warning-primary, #d97706); background: color-mix(in srgb, var(--dsw-alias-state-warning-primary, #d97706) 6%, transparent); }
 .dshmcp-kvRemove { width: 26px; height: 26px; border: 1px solid transparent; background: none; color: var(--dsw-alias-label-tertiary, #8a8a8e); cursor: pointer; border-radius: var(--dsh-layout-radius-user, 8px); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; transition: color 120ms var(--ds-ease-in-out, ease), background-color 120ms var(--ds-ease-in-out, ease); }
-.dshmcp-kvRemove:hover { color: var(--dsw-alias-state-error-primary, #ef5350); background: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 8%, transparent); }
+.dshmcp-kvRemove:hover { color: var(--dsw-alias-state-error-primary, #ef5350); background: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 6%, transparent); }
 .dshmcp-kvFoot { padding: 0 2px; }
 
 /* ── tags ───────────────────────────────────────────────────────────────── */
@@ -285,7 +328,13 @@ const CSS = `
 .dshmcp-toolHead:hover .dshmcp-toolChevron { color: var(--dsw-alias-label-secondary, #b3b3b8); }
 
 /* ── tool detail modal ──────────────────────────────────────────────────── */
-[role="dialog"].dshmcp-toolModal { width: min(820px, 92vw); height: min(760px, 88dvh); max-height: 88dvh; box-sizing: border-box; overflow: hidden; }
+[role="dialog"].dshmcp-toolModal {
+  width: min(820px, 92vw); height: min(760px, 88dvh); max-height: 88dvh; box-sizing: border-box; overflow: hidden;
+  background: var(--dsw-alias-bg-layer-1, #1c1c1f);
+  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
+  border-radius: var(--dsh-layout-radius-user-lg, 12px);
+  animation: dshmcp-modalUp 160ms var(--ds-ease-in-out, ease);
+}
 .dshmcp-toolModalBody { width: 100%; height: 100%; min-height: 0; max-height: 100%; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 14px; }
 .dshmcp-toolModalBody > :first-child { position: sticky; top: 0; z-index: 2; background: var(--dsw-alias-bg-layer-3, #232327); }
 .dshmcp-toolModalBody h6 { margin: 0 0 6px; font-size: 11px; font-weight: 500; letter-spacing: 0.05em; color: var(--dsw-alias-label-tertiary, #8a8a8e); text-transform: uppercase; }
@@ -314,31 +363,33 @@ const CSS = `
 /* ── shared modal shell (edit + 详情 dialogs) ───────────────────────────── */
 /* The platform Modal primitive is mounted headless (portal, Escape, mask
    click, aria); we pour the Quiet Structure chrome over its structural
-   roles: a 32% label-primary mask above a 4px blur, a bg-layer-1 card
-   with an 8% hairline and the user's large radius, and a 160ms slide-up
-   entry (the only transform anywhere — hover stays background-only). */
+   roles: a black 45% mask above a 4px blur (dark and light themes alike —
+   it reads as a normal modal scrim instead of a milky wash), an opaque
+   bg-layer-1 card with a 10% hairline and the user's large radius, and a
+   160ms slide-up entry (hover stays background-only everywhere else). */
 [role="presentation"]:has(> [role="dialog"].dshmcp-modal) { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; padding: 24px; }
-[role="presentation"]:has(> [role="dialog"].dshmcp-toolModal) { z-index: 10001; }
-[role="presentation"]:has(> [role="dialog"].dshmcp-modal) > [aria-hidden="true"] { position: absolute; inset: 0; background: color-mix(in srgb, var(--dsw-alias-label-primary, #f4f4f5) 32%, transparent); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); animation: dshmcp-modalFade 160ms var(--ds-ease-in-out, ease); }
+[role="presentation"]:has(> [role="dialog"].dshmcp-toolModal) { position: fixed; inset: 0; z-index: 10001; display: grid; place-items: center; padding: 24px; }
+[role="presentation"]:has(> [role="dialog"].dshmcp-modal) > [aria-hidden="true"],
+[role="presentation"]:has(> [role="dialog"].dshmcp-toolModal) > [aria-hidden="true"] { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); animation: dshmcp-modalFade 160ms var(--ds-ease-in-out, ease); }
 @keyframes dshmcp-modalFade { from { opacity: 0; } }
 .dshmcp-modal {
   position: relative; box-sizing: border-box; min-width: 0;
   width: min(560px, 100%); max-height: calc(100dvh - 48px);
   display: flex; flex-direction: column;
   background: var(--dsw-alias-bg-layer-1, #1c1c1f);
-  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
   border-radius: var(--dsh-layout-radius-user-lg, 12px);
   overflow: hidden;
   animation: dshmcp-modalUp 160ms var(--ds-ease-in-out, ease);
 }
 .dshmcp-modal.is-lg { width: min(640px, 100%); }
 @keyframes dshmcp-modalUp { from { opacity: 0; transform: translateY(10px); } }
-@media (prefers-reduced-motion: reduce) { .dshmcp-modal, [role="presentation"]:has(> [role="dialog"].dshmcp-modal) > [aria-hidden="true"] { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .dshmcp-modal, .dshmcp-toolModal, [role="presentation"]:has(> [role="dialog"].dshmcp-modal) > [aria-hidden="true"], [role="presentation"]:has(> [role="dialog"].dshmcp-toolModal) > [aria-hidden="true"] { animation: none !important; } }
 .dshmcp-modalInner { display: flex; flex-direction: column; min-height: 0; max-height: calc(100dvh - 48px); }
 .dshmcp-modalHead { flex: none; display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
 .dshmcp-modalTitle { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; line-height: 19px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dshmcp-modalClose { flex: none; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 1px solid transparent; border-radius: var(--dsh-layout-radius-user, 8px); background: transparent; color: var(--dsw-alias-label-tertiary, #8a8a8e); cursor: pointer; transition: color 120ms var(--ds-ease-in-out, ease), background-color 120ms var(--ds-ease-in-out, ease); }
-.dshmcp-modalClose:hover { color: var(--dsw-alias-label-primary, #f4f4f5); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
+.dshmcp-modalClose:hover { color: var(--dsw-alias-label-primary, #f4f4f5); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); }
 .dshmcp-modalClose:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #ffb74d); outline-offset: -2px; }
 .dshmcp-modalBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
 .dshmcp-modalFoot { flex: none; display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
@@ -371,7 +422,7 @@ const CSS = `
   min-width: 0;
   gap: 2px;
   padding: 3px;
-  background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03));
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent);
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
   border-radius: var(--dsh-layout-radius-user, 8px);
   overflow-x: auto;
@@ -395,7 +446,7 @@ const CSS = `
   white-space: nowrap;
   transition: background-color 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease);
 }
-.dshmcp-mkt-segItem:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dshmcp-mkt-segItem:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
 .dshmcp-mkt-segItem:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #ffb74d); outline-offset: -2px; }
 .dshmcp-mkt-segItem.is-active { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); font-weight: 500; }
 .dshmcp-mkt-segName { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -439,7 +490,7 @@ const CSS = `
   cursor: pointer;
   transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease);
 }
-.dshmcp-mkt-iconbtn:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent); }
+.dshmcp-mkt-iconbtn:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent); }
 .dshmcp-mkt-iconbtn:active { transform: scale(0.97); }
 .dshmcp-mkt-iconbtn:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #ffb74d); outline-offset: -2px; }
 .dshmcp-mkt-iconbtn[disabled] { opacity: .5; cursor: default; }
@@ -448,8 +499,14 @@ const CSS = `
 .dshmcp-mkt-iconbtn.is-spin svg { animation: dshmcp-mkt-spin 1.2s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .dshmcp-mkt-iconbtn.is-spin svg { animation: none !important; } }
 
-/* add-source: compact inline disclosure row */
-.dshmcp-mkt-addrow { display: flex; gap: 8px; flex-wrap: wrap; }
+/* add-source: compact inline disclosure row on a proper grouped surface */
+.dshmcp-mkt-addrow {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 8px;
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
+  border-radius: var(--dsh-layout-radius-user-lg, 12px);
+}
 .dshmcp-mkt-addrow input {
   flex: 1 1 180px;
   min-width: 0;
@@ -476,18 +533,19 @@ const CSS = `
   padding: 0 10px;
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 24%, transparent);
   border-radius: var(--dsh-layout-radius-user, 8px);
-  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent);
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 9%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
   color: var(--dsw-alias-label-primary, #f4f4f5);
   font: inherit;
   font-size: 12px;
   cursor: pointer;
   transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease);
 }
-.dshmcp-mkt-addbtn:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 28%, transparent); }
+.dshmcp-mkt-addbtn:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 13%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 28%, transparent); }
 .dshmcp-mkt-addbtn:active { transform: scale(0.97); }
 .dshmcp-mkt-addbtn[disabled] { opacity: .5; cursor: default; }
-.dshmcp-mkt-addbtn.is-quiet { background: transparent; border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); color: var(--dsw-alias-label-secondary, #b3b3b8); }
-.dshmcp-mkt-addbtn.is-quiet:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dshmcp-mkt-addbtn.is-quiet { background: transparent; border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); box-shadow: none; color: var(--dsw-alias-label-secondary, #b3b3b8); }
+.dshmcp-mkt-addbtn.is-quiet:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
 
 /* the list: one grouped container of compact rows */
 .dshmcp-mkt-row { margin: 0; }
@@ -548,14 +606,15 @@ const CSS = `
   padding: 0 12px;
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 24%, transparent);
   border-radius: var(--dsh-layout-radius-user, 8px);
-  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent);
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 9%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
   color: var(--dsw-alias-label-primary, #f4f4f5);
   font: inherit;
   font-size: 12px;
   cursor: pointer;
   transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease);
 }
-.dshmcp-mkt-install:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 28%, transparent); }
+.dshmcp-mkt-install:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 13%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 28%, transparent); }
 .dshmcp-mkt-install:active { transform: scale(0.97); }
 .dshmcp-mkt-install:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #ffb74d); outline-offset: -2px; }
 .dshmcp-mkt-install[disabled] { opacity: .55; cursor: default; }
@@ -573,7 +632,7 @@ const CSS = `
   cursor: pointer;
   transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease);
 }
-.dshmcp-mkt-remove:hover { background: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 8%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 24%, transparent); color: var(--dsw-alias-state-error-primary, #ef5350); }
+.dshmcp-mkt-remove:hover { background: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 6%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary, #ef5350) 24%, transparent); color: var(--dsw-alias-state-error-primary, #ef5350); }
 .dshmcp-mkt-remove:active { transform: scale(0.97); }
 .dshmcp-mkt-remove:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #ffb74d); outline-offset: -2px; }
 .dshmcp-mkt-remove[disabled] { opacity: .55; cursor: default; }
@@ -606,7 +665,7 @@ const CSS = `
   display: inline-flex;
   gap: 2px;
   padding: 3px;
-  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 3%, transparent);
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent);
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
   border-radius: var(--dsh-layout-radius-user, 8px);
 }
@@ -625,7 +684,7 @@ const CSS = `
   cursor: pointer;
   transition: background-color 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease);
 }
-.dshmcp-mkt-viewseg button:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dshmcp-mkt-viewseg button:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
 .dshmcp-mkt-viewseg button:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #ffb74d); outline-offset: -2px; }
 .dshmcp-mkt-viewseg button[aria-pressed=true] { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
 .dshmcp-mkt-viewseg svg { width: 14px; height: 14px; }
@@ -667,7 +726,7 @@ const CSS = `
   cursor: pointer;
   transition: color 120ms var(--ds-ease-in-out, ease), background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease);
 }
-.dshmcp-mkt-srcBtn:hover { color: var(--dsw-alias-label-primary, #f4f4f5); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); }
+.dshmcp-mkt-srcBtn:hover { color: var(--dsw-alias-label-primary, #f4f4f5); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); }
 .dshmcp-mkt-srcBtn:active { transform: scale(0.97); }
 .dshmcp-mkt-srcBtn:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #ffb74d); outline-offset: -2px; }
 .dshmcp-mkt-srcBtn[disabled] { opacity: .45; cursor: default; }
@@ -708,14 +767,14 @@ const CSS = `
   color: var(--dsw-alias-state-business-primary, #ffb74d);
 }
 
-/* ── card grid: quiet cards in one grouped container ────────────────────── */
+/* ── card grid: textured cards in one grouped container, ≥300px ────────── */
 .dshmcp-mkt-cards {
   margin: 0;
   padding: 6px;
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 8px;
   background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03));
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
   border-radius: var(--dsh-layout-radius-user-lg, 12px);
@@ -724,32 +783,42 @@ const CSS = `
 .dshmcp-mkt-card {
   flex: 1;
   min-width: 0;
+  min-height: 160px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 11px;
+  gap: 13px;
+  padding: 18px;
   border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent);
   border-radius: var(--dsh-layout-radius-user, 8px);
-  transition: background-color 120ms var(--ds-ease-in-out, ease), border-color 120ms var(--ds-ease-in-out, ease);
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent),
+    color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 2%, transparent));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent), 0 4px 16px rgba(0, 0, 0, 0.18);
+  transition: border-color 120ms var(--ds-ease-in-out, ease), box-shadow 120ms var(--ds-ease-in-out, ease);
 }
-.dshmcp-mkt-card:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); }
-.dshmcp-mkt-cardHead { display: flex; align-items: center; gap: 10px; }
+.dshmcp-mkt-card:hover {
+  border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent), 0 8px 24px rgba(0, 0, 0, 0.26);
+}
+.dshmcp-mkt-cardHead { display: flex; align-items: center; gap: 12px; }
 .dshmcp-mkt-cardTile {
   flex: none;
-  width: 40px;
-  height: 40px;
+  width: 46px;
+  height: 46px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--dsh-layout-radius-user, 8px);
-  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent);
-  color: var(--dsw-alias-label-secondary, #b3b3b8);
+  background: linear-gradient(180deg,
+    hsl(var(--dshmcp-hue, 220) 55% 55% / 14%),
+    hsl(var(--dshmcp-hue, 220) 55% 55% / 7%));
+  color: hsl(var(--dshmcp-hue, 220) 70% 74%);
 }
-.dshmcp-mkt-cardTile svg { width: 18px; height: 18px; }
-.dshmcp-mkt-cardId { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.dshmcp-mkt-cardNameLine { min-width: 0; display: flex; align-items: center; gap: 6px; }
-.dshmcp-mkt-cardName { flex: 0 1 auto; min-width: 0; font-size: 13px; font-weight: 600; line-height: 17px; color: var(--dsw-alias-label-primary, #f4f4f5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshmcp-mkt-cardTile svg { width: 20px; height: 20px; }
+.dshmcp-mkt-cardId { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dshmcp-mkt-cardNameLine { min-width: 0; display: flex; align-items: center; gap: 8px; }
+.dshmcp-mkt-cardName { flex: 0 1 auto; min-width: 0; font-size: 14px; font-weight: 600; line-height: 19px; color: var(--dsw-alias-label-primary, #f4f4f5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dshmcp-mkt-cardNameBtn { background: none; border: 0; padding: 0; font: inherit; text-align: left; cursor: pointer; color: inherit; }
 .dshmcp-mkt-cardNameBtn:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #ffb74d); outline-offset: 2px; border-radius: var(--dsh-layout-radius-user, 8px); }
 .dshmcp-mkt-cardMeta { font-size: 11px; line-height: 15px; color: var(--dsw-alias-label-tertiary, #8a8a8e); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -771,8 +840,8 @@ const CSS = `
 }
 .dshmcp-mkt-cardDesc {
   margin: 0;
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: 12.5px;
+  line-height: 1.6;
   color: var(--dsw-alias-label-secondary, #b3b3b8);
   overflow: hidden;
   display: -webkit-box;
@@ -782,7 +851,7 @@ const CSS = `
 .dshmcp-mkt-tags { display: flex; flex-wrap: wrap; gap: 4px; }
 .dshmcp-mkt-cardFoot {
   margin-top: auto;
-  padding-top: 8px;
+  padding-top: 10px;
   border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent);
   display: flex;
   align-items: center;
@@ -795,9 +864,10 @@ const CSS = `
 @keyframes dshmcp-mkt-spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
 
 /* ── material linkage (dsh-layout frosted glass) ────────────────────────── */
-/* Groups pour 34% glass, panels 46%, with --dsh-layout-line borders
-   (45–55%) so the quiet containers sit on the canvas like native
-   chrome when the workspace material is on. */
+/* Groups pour 34% glass, panels 46%, modal dialogs 88% — dialogs stay
+   near-opaque so their content never smears through — with
+   --dsh-layout-line borders (45–55%) so the quiet containers sit on the
+   canvas like native chrome when the workspace material is on. */
 html[data-dsh-layout-material='on'] .dshmcp-list,
 html[data-dsh-layout-material='on'] .dshmcp-fields,
 html[data-dsh-layout-material='on'] .dshmcp-toolList,
@@ -807,19 +877,25 @@ html[data-dsh-layout-material='on'] .dshmcp-instCards,
 html[data-dsh-layout-material='on'] .dshmcp-mkt-list,
 html[data-dsh-layout-material='on'] .dshmcp-mkt-cards,
 html[data-dsh-layout-material='on'] .dshmcp-mkt-manage,
+html[data-dsh-layout-material='on'] .dshmcp-mkt-addrow,
 html[data-dsh-layout-material='on'] .dshmcp-mkt-seg,
 html[data-dsh-layout-material='on'] .dshmcp-mkt-empty {
   background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 34%, transparent);
   border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 45%, transparent);
 }
 html[data-dsh-layout-material='on'] [role="dialog"].dshmcp-modal,
+html[data-dsh-layout-material='on'] [role="dialog"].dshmcp-toolModal {
+  background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 88%, transparent);
+  border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 55%, transparent);
+}
 html[data-dsh-layout-material='on'] .dshmcp-editor,
 html[data-dsh-layout-material='on'] .dshmcp-testPanel {
   background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 46%, transparent);
   border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 55%, transparent);
 }
-html[data-dsh-layout-material='on'] .dshmcp-editorFoot { background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 55%, transparent); border-top-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 50%, transparent); }
+html[data-dsh-layout-material='on'] .dshmcp-editorFoot { background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 88%, transparent); border-top-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 50%, transparent); }
 html[data-dsh-layout-material='on'] .dshmcp-modalFoot { border-top-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 50%, transparent); }
+html[data-dsh-layout-material='on'] .dshmcp-toolModalBody > :first-child { background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 88%, transparent); }
 
 /* ── motion safety ──────────────────────────────────────────────────────── */
 /* Quiet Structure only animates background/color; under reduced motion
@@ -830,6 +906,8 @@ html[data-dsh-layout-material='on'] .dshmcp-modalFoot { border-top-color: color-
   .dshmcp-instCard,
   .dshmcp-button,
   .dshmcp-failure button,
+  .dshmcp-detailToolHead,
+  .dshmcp-detailToolChevron,
   .dshmcp-mkt-rowInner,
   .dshmcp-mkt-segItem,
   .dshmcp-mkt-iconbtn,

@@ -10,8 +10,9 @@
  *     sources icon button that opens a grouped panel (rename / re-point /
  *     delete — visible UI, right-click delete on chips stays as a shortcut)
  *   - items render either as compact rows in one grouped container
- *     (hairline separated) or as a quiet card grid — background-only
- *     feedback everywhere, no hover lift, no shadows, no gradients
+ *     (hairline separated, quiet background-only hover) or as a textured
+ *     card grid — per-item hue icon plinth, gradient surface with a light
+ *     ambient shadow; hover lifts the border and shadow only, no motion
  *
  * Does NOT own the install / remove button behavior — those bubbled up
  * as `onInstall` / `onRemove` callbacks so the consumer plugin owns the
@@ -47,6 +48,7 @@ import { fetchAllManifests, type SourceSnapshot } from "./manifest.ts";
 import type { MarketItem, MarketItemKind, MarketSource } from "./types.ts";
 import { loadMarketView, saveMarketView, type MarketView } from "../preferences.ts";
 import { versionsDiffer } from "./version.ts";
+import { hueStyle } from "../hue.ts";
 
 export interface MarketShelfProps {
   /** localStorage slot. The launcher owns one; other plugins can pass their own. */
@@ -1074,8 +1076,12 @@ export function MarketCard({
         data-item-id={item.id}
       >
         <div className="dshmcp-mkt-cardHead">
-          <span className="dshmcp-mkt-cardTile" aria-hidden="true">
-            <TileIcon kind={item.kind} size={18} />
+          <span
+            className="dshmcp-mkt-cardTile"
+            style={hueStyle(item.name)}
+            aria-hidden="true"
+          >
+            <TileIcon kind={item.kind} size={20} />
           </span>
           <span className="dshmcp-mkt-cardId">
             {nameLine}

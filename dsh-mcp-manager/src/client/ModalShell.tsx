@@ -7,9 +7,11 @@ import type { McpManagerLocaleKey } from './locales.ts'
  * dialogs. Behavior (portal, Escape, mask click, aria) comes from the
  * platform `Modal` primitive mounted headless; the visuals are ours:
  *
- *   - mask: 32% label-primary over a 4px backdrop blur
- *   - dialog: bg-layer-1 card, 8% hairline, the user's large radius,
- *     max-width 560px (edit) / 640px (detail), a 160ms slide-up entry
+ *   - mask: black 45% over a 4px backdrop blur (dark and light themes
+ *     alike — a normal modal scrim, never a milky wash)
+ *   - dialog: opaque bg-layer-1 card, 10% hairline, the user's large
+ *     radius, max-width 560px (edit) / 640px (detail), a 160ms slide-up
+ *     entry
  *   - chrome: quiet head (title + 26px close) when `title` is given,
  *     scrollable body, optional hairline-separated foot
  *

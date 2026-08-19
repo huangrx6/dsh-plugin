@@ -92,6 +92,7 @@ function ToolDetails({ t, tool, onClose }: {
                     <td className="dshmcp-paramName">{row.name}</td>
                     <td className="dshmcp-paramType">{row.type}</td>
                     <td className={row.required ? 'dshmcp-paramRequired' : 'dshmcp-paramOptional'}>{row.required ? t('paramRequired') : t('paramOptional')}</td>
+                    <td className="dshmcp-paramDesc">{row.description}</td>
                   </tr>
                 ))}
               </tbody>
@@ -113,13 +114,15 @@ function ToolDetails({ t, tool, onClose }: {
   )
 }
 
-interface ParamRow {
+export interface ParamRow {
   readonly name: string
   readonly type: string
   readonly required: boolean
+  readonly description: string
 }
 
-function paramRows(schema: ToolRow['schema']): readonly ParamRow[] {
+/** Flatten a tool input schema into compact rows (name / type / required / description). */
+export function paramRows(schema: ToolRow['schema']): readonly ParamRow[] {
   if (schema === undefined || typeof schema !== 'object') return []
   const properties = schema['properties']
   if (typeof properties !== 'object' || properties === null) return []
@@ -127,11 +130,13 @@ function paramRows(schema: ToolRow['schema']): readonly ParamRow[] {
   return Object.entries(properties as Record<string, unknown>).map(([name, property]) => {
     const record = typeof property === 'object' && property !== null ? property as Record<string, unknown> : {}
     const type = Array.isArray(record['enum']) ? 'enum' : typeof record['type'] === 'string' ? record['type'] : '—'
-    return { name, type, required: required.includes(name) }
+    const description = typeof record['description'] === 'string' ? record['description'] : ''
+    return { name, type, required: required.includes(name), description }
   })
 }
 
-function paramsHint(t: (key: McpManagerLocaleKey) => string, schema: ToolRow['schema']): string {
+/** Compact "{n} 参数 · {r} 必填" capsule text for a tool row. */
+export function paramsHint(t: (key: McpManagerLocaleKey) => string, schema: ToolRow['schema']): string {
   const rows = paramRows(schema)
   if (rows.length === 0) return t('toolNoParamsShort')
   const required = rows.filter(row => row.required).length

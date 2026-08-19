@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { IconApiOutline14, IconLoadingOutline16, IconPlusOutline16, IconRefreshOutline16, IconTrashOutline16, IconWarningOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconApiOutline14, IconChevronRightOutline14, IconLoadingOutline16, IconPlusOutline16, IconRefreshOutline16, IconTrashOutline16, IconWarningOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { McpListResponse, McpServerView } from '../contracts.ts'
 import type { McpManagerApi } from './api.ts'
 import type { McpManagerLocaleKey } from './locales.ts'
 import type { CachedTest } from './tool-cache.ts'
 import { McpEditor } from './McpEditor.tsx'
 import { ModalShell } from './ModalShell.tsx'
-import { cachedToolsToRows } from './ToolList.tsx'
+import { cachedToolsToRows, paramRows, paramsHint, type ToolRow } from './ToolList.tsx'
 import { clearCachedTest, loadCachedTest, saveCachedTest } from './tool-cache.ts'
 import { loadInstalledView, saveInstalledView, type InstalledView } from './preferences.ts'
 import { IconGrid, IconList, IconMcp, IconRemote } from './market/icons.tsx'
+import { hueStyle } from './hue.ts'
 
 export interface McpManagerSectionProps {
   readonly t: (key: McpManagerLocaleKey) => string
@@ -425,9 +426,10 @@ function InstalledRow({ t, server, cache, autoTesting, busy, onToggle, onDetail,
 }
 
 /**
- * One installed card: 40px plinth + name + status dot with the enable
- * switch in the top-right corner, two-line clamped command/URL, transport
- * · tools · version meta, and a hairline-separated action foot.
+ * One installed card: 46px hue-tinted plinth + name + version badge +
+ * status dot with the enable switch in the top-right corner, two-line
+ * clamped command/URL, transport · tools meta, and a hairline-separated
+ * action foot.
  */
 function InstalledCard({ t, server, cache, autoTesting, busy, onToggle, onDetail, onEdit, onDelete }: {
   readonly t: (key: McpManagerLocaleKey) => string
@@ -447,19 +449,19 @@ function InstalledCard({ t, server, cache, autoTesting, busy, onToggle, onDetail
   return (
     <li className="dshmcp-instCard">
       <div className="dshmcp-instCardHead">
-        <span className="dshmcp-instCardTile" aria-hidden="true">
+        <span className="dshmcp-instCardTile" style={hueStyle(server.serverName)} aria-hidden="true">
           <TransportIcon transport={server.config?.transport === 'streamable-http' ? 'streamable-http' : 'stdio'} />
         </span>
         <span className="dshmcp-instCardId">
           <span className="dshmcp-instCardNameLine">
             <span className={`dshmcp-instName${server.disabled ? ' is-muted' : ''}`}>{server.serverName}</span>
+            {version !== undefined ? <span className="dshmcp-mkt-ver">v{version}</span> : null}
             {server.disabled
               ? <span className="dshmcp-statusDot" data-phase="disabled" aria-hidden="true" />
               : <span className="dshmcp-statusDot" data-phase={phase ?? 'unobserved'} role="img" aria-label={phaseLabel(t, phase)} title={phaseLabel(t, phase)} />}
           </span>
           <span className="dshmcp-instMeta">
             {server.disabled ? t('disabledTag') : meta.join(' · ')}
-            {version !== undefined ? ` · v${version}` : ''}
             {autoTestIndicator(autoTesting)}
           </span>
         </span>
@@ -476,7 +478,10 @@ function InstalledCard({ t, server, cache, autoTesting, busy, onToggle, onDetail
 /**
  * Read-only 详情 dialog: grouped basic-info rows (name, transport,
  * command, env count, version, patch layer …) plus a grouped tool list
- * (name + one-line description). Shares the modal shell with the editor.
+ * whose rows expand in place — full description and the input parameter
+ * schema (name / type / required / description) from the live
+ * registration or the cached probe. Shares the modal shell with the
+ * editor.
  */
 function ServerDetailModal({ t, server, cache, autoTesting, onClose }: {
   readonly t: (key: McpManagerLocaleKey) => string
@@ -489,8 +494,8 @@ function ServerDetailModal({ t, server, cache, autoTesting, onClose }: {
   const liveCount = server.tools.length
   const cachedCount = cache?.toolCount ?? cache?.tools.length ?? 0
   const shownCount = liveCount > 0 ? liveCount : cachedCount
-  const toolRows = liveCount > 0
-    ? server.tools.map(tool => ({ name: tool.publicName, description: tool.description }))
+  const toolRows: readonly ToolRow[] = liveCount > 0
+    ? server.tools.map(tool => ({ name: tool.publicName, description: tool.description, schema: tool.parameters }))
     : cache !== undefined && cache.ok ? cachedToolsToRows(cache.tools) : []
   const envCount = Object.keys(server.config?.env ?? {}).length
   const version = cache?.serverVersion
@@ -534,16 +539,69 @@ function ServerDetailModal({ t, server, cache, autoTesting, onClose }: {
           ? (
             <ul className="dshmcp-detailTools">
               {toolRows.map(tool => (
-                <li key={tool.name}>
-                  <span className="dshmcp-detailToolName">{tool.name}</span>
-                  {tool.description.trim() !== '' ? <span className="dshmcp-detailToolDesc" title={tool.description}>{tool.description}</span> : null}
-                </li>
+                <DetailToolRow key={tool.name} t={t} tool={tool} />
               ))}
             </ul>
           )
           : <p className="dshmcp-status">{t('toolNone')}</p>}
       </div>
     </ModalShell>
+  )
+}
+
+/**
+ * One expandable tool row inside the 详情 dialog: the head stays a compact
+ * name + one-line description + parameter-count capsule; clicking pours
+ * out the full description and the input parameter schema table. When the
+ * schema is unavailable (degraded cache) the expansion still shows the
+ * complete description.
+ */
+function DetailToolRow({ t, tool }: {
+  readonly t: (key: McpManagerLocaleKey) => string
+  readonly tool: ToolRow
+}) {
+  const [open, setOpen] = useState(false)
+  const params = paramRows(tool.schema)
+  return (
+    <li>
+      <button
+        type="button"
+        className="dshmcp-detailToolHead"
+        aria-expanded={open}
+        title={t('toolExpandHint')}
+        onClick={() => { setOpen(current => !current) }}
+      >
+        <span className="dshmcp-detailToolMain">
+          <span className="dshmcp-detailToolName">{tool.name}</span>
+          {tool.description.trim() !== '' ? <span className="dshmcp-detailToolDesc">{tool.description}</span> : null}
+        </span>
+        <span className="dshmcp-toolParamsHint">{paramsHint(t, tool.schema)}</span>
+        <span className="dshmcp-detailToolChevron"><IconChevronRightOutline14 size={12} aria-hidden="true" /></span>
+      </button>
+      {open
+        ? (
+          <div className="dshmcp-detailToolBody">
+            {tool.description.trim() !== '' ? <p className="dshmcp-detailToolFull">{tool.description}</p> : null}
+            {params.length > 0
+              ? (
+                <table className="dshmcp-paramTable">
+                  <tbody>
+                    {params.map(row => (
+                      <tr key={row.name}>
+                        <td className="dshmcp-paramName">{row.name}</td>
+                        <td className="dshmcp-paramType">{row.type}</td>
+                        <td className={row.required ? 'dshmcp-paramRequired' : 'dshmcp-paramOptional'}>{row.required ? t('paramRequired') : t('paramOptional')}</td>
+                        <td className="dshmcp-paramDesc">{row.description}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )
+              : <p className="dshmcp-status">{t('toolNoParams')}</p>}
+          </div>
+        )
+        : null}
+    </li>
   )
 }
 
