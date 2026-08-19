@@ -280,18 +280,18 @@ export function MarketShelf({
         translate={translate}
       />
       {error === undefined ? null : (
-        <div className="dsh-launcher-mkt-error">
+        <div className="dshm-mkt-error">
           {translate("marketFailed")}: {error}
         </div>
       )}
       {activeItems.length === 0 ? (
-        <div className="dsh-launcher-mkt-empty">
+        <div className="dshm-mkt-empty">
           {query.trim() === ""
             ? translate("marketEmpty")
             : translate("marketEmptySearch")}
         </div>
       ) : (
-        <ul className="dsh-launcher-mkt-grid">
+        <ul className="dshm-mkt-grid">
           {activeItems.map((item) => {
             const source = snapshots.find((snapshot) =>
               (snapshot.items ?? []).includes(item),
@@ -301,7 +301,7 @@ export function MarketShelf({
             const installed = isInstalled(item);
             const busy = busyId === key;
             return (
-              <li key={key} className="dsh-launcher-mkt-card">
+              <li key={key} className="dshm-mkt-card">
                 <MarketCard
                   item={item}
                   source={source}
@@ -352,13 +352,13 @@ function SourceChipRow({
   translate,
 }: SourceChipRowProps): JSX.Element {
   return (
-    <div className="dsh-launcher-mkt-sources">
-      <span className="dsh-launcher-mkt-sources-label">
+    <div className="dshm-mkt-sources">
+      <span className="dshm-mkt-sources-label">
         {translate("marketSources")}
       </span>
       <button
         type="button"
-        className={`dsh-launcher-mkt-source-chip${activeSourceId === "all" ? " is-active" : ""}`}
+        className={`dshm-mkt-source-chip${activeSourceId === "all" ? " is-active" : ""}`}
         onClick={() => {
           onPick("all");
         }}
@@ -376,7 +376,7 @@ function SourceChipRow({
           <button
             key={source.id}
             type="button"
-            className={`dsh-launcher-mkt-source-chip${activeSourceId === source.id ? " is-active" : ""}${stateClass}`}
+            className={`dshm-mkt-source-chip${activeSourceId === source.id ? " is-active" : ""}${stateClass}`}
             onClick={() => {
               onPick(source.id);
             }}
@@ -392,14 +392,14 @@ function SourceChipRow({
                   : translate("marketSourceInvalid")
             }
           >
-            <span className="dsh-launcher-mkt-source-dot" />
+            <span className="dshm-mkt-source-dot" />
             <span>{source.name}</span>
           </button>
         );
       })}
       <button
         type="button"
-        className="dsh-launcher-mkt-source-add"
+        className="dshm-mkt-source-add"
         onClick={onAdd}
       >
         <IconPlus size={12} />
@@ -429,7 +429,7 @@ function AddSourceForm({
   translate,
 }: AddSourceFormProps): JSX.Element {
   return (
-    <div className="dsh-launcher-mkt-addrow">
+    <div className="dshm-mkt-addrow">
       <input
         type="text"
         placeholder={translate("marketAddName")}
@@ -448,7 +448,7 @@ function AddSourceForm({
       />
       <button
         type="button"
-        className="dsh-launcher-mkt-toolbar-btn"
+        className="dshm-mkt-toolbar-btn"
         onClick={onSubmit}
         disabled={name.trim() === "" || url.trim() === ""}
       >
@@ -456,7 +456,7 @@ function AddSourceForm({
       </button>
       <button
         type="button"
-        className="dsh-launcher-mkt-toolbar-btn"
+        className="dshm-mkt-toolbar-btn"
         onClick={onCancel}
       >
         {translate("marketCancel")}
@@ -481,8 +481,8 @@ function Toolbar({
   translate,
 }: ToolbarProps): JSX.Element {
   return (
-    <div className="dsh-launcher-mkt-toolbar">
-      <label className="dsh-launcher-mkt-search">
+    <div className="dshm-mkt-toolbar">
+      <label className="dshm-mkt-search">
         <IconSearch size={14} />
         <input
           type="search"
@@ -495,7 +495,7 @@ function Toolbar({
       </label>
       <button
         type="button"
-        className={`dsh-launcher-mkt-toolbar-btn${refreshing ? " is-spin" : ""}`}
+        className={`dshm-mkt-toolbar-btn${refreshing ? " is-spin" : ""}`}
         onClick={onRefresh}
         disabled={refreshing}
       >
@@ -533,40 +533,40 @@ export function MarketCard({
 }: MarketCardProps): JSX.Element {
   return (
     <article>
-      <div className="dsh-launcher-mkt-card-head">
-        <span className="dsh-launcher-mkt-card-tile">
+      <div className="dshm-mkt-card-head">
+        <span className="dshm-mkt-card-tile">
           <TileIcon kind={item.kind} />
         </span>
-        <div className="dsh-launcher-mkt-card-titleline">
-          <h3 className="dsh-launcher-mkt-card-title">{item.name}</h3>
-          <div className="dsh-launcher-mkt-card-meta">
+        <div className="dshm-mkt-card-titleline">
+          <h3 className="dshm-mkt-card-title">{item.name}</h3>
+          <div className="dshm-mkt-card-meta">
             {item.author === undefined ? null : <>by {item.author}</>}
             {item.version === undefined ? null : <> · v{item.version}</>}
           </div>
         </div>
       </div>
-      <p className="dsh-launcher-mkt-card-desc">{item.description}</p>
+      <p className="dshm-mkt-card-desc">{item.description}</p>
       {item.tags !== undefined && item.tags.length > 0 ? (
-        <div className="dsh-launcher-mkt-card-tags">
+        <div className="dshm-mkt-card-tags">
           {item.tags.map((tag) => (
-            <span key={tag} className="dsh-launcher-mkt-tag">
+            <span key={tag} className="dshm-mkt-tag">
               {tag}
             </span>
           ))}
-          <span className="dsh-launcher-mkt-tag dsh-launcher-mkt-tag-source">
+          <span className="dshm-mkt-tag dshm-mkt-tag-source">
             {source.name}
           </span>
         </div>
       ) : (
-        <div className="dsh-launcher-mkt-card-tags">
-          <span className="dsh-launcher-mkt-tag dsh-launcher-mkt-tag-source">
+        <div className="dshm-mkt-card-tags">
+          <span className="dshm-mkt-tag dshm-mkt-tag-source">
             {source.name}
           </span>
         </div>
       )}
-      <div className="dsh-launcher-mkt-card-foot">
+      <div className="dshm-mkt-card-foot">
         {installed ? (
-          <span className="dsh-launcher-mkt-card-installed">
+          <span className="dshm-mkt-card-installed">
             <span aria-hidden={true}>✓</span>
             <span>{translate("marketInstalled")}</span>
           </span>
@@ -575,7 +575,7 @@ export function MarketCard({
           removeEnabled ? (
             <button
               type="button"
-              className="dsh-launcher-mkt-card-action is-danger"
+              className="dshm-mkt-card-action is-danger"
               onClick={onRemove}
               disabled={busy}
             >
@@ -589,7 +589,7 @@ export function MarketCard({
         ) : (
           <button
             type="button"
-            className="dsh-launcher-mkt-card-action is-primary"
+            className="dshm-mkt-card-action is-primary"
             onClick={onInstall}
             disabled={busy}
           >
