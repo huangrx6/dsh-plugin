@@ -144,9 +144,17 @@ export const LAUNCHER_STYLES = `
   flex: 0 0 30px;
 }
 .dsh-launcher-panel-item-icon svg { width: 18px; height: 18px; }
-.dsh-launcher-panel-item-body { flex: 1; min-width: 0; }
-.dsh-launcher-panel-item-title { font-size: 13px; font-weight: 600; }
-.dsh-launcher-panel-item-hint { font-size: 11px; color: var(--dsw-alias-label-tertiary, #8a8a8e); margin-top: 2px; }
+/* Title over hint, and the stack's total height matches the 30px icon
+   beside it (tight line-heights) so the row stays compact. */
+.dsh-launcher-panel-item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+.dsh-launcher-panel-item-title { font-size: 13px; font-weight: 600; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dsh-launcher-panel-item-hint { font-size: 11px; line-height: 1.2; color: var(--dsw-alias-label-tertiary, #8a8a8e); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dsh-launcher-panel-item-chev { color: var(--dsw-alias-label-tertiary, #8a8a8e); flex: 0 0 20px; }
 .dsh-launcher-panel-item-chev svg { width: 14px; height: 14px; }
 .dsh-launcher-panel-foot {
