@@ -1,17 +1,31 @@
 /**
- * Archive manager settings section: list + timeline + restore / export.
+ * Archive manager workspace section — master-detail list form
+ * (macOS Settings / Linear style, "quiet structure").
  *
- * Layout: a single rounded surface hosts the session list on the left and
- * the message timeline on the right. The selected list item carries a 3px
- * accent rail; the detail pane reads top-to-bottom as title + meta + action
- * toolbar + vertical timeline of events.
+ * Structure:
+ *   .dam-shell  grid 300px | 1fr (single column under 768px)
+ *     .dam-list    sticky group container: 34px search field on top,
+ *                  compact 44px rows below — title 13px/600 over an
+ *                  11px meta line (message count + relative time), with
+ *                  an inline 24px restore icon button on the trailing
+ *                  edge (revealed on hover / selection).
+ *     .dam-detail  action bar (restore = primary, exports = secondary,
+ *                  delete = danger), then a "session summary" group of
+ *                  label-left / value-right rows (ID / updated / payload
+ *                  size / messages), then a "timeline" group where each
+ *                  event is one row: 24px role icon base, event name
+ *                  12px/600 + 11px time, single-line 12px excerpt, rows
+ *                  separated by hairlines and stitched by a 2px
+ *                  label-primary 10% vertical thread.
  *
- * Data flow:
+ * Data flow (props contract unchanged — host injects `api` and `t`):
  *  - List     : host `archive.list`   → summaries (id, title, updatedAt, messageCount)
  *  - Detail   : host `archive.info`   → raw events for the selected session
  *  - Restore  : host `archive.restore` → workspaceRegistry.setState
  *  - Export md: host `archive.export-md` → Blob download
  *  - Export zip: client `fetch('/api/session.export?sessionId=…')` (trusted-host)
+ *  - Delete   : no host API — the danger button discloses an inline note
+ *               with the session directory path + a copy action.
  */
 import { useEffect, useMemo, useState } from 'react'
 import type { ArchiveManagerApi } from './api.ts'
@@ -72,7 +86,7 @@ function describeEvent(raw: unknown): { kind: EventKind; text: string; toolName:
       return { kind: 'toolResult', text, toolName: '', toolArgs: '', time: r.time ?? '' }
     }
     default:
-      return { kind: 'other', text: '', toolName: '', toolArgs: '', time: r.time ?? '' }
+      return { kind: 'other', text: '', toolName: '', toolArgs: '', time: '' }
   }
 }
 
@@ -106,6 +120,19 @@ function relativeTime(value: number | string | undefined, now: number): string {
   return formatShort(t)
 }
 
+/** Human-readable size of the raw event payload (JSON byte estimate). */
+function estimateSize(events: readonly unknown[]): string {
+  let bytes = 0
+  try {
+    bytes = JSON.stringify(events).length
+  } catch {
+    return '—'
+  }
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
 function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -120,9 +147,26 @@ function downloadBlob(blob: Blob, filename: string): void {
   }, 0)
 }
 
-const ICON_RESTORE = <svg className="dam-btn-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 7.5a4.5 4.5 0 1 1 1.318 3.182M3.5 11V7.5H7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-const ICON_MD = <svg className="dam-btn-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 2.5h10A.5.5 0 0 1 13.5 3v10a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5Z" stroke="currentColor" strokeWidth="1.2"/><path d="M5 11.5V5l2.2 3 2.3-3v6.5M10.5 5.5v5h.5M11.5 8h-1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-const ICON_ZIP = <svg className="dam-btn-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5 2.5h5l2.5 2.5V13a.5.5 0 0 1-.5.5H5a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/><path d="M10 2.5V5h2.5" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/></svg>
+/** Raw session ids used as titles get folded to "session-…xxxx". */
+function displayTitle(raw: string): string {
+  if (/^session-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u.test(raw)) {
+    return `session-…${raw.slice(-4)}`
+  }
+  return raw
+}
+
+const GLYPHS: Readonly<Record<Exclude<EventKind, 'other'>, string>> = {
+  user: 'U',
+  assistant: 'A',
+  toolCall: 'T',
+  toolResult: 'R',
+}
+
+const ICON_RESTORE = <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 7.5a4.5 4.5 0 1 1 1.318 3.182M3.5 11V7.5H7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+const ICON_MD = <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 2.5h10A.5.5 0 0 1 13.5 3v10a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5Z" stroke="currentColor" strokeWidth="1.2"/><path d="M5 11.5V5l2.2 3 2.3-3v6.5M10.5 5.5v5h.5M11.5 8h-1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+const ICON_ZIP = <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5 2.5h5l2.5 2.5V13a.5.5 0 0 1-.5.5H5a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/><path d="M10 2.5V5h2.5" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/></svg>
+const ICON_SEARCH = <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="4.2" stroke="currentColor" strokeWidth="1.3"/><path d="m10.4 10.4 3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
+const ICON_TRASH = <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.8 4.2h10.4M6.2 4V2.8h3.6V4M4.2 4.2l.6 9h6.4l.6-9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
 
 export function ArchiveManagerSection({ api, t }: Props): JSX.Element {
   const [items, setItems] = useState<readonly ArchivedSummary[]>([])
@@ -130,6 +174,8 @@ export function ArchiveManagerSection({ api, t }: Props): JSX.Element {
   const [selectedId, setSelectedId] = useState<string | undefined>()
   const [detail, setDetail] = useState<DetailState | undefined>()
   const [toast, setToast] = useState<ToastState | undefined>()
+  const [query, setQuery] = useState('')
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -163,15 +209,20 @@ export function ArchiveManagerSection({ api, t }: Props): JSX.Element {
     window.setTimeout(() => setToast(undefined), 3200)
   }
 
-  async function onRestore(): Promise<void> {
-    if (selectedId === undefined) return
+  function select(id: string): void {
+    setDeleteOpen(false)
+    setSelectedId(cur => (cur === id ? undefined : id))
+  }
+
+  async function onRestore(id: string): Promise<void> {
     if (!window.confirm(t('restoreConfirm'))) return
     try {
-      await api.restore(selectedId)
+      await api.restore(id)
       showToast(t('restoreSuccess'))
       const fresh = await api.list()
       setItems(fresh)
-      setSelectedId(undefined)
+      setSelectedId(cur => (cur === id ? undefined : cur))
+      setDeleteOpen(false)
     } catch (err) {
       showToast(t('restoreFailed') + ' ' + (err instanceof Error ? err.message : String(err)), 'error')
     }
@@ -194,17 +245,28 @@ export function ArchiveManagerSection({ api, t }: Props): JSX.Element {
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 
+  async function onCopyPath(id: string): Promise<void> {
+    const path = `~/.dsh/sessions/${id}/`
+    try {
+      await navigator.clipboard.writeText(path)
+      showToast(t('pathCopied'))
+    } catch {
+      // clipboard unavailable (permissions / non-secure context) — surface
+      // the path in the toast so it is still copyable by hand.
+      showToast(path)
+    }
+  }
+
   const selectedInfo = selectedId === undefined ? undefined : items.find(i => i.id === selectedId)
 
-  // When the host returns a raw session id as the title (no friendly
-  // title was ever written), truncate the id to "session-…xxxx" so the
-  // detail header doesn't run three lines with hex.
-  const displayTitle = (raw: string): string => {
-    if (/^session-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u.test(raw)) {
-      return `session-…${raw.slice(-4)}`
-    }
-    return raw
-  }
+  const visibleItems = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (q === '') return items
+    return items.filter(i => {
+      const hay = `${i.title} ${i.id}`.toLowerCase()
+      return hay.includes(q)
+    })
+  }, [items, query])
 
   // Timeline entries: pre-process the raw events so render is a single map.
   const timeline = useMemo(() => {
@@ -214,179 +276,187 @@ export function ArchiveManagerSection({ api, t }: Props): JSX.Element {
       .filter(entry => entry.ev.kind !== 'other')
   }, [detail?.info])
 
+  const payloadSize = useMemo(
+    () => (detail?.info === undefined ? '—' : estimateSize(detail.info.events)),
+    [detail?.info],
+  )
+
+  const emptyListText = query.trim() === '' ? t('empty') : t('noResults')
+
   return (
     <div className="dam-section">
-      <p className="dam-banner">{t('tabDesc')}</p>
       {loadError !== undefined ? (
-        <p className="dam-banner" role="alert" style={{ color: 'var(--dam-tool-err)' }}>
-          {t('loadFailed')} {loadError}
-        </p>
+        <p className="dam-note dam-note--error" role="alert">{t('loadFailed')} {loadError}</p>
       ) : null}
 
-      <div className="dam-surface">
-        {/* ── list pane ── */}
-        <div className="dam-list" role="listbox" aria-label={t('tab')}>
-          <div className="dam-list-header">
-            <span>{t('listHeader')}</span>
-            <span className="dam-list-header-count">{items.length}</span>
+      <div className="dam-shell">
+        {/* ── master: session list ── */}
+        <aside className="dam-list">
+          <div className="dam-search">
+            {ICON_SEARCH}
+            <input
+              className="dam-search-input"
+              type="search"
+              value={query}
+              placeholder={t('searchPlaceholder')}
+              aria-label={t('searchPlaceholder')}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <span className="dam-search-count" aria-hidden="true">{visibleItems.length}</span>
           </div>
-          <div className="dam-list-scroll">
-            {items.length === 0 && loadError === undefined ? (
-              <div className="dam-list-empty">
-                <div className="dam-list-empty-icon" aria-hidden="true">🗃</div>
-                <div>{t('empty')}</div>
-              </div>
+          <div className="dam-list-scroll" role="listbox" aria-label={t('listHeader')}>
+            {visibleItems.length === 0 && loadError === undefined ? (
+              <div className="dam-empty">{emptyListText}</div>
             ) : null}
-            {items.map((item) => {
+            {visibleItems.map((item) => {
               const active = item.id === selectedId
               return (
-                <button
+                <div
                   key={item.id}
-                  type="button"
                   role="option"
                   aria-selected={active}
-                  className={`dam-item${active ? ' dam-item--active' : ''}`}
-                  onClick={() => setSelectedId(item.id)}
+                  tabIndex={0}
+                  className={`dam-row${active ? ' dam-row--active' : ''}`}
+                  onClick={() => select(item.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      select(item.id)
+                    }
+                  }}
                 >
-                  <span className="dam-item-body">
-                    <span className="dam-item-title">{displayTitle(item.title || item.id)}</span>
-                    <span className="dam-item-meta">
+                  <span className="dam-row-main">
+                    <span className="dam-row-title">{displayTitle(item.title || item.id)}</span>
+                    <span className="dam-row-meta">
                       <span>{item.messageCount} {t('messageCount')}</span>
-                      <span className="dam-item-meta-dot" aria-hidden="true">·</span>
+                      <span className="dam-row-meta-dot" aria-hidden="true">·</span>
                       <span>{relativeTime(item.updatedAt, now)}</span>
                     </span>
                   </span>
-                  <svg className="dam-item-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-                    <path d="M3.5 2 7 5 3.5 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
+                  <button
+                    type="button"
+                    className="dam-icon-btn"
+                    title={t('restore')}
+                    aria-label={t('restore')}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      void onRestore(item.id)
+                    }}
+                  >
+                    {ICON_RESTORE}
+                  </button>
+                </div>
               )
             })}
           </div>
-        </div>
+        </aside>
 
-        {/* ── detail pane ── */}
-        <div className="dam-detail">
+        {/* ── detail ── */}
+        <section className="dam-detail">
           {selectedInfo === undefined ? (
             <div className="dam-detail-empty">
-              <div className="dam-detail-empty-icon" aria-hidden="true">📁</div>
               <div>{t('noSelection')}</div>
               <div className="dam-detail-empty-hint">{t('selectPrompt')}</div>
             </div>
           ) : (
             <>
-              <div className="dam-detail-head">
-                <div className="dam-detail-head-text">
-                  <h2 className="dam-detail-title">{displayTitle(selectedInfo.title || selectedInfo.id)}</h2>
-                  <div className="dam-detail-id-row">
-                    <code>{selectedInfo.id}</code>
-                    <span className="dam-detail-id-sep" aria-hidden="true" />
-                    <span>{selectedInfo.messageCount} {t('messageCount')}</span>
-                    <span className="dam-detail-id-sep" aria-hidden="true" />
-                    <span>{formatFull(selectedInfo.updatedAt)}</span>
-                  </div>
-                </div>
-                <div className="dam-actions">
-                  <button type="button" className="dam-btn dam-btn--primary" onClick={() => void onRestore()}>
+              {/* action bar */}
+              <div className="dam-toolbar">
+                <span className="dam-toolbar-name">{displayTitle(selectedInfo.title || selectedInfo.id)}</span>
+                <div className="dam-toolbar-actions">
+                  <button type="button" className="dam-btn dam-btn--primary" onClick={() => void onRestore(selectedInfo.id)}>
                     {ICON_RESTORE}<span>{t('restore')}</span>
                   </button>
-                  <button type="button" className="dam-btn" onClick={() => void onExportMd()} title={t('exportMd')}>
+                  <button type="button" className="dam-btn" onClick={() => void onExportMd()}>
                     {ICON_MD}<span>{t('exportMd')}</span>
                   </button>
-                  <button type="button" className="dam-btn" onClick={onExportZip} title={t('exportZip')}>
+                  <button type="button" className="dam-btn" onClick={onExportZip}>
                     {ICON_ZIP}<span>{t('exportZip')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="dam-btn dam-btn--danger"
+                    aria-expanded={deleteOpen}
+                    onClick={() => setDeleteOpen(cur => !cur)}
+                  >
+                    {ICON_TRASH}<span>{t('delete')}</span>
                   </button>
                 </div>
               </div>
 
-              <div className="dam-timeline">
-                {detail?.loading === true ? (
-                  <div className="dam-detail-empty">
-                    <div className="dam-detail-empty-icon" aria-hidden="true">⏳</div>
-                    <div>{t('loading')}</div>
-                  </div>
-                ) : null}
-                {detail?.error !== undefined ? (
-                  <div className="dam-detail-empty">
-                    <div className="dam-detail-empty-icon" aria-hidden="true">⚠️</div>
-                    <div>{detail.error}</div>
-                  </div>
-                ) : null}
-                {timeline.map((entry) => {
-                  const { ev, idx } = entry
-                  const roleLabel = ev.kind === 'other' ? '' : t(`role.${ev.kind}` as ArchiveManagerLocaleKey)
-                  const time = formatShort(ev.time)
-                  if (ev.kind === 'user') return (
-                    <div key={idx} className="dam-msg dam-msg--user">
-                      <div className="dam-msg-rail">
-                        <div className="dam-msg-avatar" aria-hidden="true">U</div>
-                        <div className="dam-msg-rail-line" />
-                      </div>
-                      <div className="dam-msg-body">
-                        <div className="dam-msg-head">
-                          <span className="dam-msg-role">{roleLabel}</span>
-                          {time !== '' ? <span className="dam-msg-time">{time}</span> : null}
-                        </div>
-                        <div className="dam-msg-text">{ev.text}</div>
-                      </div>
-                    </div>
-                  )
-                  if (ev.kind === 'assistant') return (
-                    <div key={idx} className="dam-msg dam-msg--assistant">
-                      <div className="dam-msg-rail">
-                        <div className="dam-msg-avatar" aria-hidden="true">A</div>
-                        <div className="dam-msg-rail-line" />
-                      </div>
-                      <div className="dam-msg-body">
-                        <div className="dam-msg-head">
-                          <span className="dam-msg-role">{roleLabel}</span>
-                          {time !== '' ? <span className="dam-msg-time">{time}</span> : null}
-                        </div>
-                        <div className="dam-msg-text">{ev.text}</div>
-                      </div>
-                    </div>
-                  )
-                  if (ev.kind === 'toolCall') return (
-                    <div key={idx} className="dam-msg dam-msg--tool">
-                      <div className="dam-msg-rail">
-                        <div className="dam-msg-avatar" aria-hidden="true">⚙</div>
-                        <div className="dam-msg-rail-line" />
-                      </div>
-                      <div className="dam-msg-body">
-                        <div className="dam-msg-head">
-                          <span className="dam-msg-role">{roleLabel}</span>
-                          {time !== '' ? <span className="dam-msg-time">{time}</span> : null}
-                        </div>
-                        <div className="dam-msg-text">
-                          {ev.toolName ? <div className="dam-msg-tool-name">{ev.toolName}</div> : null}
-                          {ev.text}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                  // toolResult
-                  return (
-                    <div key={idx} className="dam-msg dam-msg--tool-result">
-                      <div className="dam-msg-rail">
-                        <div className="dam-msg-avatar" aria-hidden="true">✓</div>
-                        <div className="dam-msg-rail-line" />
-                      </div>
-                      <div className="dam-msg-body">
-                        <div className="dam-msg-head">
-                          <span className="dam-msg-role">{roleLabel}</span>
-                          {time !== '' ? <span className="dam-msg-time">{time}</span> : null}
-                        </div>
-                        <div className="dam-msg-text">{ev.text}</div>
-                      </div>
-                    </div>
-                  )
-                })}
+              {deleteOpen ? (
+                <div className="dam-delete" role="note">
+                  <span className="dam-delete-text">{t('deleteNote')}</span>
+                  <code className="dam-delete-path">~/.dsh/sessions/{selectedInfo.id}/</code>
+                  <button type="button" className="dam-btn dam-btn--sm" onClick={() => void onCopyPath(selectedInfo.id)}>
+                    {t('copyPath')}
+                  </button>
+                </div>
+              ) : null}
+
+              {/* session summary group */}
+              <div className="dam-group">
+                <div className="dam-group-label">{t('sessionInfo')}</div>
+                <div className="dam-kv">
+                  <span className="dam-kv-key">{t('sessionId')}</span>
+                  <code className="dam-kv-val dam-kv-val--code">{selectedInfo.id}</code>
+                </div>
+                <div className="dam-kv">
+                  <span className="dam-kv-key">{t('updatedAtLabel')}</span>
+                  <span className="dam-kv-val">{formatFull(selectedInfo.updatedAt)}</span>
+                </div>
+                <div className="dam-kv">
+                  <span className="dam-kv-key">{t('sizeLabel')}</span>
+                  <span className="dam-kv-val">{payloadSize}</span>
+                </div>
+                <div className="dam-kv">
+                  <span className="dam-kv-key">{t('messagesLabel')}</span>
+                  <span className="dam-kv-val">{selectedInfo.messageCount} {t('messageCount')}</span>
+                </div>
               </div>
 
-              <div className="dam-hint">{t('deleteHint')}</div>
+              {/* timeline group */}
+              <div className="dam-group">
+                <div className="dam-group-label">
+                  <span>{t('timelineLabel')}</span>
+                  <span className="dam-group-count">{timeline.length} {t('eventCount')}</span>
+                </div>
+                <div className="dam-tl">
+                  {detail?.loading === true ? (
+                    <div className="dam-tl-state">{t('loading')}</div>
+                  ) : null}
+                  {detail?.error !== undefined ? (
+                    <div className="dam-tl-state dam-tl-state--error" role="alert">{detail.error}</div>
+                  ) : null}
+                  {detail?.loading !== true && detail?.error === undefined && timeline.length === 0 ? (
+                    <div className="dam-tl-state">{t('eventsEmpty')}</div>
+                  ) : null}
+                  {timeline.map((entry) => {
+                    const { ev, idx } = entry
+                    const kind = ev.kind as Exclude<EventKind, 'other'>
+                    const roleLabel = t(`role.${ev.kind}` as ArchiveManagerLocaleKey)
+                    const name = ev.kind === 'toolCall' && ev.toolName !== '' ? ev.toolName : roleLabel
+                    const excerpt = ev.kind === 'toolCall' ? ev.toolArgs : ev.text
+                    const time = formatShort(ev.time)
+                    return (
+                      <div key={idx} className={`dam-tl-row dam-tl-row--${kind}`}>
+                        <span className="dam-tl-icon" aria-hidden="true">{GLYPHS[kind]}</span>
+                        <div className="dam-tl-main">
+                          <div className="dam-tl-head">
+                            <span className="dam-tl-dot" aria-hidden="true" />
+                            <span className="dam-tl-name">{name}</span>
+                            {time !== '' ? <span className="dam-tl-time">{time}</span> : null}
+                          </div>
+                          <div className="dam-tl-text">{excerpt !== '' ? excerpt : '—'}</div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
             </>
           )}
-        </div>
+        </section>
       </div>
 
       {toast !== undefined ? (

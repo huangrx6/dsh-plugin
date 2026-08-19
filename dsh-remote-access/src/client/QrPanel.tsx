@@ -3,18 +3,24 @@ import type { RemoteAccessLocaleKey } from './locales.ts'
 export interface QrPanelProps {
   readonly t: (key: RemoteAccessLocaleKey) => string
   readonly svg: string
+  /** 点击「收起」时由容器收起二维码（恢复为待加载态）。 */
+  readonly onCollapse?: () => void
 }
 
 /**
- * 二维码展示（纯展示）。SVG 由 host 侧生成并经 RPC 传入，
- * client 不引入任何 QR 依赖 —— `dangerouslySetInnerHTML` 的输入
- * 全程来自本插件 host 代码（qrcode 库输出），非用户可控文本。
+ * 二维码展示（纯展示）：白色托盘 + 下方提示 + 可选收起入口。
+ * SVG 由 host 侧生成并经 RPC 传入，client 不引入任何 QR 依赖 ——
+ * `dangerouslySetInnerHTML` 的输入全程来自本插件 host 代码
+ * （qrcode 库输出），非用户可控文本。
  */
-export function QrPanel({ t, svg }: QrPanelProps) {
+export function QrPanel({ t, svg, onCollapse }: QrPanelProps) {
   return (
-    <figure className="ra-qr">
-      <figcaption className="ra-qr-title">{t('qrTitle')}</figcaption>
-      <div className="ra-qr-svg" dangerouslySetInnerHTML={{ __html: svg }} />
-    </figure>
+    <div className="ra-qr-body">
+      <div className="ra-qr-plate" dangerouslySetInnerHTML={{ __html: svg }} />
+      <p className="ra-qr-hint">{t('qrTitle')}</p>
+      {onCollapse !== undefined && (
+        <button type="button" className="ra-qr-collapse" onClick={onCollapse}>{t('hideQr')}</button>
+      )}
+    </div>
   )
 }

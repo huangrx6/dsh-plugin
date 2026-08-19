@@ -2,6 +2,12 @@
  * 远程访问面板（container）：持有全部状态与副作用，渲染交给自身与
  * 展示子组件（{@link ./IssuesList.tsx} / {@link ./QrPanel.tsx}）。
  *
+ * 布局（macOS 设置页式分组行）：
+ *   「服务状态」分组：状态行（点 + 文案 + 启停）→ 地址行（等宽 + 复制）→ meta 行
+ *   「二维码」分组：白色托盘 160px 居中 + 提示文字
+ *   宽屏两分组并排（弹性 + 320px），<768px 纵向堆叠。
+ *   区块内不再渲染大标题 —— 工作区壳已提供标题行。
+ *
  * 状态机：
  *   list: loading → ready | error      （status 轮询，manual refresh）
  *   busy: undefined | 'enable' | 'disable'   （互斥，防双击）
@@ -60,6 +66,10 @@ export function RemoteAccessSection({ t, api }: RemoteAccessSectionProps) {
     : active && data.pickerBrowse
       ? t('statusOn')
       : (active || data.loggedIn ? t('statusPartial') : t('statusOff'))
+  const dotTone = data !== undefined && (active || data.loggedIn)
+    ? (active && data.pickerBrowse ? 'ra-dot-success' : 'ra-dot-business')
+    : 'ra-dot-error'
+  const url = data?.httpsUrl ?? null
 
   const refresh = useCallback(() => {
     setState({ status: 'loading' })
@@ -87,8 +97,7 @@ export function RemoteAccessSection({ t, api }: RemoteAccessSectionProps) {
   }, [api, busy, t])
 
   const copyUrl = useCallback(() => {
-    const url = data?.httpsUrl
-    if (url === undefined || url === null) return
+    if (url === null) return
     // clipboard API 在非 Secure Context 下不可用 —— 面板主路径是 HTTPS，
     // 裸 HTTP 下的降级是无声失败（地址仍可手动选中复制）。
     void navigator.clipboard.writeText(url)
@@ -97,18 +106,16 @@ export function RemoteAccessSection({ t, api }: RemoteAccessSectionProps) {
         window.setTimeout(() => { setCopied(false) }, 1600)
       })
       .catch(() => {})
-  }, [data?.httpsUrl])
+  }, [url])
 
   const toggleQr = useCallback(() => {
-    const url = data?.httpsUrl
-    if (url === undefined || url === null) return
-    if (qrSvg !== undefined) { setQrSvg(undefined); return }
+    if (url === null || qrSvg !== undefined) return
     setQrBusy(true)
     api.getQr(url)
       .then(response => { setQrSvg(response.svg) })
-      .catch(error => { setActionError(error instanceof Error ? error.message : String(error)) })
-      .finally(() => { setQrBusy(false) })
-  }, [api, data?.httpsUrl, qrSvg])
+      .catch(error => setActionError(error instanceof Error ? error.message : String(error)))
+      .finally(() => setQrBusy(false))
+  }, [api, qrSvg, url])
 
   if (state.status === 'loading') {
     return (
@@ -127,73 +134,76 @@ export function RemoteAccessSection({ t, api }: RemoteAccessSectionProps) {
     )
   }
 
+  const device = data?.dnsName ?? data?.backendState ?? '—'
+  const network = data?.installed === true ? t('networkName') : '—'
+  const gateway = active ? (data?.serveTarget ?? t('httpsSecure')) : t('httpsNone')
+
   return (
     <div className="ra-panel">
-      <header className="ra-head">
-        <h3 className="ra-title">{t('title')}</h3>
-        <button type="button" className="ra-icon-btn" title={t('refresh')} onClick={refresh}>
-          <IconRefreshOutline16 />
-        </button>
-      </header>
-      <p className="ra-subtitle">{t('subtitle')}</p>
+      <div className="ra-grid">
+        <section className="ra-group" aria-label={t('groupService')}>
+          <div className="ra-group-head">
+            <span className="ra-section-label">{t('groupService')}</span>
+            <button type="button" className="ra-icon-btn" title={t('refresh')} aria-label={t('refresh')} onClick={refresh}>
+              <IconRefreshOutline16 />
+            </button>
+          </div>
 
-      <dl className="ra-fields">
-        <div className="ra-field">
-          <dt>{t('fieldStatus')}</dt>
-          <dd><span className={active ? 'ra-chip ra-chip-on' : 'ra-chip'}>{overall}</span></dd>
-        </div>
-        <div className="ra-field">
-          <dt>{t('fieldNetwork')}</dt>
-          <dd>{data?.installed === true ? t('networkName') : '—'}</dd>
-        </div>
-        <div className="ra-field">
-          <dt>{t('fieldHttps')}</dt>
-          <dd>{active ? t('httpsSecure') : t('httpsNone')}</dd>
-        </div>
-        <div className="ra-field">
-          <dt>{t('fieldDevice')}</dt>
-          <dd>{data?.dnsName ?? data?.backendState ?? '—'}</dd>
-        </div>
-        <div className="ra-field ra-field-wide">
-          <dt>{t('fieldUrl')}</dt>
-          <dd className="ra-url">{data?.httpsUrl ?? '—'}</dd>
-        </div>
-        <div className="ra-field ra-field-wide">
-          <dt>{t('fieldPicker')}</dt>
-          <dd>{data?.pickerBrowse === true ? t('pickerEnabled') : <span className="ra-warn">{t('pickerMissing')}</span>}</dd>
-        </div>
-      </dl>
+          <div className="ra-row">
+            <span className={`ra-dot ${dotTone}`} aria-hidden="true" />
+            <span className="ra-row-title">{overall}</span>
+            {active ? (
+              <button
+                type="button"
+                className="ra-btn"
+                disabled={busy !== undefined}
+                onClick={() => { void runAction('disable') }}
+              >
+                {busy === 'disable' ? t('disabling') : t('disable')}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="ra-btn ra-btn-primary"
+                disabled={busy !== undefined || data?.installed !== true || data.loggedIn === false}
+                onClick={() => { void runAction('enable') }}
+              >
+                {busy === 'enable' ? t('enabling') : t('enable')}
+              </button>
+            )}
+          </div>
 
-      {data?.httpsUrl != null && (
-        <div className="ra-actions">
-          <button type="button" className="ra-btn" onClick={copyUrl} disabled={busy !== undefined}>
-            {copied ? t('copied') : t('copyUrl')}
-          </button>
-          <button type="button" className="ra-btn" onClick={() => { void toggleQr() }} disabled={qrBusy}>
-            {qrSvg !== undefined ? t('hideQr') : (qrBusy ? t('loading') : t('showQr'))}
-          </button>
-        </div>
-      )}
+          <div className="ra-row">
+            <span className="ra-row-text ra-mono" title={url ?? undefined}>{url ?? '—'}</span>
+            {url !== null && (
+              <button type="button" className="ra-btn" onClick={copyUrl} disabled={busy !== undefined}>
+                {copied ? t('copied') : t('copyUrl')}
+              </button>
+            )}
+          </div>
 
-      {qrSvg !== undefined && <QrPanel t={t} svg={qrSvg} />}
+          <div className="ra-row">
+            <span className="ra-meta">{device} · {network} · {gateway}</span>
+            {data?.pickerBrowse !== true && <span className="ra-meta ra-meta-warn">{t('pickerMissing')}</span>}
+          </div>
+        </section>
 
-      <div className="ra-actions">
-        <button
-          type="button"
-          className="ra-btn ra-btn-primary"
-          disabled={busy !== undefined || data?.installed !== true || data.loggedIn === false}
-          onClick={() => { void runAction('enable') }}
-        >
-          {busy === 'enable' ? t('enabling') : t('enable')}
-        </button>
-        <button
-          type="button"
-          className="ra-btn"
-          disabled={busy !== undefined || !active}
-          onClick={() => { void runAction('disable') }}
-        >
-          {busy === 'disable' ? t('disabling') : t('disable')}
-        </button>
+        <section className="ra-group ra-group-qr" aria-label={t('groupQr')}>
+          <div className="ra-group-head">
+            <span className="ra-section-label">{t('groupQr')}</span>
+          </div>
+          {url === null
+            ? <p className="ra-qr-empty">{t('qrUnavailable')}</p>
+            : qrSvg === undefined
+              ? (
+                <div className="ra-qr-body">
+                  <button type="button" className="ra-btn" onClick={toggleQr} disabled={qrBusy}>
+                    {qrBusy ? t('loading') : t('showQr')}
+                  </button>
+                </div>
+              )
+              : <QrPanel t={t} svg={qrSvg} onCollapse={() => { setQrSvg(undefined) }} />}
+        </section>
       </div>
 
       {actionError !== undefined && <p className="ra-error">{actionError}</p>}

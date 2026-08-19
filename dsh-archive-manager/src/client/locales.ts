@@ -22,6 +22,19 @@ export type ArchiveManagerLocaleKey =
   | 'messageCount'
   | 'sessionId'
   | 'deleteHint'
+  | 'searchPlaceholder'
+  | 'noResults'
+  | 'sessionInfo'
+  | 'timelineLabel'
+  | 'updatedAtLabel'
+  | 'sizeLabel'
+  | 'messagesLabel'
+  | 'eventCount'
+  | 'delete'
+  | 'deleteNote'
+  | 'copyPath'
+  | 'pathCopied'
+  | 'eventsEmpty'
   | 'role.user'
   | 'role.assistant'
   | 'role.toolCall'
@@ -46,6 +59,19 @@ export const zhCN: Record<ArchiveManagerLocaleKey, string> = {
   messageCount: '条消息',
   sessionId: '会话 ID',
   deleteHint: '彻底删除：到 Mac 的 ~/.dsh/sessions/<id>/ 目录手动清理。dsh 未公开删除 API。',
+  searchPlaceholder: '搜索归档会话…',
+  noResults: '没有匹配的归档会话。',
+  sessionInfo: '会话摘要',
+  timelineLabel: '时间线',
+  updatedAtLabel: '更新时间',
+  sizeLabel: '记录大小',
+  messagesLabel: '消息数',
+  eventCount: '条事件',
+  delete: '删除',
+  deleteNote: 'dsh 未公开删除 API：在 Mac 上手动清理该会话目录。',
+  copyPath: '复制路径',
+  pathCopied: '路径已复制。',
+  eventsEmpty: '该会话没有可展示的消息记录。',
   'role.user': '你',
   'role.assistant': '助手',
   'role.toolCall': '工具调用',
@@ -71,6 +97,19 @@ export const enUS: Record<ArchiveManagerLocaleKey, string> = {
   messageCount: 'messages',
   sessionId: 'Session ID',
   deleteHint: 'Hard delete: remove ~/.dsh/sessions/<id>/ on the Mac manually. dsh does not expose a delete API.',
+  searchPlaceholder: 'Search archived sessions…',
+  noResults: 'No matching archived sessions.',
+  sessionInfo: 'Session summary',
+  timelineLabel: 'Timeline',
+  updatedAtLabel: 'Updated',
+  sizeLabel: 'Payload size',
+  messagesLabel: 'Messages',
+  eventCount: 'events',
+  delete: 'Delete',
+  deleteNote: 'dsh exposes no delete API: remove the session directory on the Mac manually.',
+  copyPath: 'Copy path',
+  pathCopied: 'Path copied.',
+  eventsEmpty: 'No displayable message events in this session.',
   'role.user': 'You',
   'role.assistant': 'Assistant',
   'role.toolCall': 'Tool call',

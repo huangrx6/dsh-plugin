@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { IconChevronRightOutline14, IconPlusOutline16, IconRefreshOutline16, IconSearchOutline16, IconSkillOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconPlusOutline16, IconRefreshOutline16, IconSearchOutline16, IconSkillOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { SkillListItem } from '../contracts.ts'
 import type { SkillManagerApi } from './api.ts'
 import type { SkillManagerLocaleKey } from './locales.ts'
@@ -18,7 +18,10 @@ interface ListState {
   readonly skills?: readonly SkillListItem[]
 }
 
-/** Independent settings section: skill catalog with search, import and detail views. */
+/** Master-detail settings section: compact skill list on the left (280px),
+ *  detail / import panel on the right; collapses to one column under 768px.
+ *  The workspace shell already renders the section title, so the block
+ *  itself only carries 11px section labels. */
 export function SkillManagerSection({ t, api }: SkillManagerSectionProps) {
   const [view, setView] = useState<View>({ kind: 'list' })
   const [request, setRequest] = useState(0)
@@ -48,28 +51,8 @@ export function SkillManagerSection({ t, api }: SkillManagerSectionProps) {
       || skill.description.toLocaleLowerCase().includes(normalizedQuery))
   }, [normalizedQuery, skills])
 
-  if (view.kind === 'detail') {
-    return <SkillDetailView t={t} api={api} name={view.name} path={view.path} onBack={() => setView({ kind: 'list' })} onDeleted={reload} />
-  }
-  if (view.kind === 'import') {
-    return <SkillImportView t={t} api={api} onDone={importedName => { reload(); setView(importedName !== undefined ? { kind: 'detail', name: importedName } : { kind: 'list' }) }} onCancel={() => { setView({ kind: 'list' }) }} />
-  }
-
   return (
-    <div className="dshm-tab" aria-busy={state.status === 'loading'}>
-      <header className="dshm-head">
-        <h2>{t('tab')}</h2>
-        <p>{t('intro')}</p>
-      </header>
-      {state.status === 'loading'
-        ? (
-          <div className="dshm-skeleton" role="status" aria-label={t('loading')}>
-            <div className="dshm-skelRow" />
-            <div className="dshm-skelRow" />
-            <div className="dshm-skelRow" />
-          </div>
-        )
-        : null}
+    <div className="dshm-tab dshm-manager" aria-busy={state.status === 'loading'}>
       {state.status === 'error'
         ? (
           <div className="dshm-failure" role="alert">
@@ -78,66 +61,96 @@ export function SkillManagerSection({ t, api }: SkillManagerSectionProps) {
           </div>
         )
         : null}
-      {state.status === 'ready'
-        ? (
-          <>
-            <div className="dshm-toolbar">
-              <label className="dshm-search">
-                <IconSearchOutline16 size={15} aria-hidden="true" />
-                <span className="dshm-visuallyHidden">{t('search')}</span>
-                <input type="search" value={query} placeholder={t('search')} onChange={event => { setQuery(event.currentTarget.value) }} />
-              </label>
-              <button type="button" className="dshm-button dshm-buttonIcon" onClick={reload} title={t('refresh')} aria-label={t('refresh')}>
-                <IconRefreshOutline16 size={15} aria-hidden="true" />
-              </button>
-            </div>
-            <div className="dshm-heading">
-              <h3>{t('catalog')}</h3>
-              <span className="dshm-count" data-skill-count={filtered.length}>{filtered.length}</span>
-              <span className="dshm-spacer" />
-              <button type="button" className="dshm-button dshm-buttonPrimary" onClick={() => { setView({ kind: 'import' }) }}>
-                <IconPlusOutline16 size={14} aria-hidden="true" />
-                {t('importButton')}
-              </button>
-            </div>
-            {skills.length === 0
-              ? (
-                <div className="dshm-empty">
-                  <span className="dshm-emptyTile"><IconSkillOutline16 size={22} aria-hidden="true" /></span>
-                  <p className="dshm-emptyTitle">{t('emptyTitle')}</p>
-                  <p>{t('empty')}</p>
+      <div className="dshm-managerGrid">
+        <aside className="dshm-managerMaster">
+          <div className="dshm-managerBar">
+            <label className="dshm-search dshm-searchDense">
+              <IconSearchOutline16 size={13} aria-hidden="true" />
+              <span className="dshm-visuallyHidden">{t('search')}</span>
+              <input type="search" value={query} placeholder={t('search')} onChange={event => { setQuery(event.currentTarget.value) }} />
+            </label>
+            <button type="button" className="dshm-iconBtn" onClick={reload} title={t('refresh')} aria-label={t('refresh')}>
+              <IconRefreshOutline16 size={14} aria-hidden="true" />
+            </button>
+            <button type="button" className="dshm-iconBtn is-primary" onClick={() => { setView({ kind: 'import' }) }} title={t('importButton')} aria-label={t('importButton')}>
+              <IconPlusOutline16 size={14} aria-hidden="true" />
+            </button>
+          </div>
+          <div className="dshm-managerLabelRow">
+            <span className="dshm-sectionLabel">{t('catalog')}</span>
+            <span className="dshm-managerCount" data-skill-count={filtered.length}>{filtered.length}</span>
+          </div>
+          {state.status === 'loading'
+            ? (
+              <div className="dshm-skeleton" role="status" aria-label={t('loading')}>
+                <div className="dshm-skelRow" />
+                <div className="dshm-skelRow" />
+                <div className="dshm-skelRow" />
+                <div className="dshm-skelRow" />
+                <div className="dshm-skelRow" />
+              </div>
+            )
+            : null}
+          {state.status === 'ready'
+            ? (
+              <>
+                {skills.length === 0
+                  ? (
+                    <div className="dshm-empty dshm-emptyDense">
+                      <span className="dshm-emptyTile"><IconSkillOutline16 size={20} aria-hidden="true" /></span>
+                      <p className="dshm-emptyTitle">{t('emptyTitle')}</p>
+                      <p>{t('empty')}</p>
+                    </div>
+                  )
+                  : null}
+                {skills.length > 0 && filtered.length === 0 ? <p className="dshm-status">{t('emptySearch')}</p> : null}
+                {filtered.length > 0
+                  ? (
+                    <ul className="dshm-managerList">
+                      {filtered.map(skill => {
+                        const selected = view.kind === 'detail' && view.name === skill.name
+                        return (
+                          <li
+                            key={`${skill.source}:${skill.name}`}
+                            className={`dshm-managerRow${selected ? ' is-selected' : ''}`}
+                            data-skill={skill.name}
+                          >
+                            <button type="button" className="dshm-managerRowBtn" aria-current={selected ? 'true' : undefined} onClick={() => { setView({ kind: 'detail', name: skill.name, path: skill.path }) }}>
+                              <span className={`dshm-tile dshm-managerTile${skill.invalid !== undefined ? ' is-error' : skill.shadowed ? ' is-warn' : ''}`}>
+                                <IconSkillOutline16 size={15} aria-hidden="true" />
+                              </span>
+                              <span className="dshm-managerRowBody">
+                                <span className="dshm-managerRowName">{skill.name}</span>
+                                <span className="dshm-managerRowMeta">
+                                  {skill.shadowed ? <span className="dshm-managerFlag is-warn">{t('shadowedTag')}</span> : null}
+                                  {skill.invalid !== undefined ? <span className="dshm-managerFlag is-error">{t('invalidTag')}</span> : null}
+                                  {sourceLabel(t, skill.source)}
+                                </span>
+                              </span>
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  )
+                  : null}
+              </>
+            )
+            : null}
+        </aside>
+        <section className="dshm-managerDetail">
+          {view.kind === 'detail'
+            ? <SkillDetailView t={t} api={api} name={view.name} path={view.path} onBack={() => { setView({ kind: 'list' }) }} onDeleted={reload} />
+            : view.kind === 'import'
+              ? <SkillImportView t={t} api={api} onDone={importedName => { reload(); setView(importedName !== undefined ? { kind: 'detail', name: importedName } : { kind: 'list' }) }} onCancel={() => { setView({ kind: 'list' }) }} />
+              : (
+                <div className="dshm-managerHint">
+                  <span className="dshm-tile dshm-managerHintTile"><IconSkillOutline16 size={18} aria-hidden="true" /></span>
+                  <p>{t('selectHint')}</p>
                 </div>
-              )
-              : null}
-            {skills.length > 0 && filtered.length === 0 ? <p className="dshm-status">{t('emptySearch')}</p> : null}
-            {filtered.length > 0
-              ? (
-                <ul className="dshm-cards">
-                  {filtered.map(skill => (
-                    <li key={`${skill.source}:${skill.name}`} className="dshm-card" data-skill={skill.name}>
-                      <button type="button" className="dshm-cardContent" onClick={() => { setView({ kind: 'detail', name: skill.name, path: skill.path }) }}>
-                        <span className={`dshm-tile ${skill.invalid !== undefined ? 'dshm-tileError' : skill.shadowed ? 'dshm-tileWarn' : ''}`}>
-                          <IconSkillOutline16 size={17} aria-hidden="true" />
-                        </span>
-                        <span className="dshm-cardBody">
-                          <span className="dshm-cardTitle">{skill.name}</span>
-                          <span className="dshm-cardDesc">{skill.invalid !== undefined ? skill.invalid : skill.description}</span>
-                        </span>
-                        <span className="dshm-cardTrailing">
-                          {skill.shadowed ? <span className="dshm-tag dshm-tagWarn">{t('shadowedTag')}</span> : null}
-                          {skill.invalid !== undefined ? <span className="dshm-tag dshm-tagError">{t('invalidTag')}</span> : null}
-                          <span className="dshm-tag">{sourceLabel(t, skill.source)}</span>
-                          <IconChevronRightOutline14 size={12} aria-hidden="true" />
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )
-              : null}
-          </>
-        )
-        : null}
+              )}
+        </section>
+      </div>
     </div>
   )
 }

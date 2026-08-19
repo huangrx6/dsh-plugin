@@ -427,139 +427,138 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
 @keyframes dsh-layout-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes dsh-layout-dock-in { from { opacity: 0; } to { opacity: 1; } }
 
-/* ── 设置页 ───────────────────────────────────────────────────────────────── */
-.dsh-layout-settings { display: grid; gap: 16px; max-width: 880px; color: var(--dsw-alias-label-primary, #f4f4f5); }
+/* ── 设置页 ─────────────────────────────────────────────────────────────────
+   macOS System Settings anatomy, Quiet Structure tokens: flat surfaces only —
+   no gradients, no glows, no recessed wells. A segmented tab control up top,
+   then section labels over group boxes; each box stacks setting rows (label
+   + description left, control right, 44px min-height, 1px hairline between).
+   Motion vocabulary is exactly background-color/color at 120ms; radius rides
+   the --dsh-layout-radius-user bridge. */
+.dsh-layout-settings { display: grid; gap: 16px; max-width: 720px; color: var(--dsw-alias-label-primary, #f4f4f5); }
 .dsh-layout-settings * { box-sizing: border-box; }
 @media (max-width: 767px) {
   /* 隐藏 DSH 头部里的「打开配置文件」动作（桌面操作，手机端拥挤） */
   [role='dialog'][class*='_panel'] [class$='_action'] { display: none !important; }
 }
-.dsh-layout-settings__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 4px 2px 6px; }
-.dsh-layout-settings h2 { margin: 0 0 6px; font-size: 19px; font-weight: 650; letter-spacing: .01em; line-height: 26px; }
-.dsh-layout-settings h3 { margin: 0; font-size: 14px; font-weight: 600; line-height: 20px; }
-.dsh-layout-settings p { margin: 5px 0 0; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 12px; line-height: 1.55; }
-/* Tab bar: Frosted Modern capsule segmented control — a recessed well holds
-   pill segments; the active segment fills with a bright light gradient and a
-   top light edge, inactive segments stay ghost until hovered. */
-.dsh-layout-tabs { display: inline-flex; justify-self: start; gap: 4px; padding: 4px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 2%, transparent)); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
-.dsh-layout-tabs button { flex: none; min-height: 32px; padding: 4px 16px; border: 0; border-radius: var(--dsh-layout-radius-user, 9px); background: transparent; color: var(--dsw-alias-label-secondary, #b3b3b8); font: inherit; font-size: 13px; font-weight: 550; white-space: nowrap; cursor: pointer; transition: color 140ms var(--ds-ease-in-out, ease), background-color 140ms var(--ds-ease-in-out, ease), box-shadow 140ms var(--ds-ease-in-out, ease), transform 140ms var(--ds-ease-in-out, ease); }
-.dsh-layout-tabs button:hover { color: var(--dsw-alias-label-primary, #f4f4f5); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
-.dsh-layout-tabs button:active { transform: scale(0.98); }
-.dsh-layout-tabs button[aria-selected='true'] { background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 28%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent)); color: var(--dsw-alias-label-primary, #f4f4f5); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent), 0 2px 8px rgb(0 0 0 / 16%); }
-/* Two-rail field rows: icon + label on the left, controls in one aligned
-   column on the right — every control starts at the same x, nothing drifts.
-   Hairline separators keep the vertical rhythm; groups breathe on one beat. */
-.dsh-layout-settings__field { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 6px 16px; align-items: center; padding: 11px 0; border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
-.dsh-layout-settings__group { display: flex; align-items: center; gap: 12px; margin: 22px 0 4px; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 11px; font-weight: 600; letter-spacing: .08em; }
-.dsh-layout-settings__group::after { content: ''; flex: 1; height: 1px; background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); }
-.dsh-layout-settings__group:first-child { margin-top: 4px; }
-.dsh-layout-settings__field:last-child { border-bottom: 0; padding-bottom: 2px; }
-.dsh-layout-settings__field:first-of-type { padding-top: 14px; }
-.dsh-layout-settings__label { display: flex; align-items: center; gap: 9px; min-width: 0; }
-.dsh-layout-settings__label strong { overflow: hidden; color: var(--dsw-alias-label-secondary, #b3b3b8); font-size: 12px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
-/* 字段标签改为上下堆叠：标签在上，已自定义/恢复按钮在下（不再挤在标签右侧）。 */
-.dsh-layout-settings__field .dsh-layout-settings__label { flex-direction: column; align-items: flex-start; gap: 3px; }
-.dsh-layout-field-meta { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
-/* Icon tile: a small frosted slab with its own top light edge. */
-.dsh-layout-settings__icon { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 28px; height: 28px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); border-radius: var(--dsh-layout-radius-user, 8px); background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent)); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); color: var(--dsw-alias-label-secondary, #b3b3b8); }
-.dsh-layout-settings__field .dsh-layout-settings__icon { color: var(--dsw-alias-label-secondary, #b3b3b8); }
-.dsh-layout-settings__control { display: grid; gap: 8px; min-width: 0; }
-.dsh-layout-settings__control > .dsh-layout-segmented, .dsh-layout-settings__control > .dsh-layout-tiers { margin-top: 0; }
-/* Card: a frosted raised slab over the workspace canvas — translucent light
-   gradient (not a flat fill), hairline edge, top light edge, soft lift. */
-.dsh-layout-settings__card { padding: 18px 20px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 7%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 3%, transparent)); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent), 0 14px 36px rgb(0 0 0 / 14%); }
-.dsh-layout-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 13px; border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); }
-.dsh-layout-section-heading .dsh-layout-settings__label { align-items: flex-start; }
-.dsh-layout-section-heading .dsh-layout-settings__icon { margin-top: 1px; color: var(--dsw-alias-label-secondary, #b3b3b8); }
-.dsh-layout-section-heading h3 { margin: 0; font-size: 14px; font-weight: 600; line-height: 20px; }
-.dsh-layout-section-heading p { margin: 2px 0 0; }
-/* Switch: a neutral recessed track; ON fills with the bright light gradient
-   and the knob follows label-primary so it reads on both themes. */
-.dsh-layout-toggle { display: inline-flex; align-items: center; gap: 9px; color: var(--dsw-alias-label-secondary, #b3b3b8); font-size: 12px; white-space: nowrap; cursor: pointer; }
+.dsh-layout-settings__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px 24px; padding: 2px 2px 0; }
+.dsh-layout-settings h2 { margin: 0 0 4px; font-size: 17px; font-weight: 650; letter-spacing: .01em; line-height: 24px; }
+.dsh-layout-settings p { margin: 0; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 12px; line-height: 1.55; }
+.dsh-layout-settings__actions { display: flex; flex: none; align-items: center; gap: 8px; margin-top: 2px; }
+/* Tab bar: one equal-width segmented control — quiet well, flat 10% active
+   chip, hover stays at 4% background. */
+.dsh-layout-tabs { display: inline-flex; justify-self: start; gap: 2px; padding: 3px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); }
+.dsh-layout-tabs button { flex: 1 1 0; min-width: 76px; min-height: 28px; padding: 3px 20px; border: 0; border-radius: var(--dsh-layout-radius-user, 8px); background: transparent; color: var(--dsw-alias-label-secondary, #b3b3b8); font: inherit; font-size: 13px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
+.dsh-layout-tabs button:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dsh-layout-tabs button[aria-selected='true'] { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
+/* Content column: section label over a group box, groups breathe one beat. */
+.dsh-layout-settings__body { display: grid; gap: 22px; }
+.dsh-layout-settings__section { display: grid; gap: 6px; }
+.dsh-layout-settings__group { margin: 0; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 11px; font-weight: 500; letter-spacing: .05em; }
+.dsh-layout-group { padding: 6px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); border-radius: var(--dsh-layout-radius-user-lg, 12px); background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.03)); }
+/* Setting row: label rail on the left, control right-aligned and vertically
+   centered; 1px hairline between rows keeps the rhythm. Wide rows stack the
+   control under the label at full width (editors, card grids, long segmented
+   groups). */
+.dsh-layout-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 16px; min-height: 44px; padding: 8px 12px; }
+.dsh-layout-row + .dsh-layout-row { border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); }
+.dsh-layout-row__label { display: grid; gap: 2px; min-width: 0; }
+.dsh-layout-row__title { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.dsh-layout-row__title strong { font-size: 13px; font-weight: 500; line-height: 18px; }
+.dsh-layout-row__desc { color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 11px; line-height: 16px; }
+.dsh-layout-row__control { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 10px; min-width: 0; }
+.dsh-layout-row--wide { grid-template-columns: minmax(0, 1fr); }
+.dsh-layout-row--wide .dsh-layout-row__control { justify-content: flex-start; margin-top: 6px; }
+.dsh-layout-inline { display: inline-flex; flex: 1 1 100%; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px 10px; min-width: 0; }
+.dsh-layout-row--wide .dsh-layout-inline { justify-content: flex-start; }
+/* Switch: 36×20 capsule; ON reads as a 30% label-primary fill with a white
+   knob — quiet on both themes. */
+.dsh-layout-toggle { display: inline-flex; align-items: center; gap: 8px; color: var(--dsw-alias-label-secondary, #b3b3b8); font-size: 12px; white-space: nowrap; cursor: pointer; }
 .dsh-layout-toggle input { position: absolute; opacity: 0; pointer-events: none; }
-.dsh-layout-toggle i { position: relative; width: 38px; height: 22px; border-radius: 999px; background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent); transition: background 160ms var(--ds-ease-in-out, ease), box-shadow 160ms var(--ds-ease-in-out, ease); }
-.dsh-layout-toggle:hover i { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 22%, transparent); }
-.dsh-layout-toggle i::after { content: ''; position: absolute; width: 16px; height: 16px; top: 3px; left: 3px; border-radius: 50%; background: var(--dsw-alias-label-primary, #fff); box-shadow: 0 1px 4px rgb(0 0 0 / 28%); transition: transform 160ms var(--ds-ease-in-out, ease); }
-.dsh-layout-toggle input:checked + i { background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 28%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 22%, transparent), inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent); }
+.dsh-layout-toggle i { position: relative; flex: none; width: 36px; height: 20px; border-radius: 999px; background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent); transition: background-color 120ms ease; }
+.dsh-layout-toggle i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; }
+.dsh-layout-toggle input:checked + i { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 30%, transparent); }
 .dsh-layout-toggle input:checked + i::after { transform: translateX(16px); }
 .dsh-layout-toggle input:focus-visible + i { outline: 2px solid var(--dsw-alias-state-business-primary, #3678ea); outline-offset: 2px; }
-/* Inner segmented control: a recessed well; the pressed segment lifts with
-   the bright gradient + top light edge, mirroring the tab bar above. */
-.dsh-layout-segmented { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 3px; border-radius: var(--dsh-layout-radius-user-lg, 10px); background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 2%, transparent)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); }
-.dsh-layout-segmented button { min-height: 30px; padding: 4px 13px; border: 0; border-radius: var(--dsh-layout-radius-user, 7px); background: transparent; color: var(--dsw-alias-label-secondary, #b3b3b8); font: inherit; white-space: nowrap; cursor: pointer; transition: color 140ms var(--ds-ease-in-out, ease), background-color 140ms var(--ds-ease-in-out, ease), box-shadow 140ms var(--ds-ease-in-out, ease), transform 140ms var(--ds-ease-in-out, ease); }
-.dsh-layout-segmented button:hover { color: var(--dsw-alias-label-primary, #f4f4f5); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); }
-.dsh-layout-segmented button:active { transform: scale(0.98); }
-.dsh-layout-segmented button[aria-pressed='true'] { background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 28%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent)); color: var(--dsw-alias-label-primary, #f4f4f5); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent), 0 1px 4px rgb(0 0 0 / 14%); }
-/* 材质档位: equal frosted tiles, poetic name over a one-line hint; the
-   active tier brightens its edge and catches the light like the tabs. */
-.dsh-layout-tiers { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-.dsh-layout-tiers button { min-height: 54px; padding: 9px 11px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); border-radius: var(--dsh-layout-radius-user, 9px); background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 2%, transparent)); color: var(--dsw-alias-label-primary, #f4f4f5); text-align: left; font: inherit; cursor: pointer; transition: border-color 150ms var(--ds-ease-in-out, ease), box-shadow 150ms var(--ds-ease-in-out, ease), transform 150ms var(--ds-ease-in-out, ease); }
-.dsh-layout-tiers button:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 22%, transparent); }
-.dsh-layout-tiers button:active { transform: scale(0.98); }
-.dsh-layout-tiers button[aria-pressed='true'] { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 26%, transparent); background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 13%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent)); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 26%, transparent); }
+/* Inner segmented control: small equal-weight capsules in a quiet 5% well;
+   the pressed segment is the same flat 10% chip as the active tab. */
+.dsh-layout-segmented { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 2px; border-radius: var(--dsh-layout-radius-user, 8px); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); }
+.dsh-layout-segmented button { min-height: 24px; padding: 2px 10px; border: 0; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px); background: transparent; color: var(--dsw-alias-label-secondary, #b3b3b8); font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
+.dsh-layout-segmented button:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dsh-layout-segmented button[aria-pressed='true'] { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dsh-layout-segmented--fill { width: 100%; }
+.dsh-layout-segmented--fill button { flex: 1 1 0; min-width: 0; text-align: center; }
+/* Slider: 2px track, 12px accent knob; --dsh-layout-fill (set inline) fills
+   the travelled run in WebKit, ::-moz-range-progress covers Firefox. */
+.dsh-layout-range { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.dsh-layout-range__name { flex: none; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 11px; }
+.dsh-layout-range input[type='range'] { -webkit-appearance: none; appearance: none; width: 160px; height: 20px; margin: 0; background: transparent; cursor: pointer; }
+.dsh-layout-range input[type='range']::-webkit-slider-runnable-track { height: 2px; border-radius: 1px; background: linear-gradient(to right, var(--dsw-alias-state-business-primary, #3678ea) var(--dsh-layout-fill, 50%), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent) var(--dsh-layout-fill, 50%)); }
+.dsh-layout-range input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; margin-top: -5px; border: 0; border-radius: 50%; background: var(--dsw-alias-state-business-primary, #3678ea); }
+.dsh-layout-range input[type='range']::-moz-range-track { height: 2px; border-radius: 1px; background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 18%, transparent); }
+.dsh-layout-range input[type='range']::-moz-range-progress { height: 2px; border-radius: 1px; background: var(--dsw-alias-state-business-primary, #3678ea); }
+.dsh-layout-range input[type='range']::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: var(--dsw-alias-state-business-primary, #3678ea); }
+.dsh-layout-range input[type='range']:focus-visible { outline: 2px solid color-mix(in srgb, var(--dsw-alias-state-business-primary, #3678ea) 60%, transparent); outline-offset: 2px; }
+.dsh-layout-range output { flex: none; min-width: 44px; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 11px; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.dsh-layout-row--wide .dsh-layout-range { flex: 1 1 100%; }
+.dsh-layout-row--wide .dsh-layout-range input[type='range'] { flex: 1; width: auto; }
+/* 材质档位: a 4-column card grid — name over hint; the selected card is a
+   flat 8% fill with a 24% edge. */
+.dsh-layout-tiers { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; width: 100%; }
+.dsh-layout-tiers button { padding: 8px 10px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); border-radius: var(--dsh-layout-radius-user, 8px); background: transparent; color: var(--dsw-alias-label-primary, #f4f4f5); text-align: left; font: inherit; cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
+.dsh-layout-tiers button:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
+.dsh-layout-tiers button[aria-pressed='true'] { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 24%, transparent); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); }
 .dsh-layout-tiers strong { display: block; overflow: hidden; font-size: 12px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
 .dsh-layout-tiers span { display: block; overflow: hidden; margin-top: 2px; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 11px; white-space: nowrap; text-overflow: ellipsis; }
-.dsh-layout-range { display: flex; align-items: center; gap: 10px; }
-.dsh-layout-range input[type='range'] { flex: 1; min-height: 24px; margin: 0; accent-color: var(--dsw-alias-state-business-primary, #3678ea); }
-/* Live values read as small tabular badges, not bare text. */
-.dsh-layout-range output { display: inline-flex; flex: none; align-items: center; justify-content: center; min-width: 52px; height: 20px; padding: 0 8px; border-radius: 999px; background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); color: var(--dsw-alias-label-secondary, #b3b3b8); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.dsh-layout-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.dsh-layout-chips label { display: inline-flex; align-items: center; gap: 5px; min-height: 28px; padding: 3px 11px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent); border-radius: 999px; background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 2%, transparent)); color: var(--dsw-alias-label-secondary, #b3b3b8); font-size: 12px; white-space: nowrap; cursor: pointer; transition: border-color 140ms var(--ds-ease-in-out, ease), background-color 140ms var(--ds-ease-in-out, ease), color 140ms var(--ds-ease-in-out, ease); }
-.dsh-layout-chips label:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 22%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
-.dsh-layout-chips label:has(input:checked) { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 26%, transparent); background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 7%, transparent)); color: var(--dsw-alias-label-primary, #f4f4f5); }
-.dsh-layout-chips input { accent-color: var(--dsw-alias-state-business-primary, #3678ea); }
-.dsh-layout-colors { display: flex; align-items: center; gap: 12px; }
-.dsh-layout-colors input[type='color'] { width: 42px; height: 32px; padding: 2px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent); border-radius: var(--dsh-layout-radius-user, 6px); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); cursor: pointer; transition: border-color 140ms var(--ds-ease-in-out, ease); }
-.dsh-layout-colors input[type='color']:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 24%, transparent); }
-.dsh-layout-settings input[type='url'], .dsh-layout-settings input[type='text'] { width: 100%; min-height: 32px; padding: 5px 10px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent); border-radius: var(--dsh-layout-radius-user, 6px); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); font: inherit; transition: border-color 140ms var(--ds-ease-in-out, ease), background-color 140ms var(--ds-ease-in-out, ease); }
-.dsh-layout-settings input[type='url']:hover, .dsh-layout-settings input[type='text']:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 20%, transparent); }
-.dsh-layout-settings input[type='url']:focus, .dsh-layout-settings input[type='text']:focus { border-color: color-mix(in srgb, var(--dsw-alias-state-business-primary, #3678ea) 55%, transparent); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); outline: none; }
+/* Metric chips: flat checkboxes; checked mirrors the selected card recipe. */
+.dsh-layout-chips { display: flex; flex-wrap: wrap; gap: 4px 6px; width: 100%; }
+.dsh-layout-chips label { display: inline-flex; align-items: center; gap: 5px; min-height: 24px; padding: 1px 9px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); border-radius: var(--dsh-layout-radius-user, 8px); background: transparent; color: var(--dsw-alias-label-secondary, #b3b3b8); font-size: 12px; white-space: nowrap; cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
+.dsh-layout-chips label:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dsh-layout-chips label:has(input:checked) { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 24%, transparent); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dsh-layout-chips input { margin: 0; accent-color: var(--dsw-alias-state-business-primary, #3678ea); }
+.dsh-layout-colors { display: flex; align-items: center; gap: 10px; }
+.dsh-layout-colors input[type='color'] { width: 40px; height: 26px; padding: 2px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent); border-radius: var(--dsh-layout-radius-user, 6px); background: transparent; cursor: pointer; }
+.dsh-layout-colors input[type='color']:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
+/* Text/URL fields: bare hairline fields, transparent at rest, 4% on hover. */
+.dsh-layout-settings input[type='url'], .dsh-layout-settings input[type='text'] { width: 100%; min-height: 28px; padding: 4px 9px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); border-radius: var(--dsh-layout-radius-user, 6px); background: transparent; color: var(--dsw-alias-label-primary, #f4f4f5); font: inherit; font-size: 12px; }
+.dsh-layout-settings input[type='url']:hover, .dsh-layout-settings input[type='text']:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
+.dsh-layout-settings input[type='url']:focus, .dsh-layout-settings input[type='text']:focus { border-color: color-mix(in srgb, var(--dsw-alias-state-business-primary, #3678ea) 55%, transparent); outline: none; }
 .dsh-layout-settings input[type='url']::placeholder, .dsh-layout-settings input[type='text']::placeholder { color: var(--dsw-alias-label-tertiary, #8a8a8e); }
-/* Custom page-padding editor: one compact row per area, preset placeholders. */
-.dsh-layout-pads { display: grid; gap: 6px; }
-.dsh-layout-pads__row { display: flex; align-items: center; gap: 12px; color: var(--dsw-alias-label-secondary, #b3b3b8); font-size: 12px; }
+/* Custom page-padding editor: one compact row per area; number fields are
+   60px, right-aligned, tabular. */
+.dsh-layout-pads { display: grid; gap: 4px; width: 100%; }
+.dsh-layout-pads__row { display: flex; align-items: center; gap: 10px; color: var(--dsw-alias-label-secondary, #b3b3b8); font-size: 12px; }
 .dsh-layout-pads__row > span { flex: none; width: 44px; }
-.dsh-layout-pads__row label { display: inline-flex; align-items: center; gap: 6px; color: var(--dsw-alias-label-tertiary, #8a8a8e); }
-.dsh-layout-pads__row input { width: 64px; min-height: 28px; padding: 3px 8px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent); border-radius: var(--dsh-layout-radius-user, 6px); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); font: inherit; font-variant-numeric: tabular-nums; transition: border-color 140ms var(--ds-ease-in-out, ease); }
-.dsh-layout-pads__row input:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 20%, transparent); }
+.dsh-layout-pads__row label { display: inline-flex; align-items: center; gap: 5px; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 11px; }
+.dsh-layout-pads__row input { width: 60px; min-height: 24px; padding: 2px 6px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); border-radius: var(--dsh-layout-radius-user, 6px); background: transparent; color: var(--dsw-alias-label-primary, #f4f4f5); font: inherit; font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; }
+.dsh-layout-pads__row input:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
 .dsh-layout-pads__row input:focus { border-color: color-mix(in srgb, var(--dsw-alias-state-business-primary, #3678ea) 55%, transparent); outline: none; }
 .dsh-layout-pads__hint { margin: 2px 0 0; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 11px; }
-/* Pill actions share one recipe: frosted gradient fill, hairline edge, top
-   light edge; hover brightens the border, press settles at scale(0.98). */
-.dsh-layout-file-button { display: inline-flex; align-items: center; min-height: 32px; padding: 5px 14px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent); border-radius: 999px; background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 9%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent)); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); font: inherit; white-space: nowrap; cursor: pointer; user-select: none; transition: border-color 140ms var(--ds-ease-in-out, ease), transform 140ms var(--ds-ease-in-out, ease); }
-.dsh-layout-file-button:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 26%, transparent); }
-.dsh-layout-file-button:active { transform: scale(0.98); }
+/* Secondary actions (file pickers, 恢复默认): one quiet recipe — hairline
+   edge, transparent fill, 4% background on hover. */
+.dsh-layout-file-button, .dsh-layout-settings__reset { display: inline-flex; align-items: center; justify-content: center; min-height: 26px; padding: 3px 12px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent); border-radius: var(--dsh-layout-radius-user, 6px); background: transparent; color: var(--dsw-alias-label-primary, #f4f4f5); font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; user-select: none; transition: background-color 120ms ease, color 120ms ease; }
+.dsh-layout-file-button:hover, .dsh-layout-settings__reset:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
 label:has(> .dsh-layout-file-button) { display: inline-flex; }
-/* Status badges: the accent tinted as a light capsule with an inner ring. */
-.dsh-layout-dirty { flex: none; display: inline-flex; align-items: center; height: 22px; margin-top: 4px; padding: 0 10px; border-radius: 999px; background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-state-business-primary, #3678ea) 20%, transparent), color-mix(in srgb, var(--dsw-alias-state-business-primary, #3678ea) 11%, transparent)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dsw-alias-state-business-primary, #3678ea) 26%, transparent), inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-state-business-primary, #3678ea) 24%, transparent); color: var(--dsw-alias-state-business-primary, #6f9df7); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.dsh-layout-field-status { flex: none; display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border-radius: 999px; background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-state-business-primary, #3678ea) 16%, transparent), color-mix(in srgb, var(--dsw-alias-state-business-primary, #3678ea) 9%, transparent)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dsw-alias-state-business-primary, #3678ea) 22%, transparent); color: var(--dsw-alias-state-business-primary, #6f9df7); font-size: 10px; font-weight: 600; white-space: nowrap; }
-.dsh-layout-field-reset { flex: none; width: 20px; height: 20px; padding: 0; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); color: var(--dsw-alias-label-secondary, #b3b3b8); font-size: 11px; line-height: 1; cursor: pointer; transition: border-color 140ms var(--ds-ease-in-out, ease), color 140ms var(--ds-ease-in-out, ease), background-color 140ms var(--ds-ease-in-out, ease), transform 140ms var(--ds-ease-in-out, ease); }
-.dsh-layout-field-reset:hover { border-color: color-mix(in srgb, var(--dsw-alias-state-business-primary, #3678ea) 45%, transparent); background: color-mix(in srgb, var(--dsw-alias-state-business-primary, #3678ea) 10%, transparent); color: var(--dsw-alias-state-business-primary, #6f9df7); }
-.dsh-layout-field-reset:active { transform: scale(0.98); }
-.dsh-layout-settings footer { display: flex; justify-content: flex-end; }
-.dsh-layout-settings footer button { min-height: 32px; padding: 6px 16px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent); border-radius: 999px; background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent)); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); font: inherit; white-space: nowrap; cursor: pointer; transition: border-color 140ms var(--ds-ease-in-out, ease), transform 140ms var(--ds-ease-in-out, ease); }
-.dsh-layout-settings footer button:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 26%, transparent); }
-.dsh-layout-settings footer button:active { transform: scale(0.98); }
-/* Settings-panel motion guard: no transition choreography, no press travel
-   when the user prefers reduced motion (the popover rules below are separate). */
+/* Status badges: flat accent tints, no rings. */
+.dsh-layout-dirty { flex: none; display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; background: color-mix(in srgb, var(--dsw-alias-state-business-primary, #3678ea) 14%, transparent); color: var(--dsw-alias-state-business-primary, #6f9df7); font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dsh-layout-field-status { flex: none; display: inline-flex; align-items: center; height: 16px; padding: 0 6px; border-radius: 999px; background: color-mix(in srgb, var(--dsw-alias-state-business-primary, #3678ea) 12%, transparent); color: var(--dsw-alias-state-business-primary, #6f9df7); font-size: 10px; font-weight: 500; white-space: nowrap; }
+.dsh-layout-field-reset { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent); border-radius: 999px; background: transparent; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 11px; line-height: 1; cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
+.dsh-layout-field-reset:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
+/* Settings-panel motion guard: the whole panel drops to zero transition when
+   the user prefers reduced motion (the popover rules below are separate). */
 @media (prefers-reduced-motion: reduce) {
-  .dsh-layout-tabs button, .dsh-layout-segmented button, .dsh-layout-tiers button,
-  .dsh-layout-chips label, .dsh-layout-file-button, .dsh-layout-field-reset,
-  .dsh-layout-settings input[type='url'], .dsh-layout-settings input[type='text'],
-  .dsh-layout-pads__row input, .dsh-layout-settings footer button,
-  .dsh-layout-toggle i, .dsh-layout-toggle i::after { transition: none; }
-  .dsh-layout-tabs button:active, .dsh-layout-segmented button:active,
-  .dsh-layout-tiers button:active, .dsh-layout-file-button:active,
-  .dsh-layout-field-reset:active, .dsh-layout-settings footer button:active { transform: none; }
+  .dsh-layout-settings, .dsh-layout-settings * { transition: none !important; }
 }
 @media (prefers-reduced-motion: reduce) { .dsh-layout-panel { animation: none; } .dsh-layout-trigger { transition: none; } }
 
 /* ── 窄屏（< 768px）─────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  .dsh-layout-settings__field { grid-template-columns: 1fr; gap: 6px; }
-  .dsh-layout-settings__label { align-items: center; }
-  .dsh-layout-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
-  .dsh-layout-tabs button { padding: 7px 8px; text-align: center; }
+  /* 窄屏：标题行纵排、tab 铺满、设置行改为上下堆叠、档位卡 2 列。 */
+  .dsh-layout-settings__header { flex-direction: column; align-items: flex-start; }
+  .dsh-layout-settings__actions { margin-top: 2px; }
+  .dsh-layout-tabs { display: flex; width: 100%; }
+  .dsh-layout-row { grid-template-columns: minmax(0, 1fr); }
+  .dsh-layout-row__control { justify-content: flex-start; margin-top: 6px; }
+  .dsh-layout-inline { justify-content: flex-start; }
   .dsh-layout-tiers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
   /* DSH's outer settings panel is desktop row-based by default (188px nav

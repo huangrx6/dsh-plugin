@@ -3,11 +3,13 @@
  * (vendored from dsh-launcher's market module — the platform's ModuleLoader
  * forbids cross-plugin value imports, so the source-of-truth lives here).
  *
- * Owns:
- *   - The source chips row (with "All / built-in / user-added" + an "Add
- *     source" affordance)
- *   - The search/refresh toolbar
- *   - The card grid
+ * Layout ("Quiet Structure", Raycast-store-like):
+ *   - one toolbar row: segmented source control (equal pills, 6px status
+ *     dots) + 34px search + 28px icon-only refresh
+ *   - add-source: compact inline row toggled by the trailing "+" segment
+ *   - items: a single grouped container of compact rows (32px icon base,
+ *     13px name + 11px source meta, single-line 12px description, install
+ *     button / installed badge on the right) separated by 1px hairlines
  *
  * Does NOT own the install / remove button behavior — those bubbled up
  * as `onInstall` / `onRemove` callbacks so the consumer plugin owns the
@@ -42,12 +44,12 @@ export interface MarketShelfProps {
   readonly fetcher?: typeof fetch;
   /** Restrict which kinds of items render. Undefined = all kinds. */
   readonly kinds?: readonly MarketItemKind[];
-  /** Cards rendered with this label set. Callers pass a translator. */
+  /** Rows rendered with this label set. Callers pass a translator. */
   readonly translate: (
     key: MarketplaceLocaleKey,
     params?: Record<string, unknown>,
   ) => string;
-  /** Optional card click handler (open detail). */
+  /** Optional row click handler (open detail). */
   readonly onItemOpen?: (item: MarketItem, source: MarketSource) => void;
   /** Install handler. Returns a promise that resolves once the install finishes. */
   readonly onInstall: (item: MarketItem, source: MarketSource) => Promise<void>;
@@ -83,26 +85,55 @@ export type MarketplaceLocaleKey =
   | "marketSourceDown"
   | "marketSourceInvalid";
 
+/** State class carried by a source segment's status dot. */
+function segmentStateClass(snapshot: SourceSnapshot | undefined): string {
+  if (snapshot?.state === "offline") return " is-down";
+  if (snapshot?.state === "invalid") return " is-invalid";
+  if (snapshot?.state === "ok") return " is-up";
+  return "";
+}
+
+/** State tooltip for a source segment. */
+function segmentTitle(
+  snapshot: SourceSnapshot | undefined,
+  translate: (key: MarketplaceLocaleKey) => string,
+): string {
+  if (snapshot?.state === "offline") return translate("marketSourceDown");
+  if (snapshot?.state === "invalid") return translate("marketSourceInvalid");
+  return translate("marketSourceUp");
+}
+
 /**
- * Pick a card tile icon by item kind. The launcher's "default" tile is
+ * Pick a row tile icon by item kind. The launcher's "default" tile is
  * the sparkle (general/unknown); consumers can override by passing a
  * different `kind` in the manifest.
  */
 function TileIcon({ kind }: { readonly kind: MarketItemKind }): JSX.Element {
   switch (kind) {
     case "skill":
-      return <IconSkills size={18} />;
+      return <IconSkills size={15} />;
     case "mcp":
-      return <IconMcp size={18} />;
+      return <IconMcp size={15} />;
     case "archive":
-      return <IconArchive size={18} />;
+      return <IconArchive size={15} />;
     case "layout":
-      return <IconLayout size={18} />;
+      return <IconLayout size={15} />;
     case "remote":
-      return <IconRemote size={18} />;
+      return <IconRemote size={15} />;
     default:
-      return <IconSparkle size={18} />;
+      return <IconSparkle size={15} />;
   }
+}
+
+/** Compose the 11px meta line under a row name: source · author · version. */
+function rowMeta(
+  item: MarketItem,
+  source: MarketSource,
+): string {
+  const parts: string[] = [source.name];
+  if (item.author !== undefined) parts.push(item.author);
+  if (item.version !== undefined) parts.push(`v${item.version}`);
+  return parts.join(" · ");
 }
 
 export function MarketShelf({
@@ -241,22 +272,51 @@ export function MarketShelf({
   );
 
   return (
-    <div>
-      <SourceChipRow
-        sources={sources}
-        snapshots={snapshots}
-        activeSourceId={activeSourceId}
-        onPick={(id) => {
-          setActiveSourceId(id);
-        }}
-        onAdd={() => {
-          setShowAddForm(true);
-        }}
-        onRemove={handleRemove}
-        translate={translate}
-      />
+    <div className="dshm-mkt">
+      <div className="dshm-mkt-toolbar">
+        <SourceSegmented
+          sources={sources}
+          snapshots={snapshots}
+          activeSourceId={activeSourceId}
+          onPick={(id) => {
+            setActiveSourceId(id);
+          }}
+          onAdd={() => {
+            setShowAddForm(true);
+          }}
+          onRemove={handleRemove}
+          translate={translate}
+        />
+        <label className="dshm-mkt-search">
+          <IconSearch size={13} />
+          <input
+            type="search"
+            placeholder={translate("marketSearch")}
+            value={query}
+            onChange={(event) => {
+              setQuery(event.currentTarget.value);
+            }}
+          />
+        </label>
+        <button
+          type="button"
+          className={`dshm-mkt-iconBtn${refreshing ? " is-spin" : ""}`}
+          onClick={() => {
+            void refresh();
+          }}
+          disabled={refreshing}
+          title={
+            refreshing
+              ? translate("marketRefreshing")
+              : translate("marketRefresh")
+          }
+          aria-label={translate("marketRefresh")}
+        >
+          <IconRefresh size={14} />
+        </button>
+      </div>
       {showAddForm ? (
-        <AddSourceForm
+        <AddSourceRow
           name={draftName}
           url={draftUrl}
           onNameChange={setDraftName}
@@ -270,17 +330,8 @@ export function MarketShelf({
           translate={translate}
         />
       ) : null}
-      <Toolbar
-        refreshing={refreshing}
-        query={query}
-        onQueryChange={setQuery}
-        onRefresh={() => {
-          void refresh();
-        }}
-        translate={translate}
-      />
       {error === undefined ? null : (
-        <div className="dshm-mkt-error">
+        <div className="dshm-mkt-error" role="alert">
           {translate("marketFailed")}: {error}
         </div>
       )}
@@ -291,7 +342,7 @@ export function MarketShelf({
             : translate("marketEmptySearch")}
         </div>
       ) : (
-        <ul className="dshm-mkt-grid">
+        <ul className="dshm-mkt-list">
           {activeItems.map((item) => {
             const source = snapshots.find((snapshot) =>
               (snapshot.items ?? []).includes(item),
@@ -301,29 +352,28 @@ export function MarketShelf({
             const installed = isInstalled(item);
             const busy = busyId === key;
             return (
-              <li key={key} className="dshm-mkt-card">
-                <MarketCard
-                  item={item}
-                  source={source}
-                  installed={installed}
-                  busy={busy}
-                  removeEnabled={onRemove !== undefined}
-                  translate={translate}
-                  {...(onItemOpen === undefined
-                    ? {}
-                    : {
-                        onOpen: () => {
-                          onItemOpen(item, source);
-                        },
-                      })}
-                  onInstall={() => {
-                    void handleInstall(item, source);
-                  }}
-                  onRemove={() => {
-                    void handleRemoveClick(item, source);
-                  }}
-                />
-              </li>
+              <MarketRow
+                key={key}
+                item={item}
+                source={source}
+                installed={installed}
+                busy={busy}
+                removeEnabled={onRemove !== undefined}
+                translate={translate}
+                {...(onItemOpen === undefined
+                  ? {}
+                  : {
+                      onOpen: () => {
+                        onItemOpen(item, source);
+                      },
+                    })}
+                onInstall={() => {
+                  void handleInstall(item, source);
+                }}
+                onRemove={() => {
+                  void handleRemoveClick(item, source);
+                }}
+              />
             );
           })}
         </ul>
@@ -332,7 +382,7 @@ export function MarketShelf({
   );
 }
 
-interface SourceChipRowProps {
+interface SourceSegmentedProps {
   readonly sources: readonly MarketSource[];
   readonly snapshots: readonly SourceSnapshot[];
   readonly activeSourceId: string | "all";
@@ -342,7 +392,8 @@ interface SourceChipRowProps {
   readonly translate: (key: MarketplaceLocaleKey) => string;
 }
 
-function SourceChipRow({
+/** Equal-width segmented control: All | each source (status dot) | "+". */
+function SourceSegmented({
   sources,
   snapshots,
   activeSourceId,
@@ -350,33 +401,33 @@ function SourceChipRow({
   onAdd,
   onRemove,
   translate,
-}: SourceChipRowProps): JSX.Element {
+}: SourceSegmentedProps): JSX.Element {
   return (
-    <div className="dshm-mkt-sources">
-      <span className="dshm-mkt-sources-label">
-        {translate("marketSources")}
-      </span>
+    <div
+      className="dshm-mkt-seg"
+      role="group"
+      aria-label={translate("marketSources")}
+    >
       <button
         type="button"
-        className={`dshm-mkt-source-chip${activeSourceId === "all" ? " is-active" : ""}`}
+        className={`dshm-mkt-segBtn${activeSourceId === "all" ? " is-active" : ""}`}
+        aria-pressed={activeSourceId === "all"}
         onClick={() => {
           onPick("all");
         }}
       >
-        {translate("marketAll")}
+        <span className="dshm-mkt-segLabel">{translate("marketAll")}</span>
       </button>
       {sources.map((source) => {
         const snapshot = snapshots.find(
           (entry) => entry.source.id === source.id,
         );
-        let stateClass = "";
-        if (snapshot?.state === "offline") stateClass = " is-down";
-        if (snapshot?.state === "invalid") stateClass = " is-invalid";
         return (
           <button
             key={source.id}
             type="button"
-            className={`dshm-mkt-source-chip${activeSourceId === source.id ? " is-active" : ""}${stateClass}`}
+            className={`dshm-mkt-segBtn${segmentStateClass(snapshot)}${activeSourceId === source.id ? " is-active" : ""}`}
+            aria-pressed={activeSourceId === source.id}
             onClick={() => {
               onPick(source.id);
             }}
@@ -384,32 +435,27 @@ function SourceChipRow({
               event.preventDefault();
               if (!source.builtIn) onRemove(source.id);
             }}
-            title={
-              snapshot?.state === "ok"
-                ? translate("marketSourceUp")
-                : snapshot?.state === "offline"
-                  ? translate("marketSourceDown")
-                  : translate("marketSourceInvalid")
-            }
+            title={segmentTitle(snapshot, translate)}
           >
-            <span className="dshm-mkt-source-dot" />
-            <span>{source.name}</span>
+            <span className="dshm-mkt-segDot" aria-hidden={true} />
+            <span className="dshm-mkt-segLabel">{source.name}</span>
           </button>
         );
       })}
       <button
         type="button"
-        className="dshm-mkt-source-add"
+        className="dshm-mkt-segBtn dshm-mkt-segAdd"
         onClick={onAdd}
+        title={translate("marketAddSource")}
+        aria-label={translate("marketAddSource")}
       >
         <IconPlus size={12} />
-        <span>{translate("marketAddSource")}</span>
       </button>
     </div>
   );
 }
 
-interface AddSourceFormProps {
+interface AddSourceRowProps {
   readonly name: string;
   readonly url: string;
   readonly onNameChange: (value: string) => void;
@@ -419,7 +465,8 @@ interface AddSourceFormProps {
   readonly translate: (key: MarketplaceLocaleKey) => string;
 }
 
-function AddSourceForm({
+/** Compact inline add-source form (28px inputs, 26px buttons). */
+function AddSourceRow({
   name,
   url,
   onNameChange,
@@ -427,7 +474,7 @@ function AddSourceForm({
   onSubmit,
   onCancel,
   translate,
-}: AddSourceFormProps): JSX.Element {
+}: AddSourceRowProps): JSX.Element {
   return (
     <div className="dshm-mkt-addrow">
       <input
@@ -448,69 +495,20 @@ function AddSourceForm({
       />
       <button
         type="button"
-        className="dshm-mkt-toolbar-btn"
+        className="dshm-mkt-btn is-primary"
         onClick={onSubmit}
         disabled={name.trim() === "" || url.trim() === ""}
       >
         {translate("marketAdd")}
       </button>
-      <button
-        type="button"
-        className="dshm-mkt-toolbar-btn"
-        onClick={onCancel}
-      >
+      <button type="button" className="dshm-mkt-btn" onClick={onCancel}>
         {translate("marketCancel")}
       </button>
     </div>
   );
 }
 
-interface ToolbarProps {
-  readonly refreshing: boolean;
-  readonly query: string;
-  readonly onQueryChange: (value: string) => void;
-  readonly onRefresh: () => void;
-  readonly translate: (key: MarketplaceLocaleKey) => string;
-}
-
-function Toolbar({
-  refreshing,
-  query,
-  onQueryChange,
-  onRefresh,
-  translate,
-}: ToolbarProps): JSX.Element {
-  return (
-    <div className="dshm-mkt-toolbar">
-      <label className="dshm-mkt-search">
-        <IconSearch size={14} />
-        <input
-          type="search"
-          placeholder={translate("marketSearch")}
-          value={query}
-          onChange={(event) => {
-            onQueryChange(event.currentTarget.value);
-          }}
-        />
-      </label>
-      <button
-        type="button"
-        className={`dshm-mkt-toolbar-btn${refreshing ? " is-spin" : ""}`}
-        onClick={onRefresh}
-        disabled={refreshing}
-      >
-        <IconRefresh size={14} />
-        <span>
-          {refreshing
-            ? translate("marketRefreshing")
-            : translate("marketRefresh")}
-        </span>
-      </button>
-    </div>
-  );
-}
-
-export interface MarketCardProps {
+export interface MarketRowProps {
   readonly item: MarketItem;
   readonly source: MarketSource;
   readonly installed: boolean;
@@ -519,9 +517,11 @@ export interface MarketCardProps {
   readonly translate: (key: MarketplaceLocaleKey) => string;
   readonly onInstall: () => void;
   readonly onRemove: () => void;
+  readonly onOpen?: () => void;
 }
 
-export function MarketCard({
+/** One compact row inside the grouped list container. */
+export function MarketRow({
   item,
   source,
   installed,
@@ -530,77 +530,62 @@ export function MarketCard({
   translate,
   onInstall,
   onRemove,
-}: MarketCardProps): JSX.Element {
+  onOpen,
+}: MarketRowProps): JSX.Element {
+  const identity = (
+    <>
+      <span className="dshm-mkt-rowTile" aria-hidden={true}>
+        <TileIcon kind={item.kind} />
+      </span>
+      <span className="dshm-mkt-rowId">
+        <span className="dshm-mkt-rowName">{item.name}</span>
+        <span className="dshm-mkt-rowMeta">{rowMeta(item, source)}</span>
+      </span>
+      <span className="dshm-mkt-rowDesc">{item.description}</span>
+    </>
+  );
   return (
-    <article>
-      <div className="dshm-mkt-card-head">
-        <span className="dshm-mkt-card-tile">
-          <TileIcon kind={item.kind} />
-        </span>
-        <div className="dshm-mkt-card-titleline">
-          <h3 className="dshm-mkt-card-title">{item.name}</h3>
-          <div className="dshm-mkt-card-meta">
-            {item.author === undefined ? null : <>by {item.author}</>}
-            {item.version === undefined ? null : <> · v{item.version}</>}
-          </div>
-        </div>
-      </div>
-      <p className="dshm-mkt-card-desc">{item.description}</p>
-      {item.tags !== undefined && item.tags.length > 0 ? (
-        <div className="dshm-mkt-card-tags">
-          {item.tags.map((tag) => (
-            <span key={tag} className="dshm-mkt-tag">
-              {tag}
-            </span>
-          ))}
-          <span className="dshm-mkt-tag dshm-mkt-tag-source">
-            {source.name}
-          </span>
-        </div>
+    <li
+      className={`dshm-mkt-row${installed ? " is-installed" : ""}`}
+      data-kind={item.kind}
+    >
+      {onOpen === undefined ? (
+        <div className="dshm-mkt-rowMain">{identity}</div>
       ) : (
-        <div className="dshm-mkt-card-tags">
-          <span className="dshm-mkt-tag dshm-mkt-tag-source">
-            {source.name}
-          </span>
-        </div>
+        <button type="button" className="dshm-mkt-rowMain" onClick={onOpen}>
+          {identity}
+        </button>
       )}
-      <div className="dshm-mkt-card-foot">
+      <div className="dshm-mkt-rowSide">
         {installed ? (
-          <span className="dshm-mkt-card-installed">
-            <span aria-hidden={true}>✓</span>
-            <span>{translate("marketInstalled")}</span>
+          <span className="dshm-mkt-badge">
+            <span className="dshm-mkt-badgeDot" aria-hidden={true} />
+            {translate("marketInstalled")}
           </span>
-        ) : null}
-        {installed ? (
-          removeEnabled ? (
-            <button
-              type="button"
-              className="dshm-mkt-card-action is-danger"
-              onClick={onRemove}
-              disabled={busy}
-            >
-              <span>
-                {busy
-                  ? translate("marketInstalling")
-                  : translate("marketRemove")}
-              </span>
-            </button>
-          ) : null
         ) : (
           <button
             type="button"
-            className="dshm-mkt-card-action is-primary"
+            className="dshm-mkt-btn is-primary"
             onClick={onInstall}
             disabled={busy}
           >
-            <span>
-              {busy
-                ? translate("marketInstalling")
-                : translate("marketInstall")}
-            </span>
+            {busy
+              ? translate("marketInstalling")
+              : translate("marketInstall")}
           </button>
         )}
+        {installed && removeEnabled ? (
+          <button
+            type="button"
+            className="dshm-mkt-btn is-danger"
+            onClick={onRemove}
+            disabled={busy}
+            title={translate("marketRemove")}
+          >
+            {busy ? translate("marketRemoving") : translate("marketRemove")}
+          </button>
+        ) : null}
       </div>
-    </article>
+    </li>
   );
 }

@@ -292,7 +292,8 @@ export function WorkspaceView({
   );
 }
 
-/** Section header: icon tile + title + subtitle above the body. */
+/** Section header: slim title row (title + subtitle, hairline below) —
+    the content speaks, not a hero tile. */
 function SectionContent({
   section,
   translate,
@@ -303,7 +304,6 @@ function SectionContent({
   if (section === undefined) return <></>;
   return (
     <header className="dsh-launcher-section-header">
-      <span className="dsh-launcher-section-header-tile">{section.icon}</span>
       <div className="dsh-launcher-section-header-body">
         <h1 className="dsh-launcher-section-header-title">
           {translate(section.labelKey)}

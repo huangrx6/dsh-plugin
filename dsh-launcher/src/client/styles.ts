@@ -30,14 +30,7 @@ export const LAUNCHER_STYLES = `
   text-align: left;
   cursor: pointer;
   border-radius: var(--dsh-layout-radius-user, 8px);
-  transition: background 120ms var(--ds-ease-in-out, ease);
   margin: 2px 0;
-}
-.dsh-launcher-trigger:hover {
-  background: var(--dsw-alias-interactive-bg-hover, rgba(255, 255, 255, 0.06));
-}
-.dsh-launcher-trigger:active {
-  background: var(--dsw-alias-interactive-bg-active, rgba(255, 255, 255, 0.1));
 }
 .dsh-launcher-trigger-icon {
   display: inline-flex;
@@ -71,8 +64,10 @@ export const LAUNCHER_STYLES = `
   --dsh-launcher-ease: cubic-bezier(0.22, 1, 0.36, 1);
   position: fixed;
   inset: 0;
-  background: color-mix(in srgb, var(--dsw-alias-label-primary, #000) 18%, transparent);
-  backdrop-filter: blur(6px);
+  /* No scrim on purpose: the mask is a transparent click-catcher
+     (click-outside closes). Dimming/blurring the whole page behind a
+     small popover read as abrupt. */
+  background: transparent;
   z-index: 9999;
   display: flex;
   align-items: flex-end;
@@ -91,9 +86,9 @@ export const LAUNCHER_STYLES = `
   animation: dsh-launcher-panel-out 200ms cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 .dsh-launcher-panel {
-  width: min(420px, 92vw);
+  width: min(380px, 92vw);
   background: var(--dsw-alias-bg-layer-1, #1c1c1f);
-  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
   border-radius: var(--dsh-layout-radius-user-lg, 16px);
   box-shadow: var(--dsw-shadow-lv2, 0 20px 60px rgba(0, 0, 0, 0.45));
   overflow: hidden;
@@ -105,7 +100,7 @@ export const LAUNCHER_STYLES = `
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 16px 18px 12px;
+  padding: 12px 16px 10px;
   border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
 }
 .dsh-launcher-panel-title {
@@ -119,13 +114,13 @@ export const LAUNCHER_STYLES = `
   color: var(--dsw-alias-label-tertiary, #8a8a8e);
   margin-left: auto;
 }
-.dsh-launcher-panel-body { padding: 6px 8px; }
+.dsh-launcher-panel-body { padding: 6px; }
 .dsh-launcher-panel-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  padding: 12px 12px;
+  padding: 10px 12px;
   border: 0;
   background: transparent;
   color: var(--dsw-alias-label-primary, #f4f4f5);
@@ -138,14 +133,14 @@ export const LAUNCHER_STYLES = `
 .dsh-launcher-panel-item:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(255, 255, 255, 0.06)); }
 .dsh-launcher-panel-item-icon {
   display: inline-flex;
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   align-items: center;
   justify-content: center;
   border-radius: var(--dsh-layout-radius-user, 10px);
   background: var(--dsw-alias-bg-module-platform, rgba(255, 255, 255, 0.04));
   color: var(--dsw-alias-label-primary, #f4f4f5);
-  flex: 0 0 36px;
+  flex: 0 0 30px;
 }
 .dsh-launcher-panel-item-icon svg { width: 18px; height: 18px; }
 .dsh-launcher-panel-item-body { flex: 1; min-width: 0; }
@@ -256,7 +251,7 @@ export const LAUNCHER_STYLES = `
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 10px 12px;
+  padding: 7px 10px;
   border: 0;
   background: transparent;
   color: var(--dsw-alias-label-secondary, #b3b3b8);
@@ -265,7 +260,7 @@ export const LAUNCHER_STYLES = `
   text-align: left;
   border-radius: var(--dsh-layout-radius-user, 10px);
   cursor: pointer;
-  margin: 2px 0;
+  margin: 1px 0;
   transition: background 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease);
   animation: dsh-launcher-item-in 340ms var(--dsh-launcher-ease, ease) backwards;
 }
@@ -287,9 +282,14 @@ export const LAUNCHER_STYLES = `
 .dsh-launcher-canvas-content {
   grid-area: content;
   overflow-y: auto;
-  padding: 24px 28px 64px;
+  padding: 28px 32px 80px;
   -webkit-overflow-scrolling: touch;
   animation: dsh-launcher-content-in 460ms var(--dsh-launcher-ease, ease) 110ms backwards;
+}
+/* Wide screens: cap the reading width so grouped content stays
+   composed instead of stretching edge to edge. */
+.dsh-launcher-canvas-content > * {
+  max-width: 960px;
 }
 .dsh-launcher-canvas-content-h1 {
   font-size: 18px;
@@ -309,40 +309,24 @@ export const LAUNCHER_STYLES = `
 }
 .dsh-launcher-canvas-content-empty-title { font-size: 14px; margin-bottom: 8px; color: var(--dsw-alias-label-secondary, #b3b3b8); }
 
-/* ─── Content area polish: section header + body wrap ─── */
+/* ─── Content area: slim title row + capped reading width ─── */
 .dsh-launcher-section-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
-  padding-bottom: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
   border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
 }
-.dsh-launcher-section-header-tile {
-  display: inline-flex;
-  width: 44px;
-  height: 44px;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--dsh-layout-radius-user-lg, 12px);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent), color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent));
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent), 0 6px 18px color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent);
-  color: var(--dsw-alias-label-primary, #f4f4f5);
-  flex: 0 0 44px;
-}
-.dsh-launcher-section-header-tile svg { width: 22px; height: 22px; }
-.dsh-launcher-section-header-body { flex: 1; min-width: 0; }
+.dsh-launcher-section-header-body { min-width: 0; }
 .dsh-launcher-section-header-title {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
   margin: 0;
-  line-height: 1.2;
+  letter-spacing: 0.01em;
   color: var(--dsw-alias-label-primary, #f4f4f5);
 }
 .dsh-launcher-section-header-subtitle {
   font-size: 12px;
   color: var(--dsw-alias-label-tertiary, #8a8a8e);
-  margin-top: 4px;
+  margin: 4px 0 0;
   line-height: 1.5;
 }
 
@@ -497,15 +481,8 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
   .dsh-launcher-canvas-content {
     padding: 16px 14px 80px;
   }
-  .dsh-launcher-section-header {
-    align-items: flex-start;
-    gap: 10px;
-    margin-bottom: 14px;
-    padding-bottom: 12px;
-  }
-  .dsh-launcher-section-header-tile { width: 36px; height: 36px; flex: 0 0 36px; }
-  .dsh-launcher-section-header-tile svg { width: 18px; height: 18px; }
-  .dsh-launcher-section-header-title { font-size: 17px; }
+  .dsh-launcher-section-header { margin-bottom: 16px; padding-bottom: 12px; }
+  .dsh-launcher-section-header-title { font-size: 15px; }
   .dsh-launcher-section-header-subtitle { font-size: 11px; }
 
   .dsh-launcher-panel-mask {
@@ -526,7 +503,7 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
   }
   .dsh-launcher-panel-hint { display: none; }
   .dsh-launcher-panel-item { padding: 14px 12px; }
-  .dsh-launcher-panel-item-icon { width: 40px; height: 40px; flex: 0 0 40px; }
+  .dsh-launcher-panel-item-icon { width: 34px; height: 34px; flex: 0 0 34px; }
   .dsh-launcher-panel-item-icon svg { width: 20px; height: 20px; }
   .dsh-launcher-panel-item-title { font-size: 14px; }
   .dsh-launcher-panel-item-hint { font-size: 12px; }
@@ -540,11 +517,10 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
 }
 
 /* ─── Floating launcher button (FAB) ───
-   The guaranteed entry point: visible on every viewport by default.
-   On desktop, when the best-effort side-rail button mounted successfully
-   (rail-button.ts marks <body data-dsh-launcher-rail>), the FAB yields
-   its slot so there aren't two floating entries for the same panel. On
-   phones the rail lives in an off-canvas drawer, so the FAB always shows. */
+   Fallback entry only: visible whenever the side-rail button could NOT
+   mount (rail-button.ts marks <body data-dsh-launcher-rail> on success,
+   which hides the FAB on every viewport — phones included, where the
+   entry is the drawer sidebar's footer button instead of a floater). */
 .dsh-launcher-fab-host {
   display: contents;
 }
@@ -593,9 +569,7 @@ body[data-dsh-launcher-rail] [data-dsh-launcher-replaced] {
   outline: 2px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 40%, transparent);
   outline-offset: 2px;
 }
-@media (min-width: 768px) {
-  body[data-dsh-launcher-rail] .dsh-launcher-fab { display: none; }
-}
+body[data-dsh-launcher-rail] .dsh-launcher-fab { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .dsh-launcher-fab { transition: none; }
   .dsh-launcher-fab:hover { transform: none; }
