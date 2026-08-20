@@ -1166,6 +1166,30 @@ html[data-dsh-layout-material='on'] .dshmcp-mkt-seg,
 html[data-dsh-layout-material='on'] .dshmcp-mkt-empty {
   background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 34%, transparent);
   border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 45%, transparent);
+  -webkit-backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
+  backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
+}
+/* individual cards were missing from the bridge — they stayed flat
+   bg-layer-2 while the skill cards frosted. Same 34% pour + native blur. */
+html[data-dsh-layout-material='on'] .dshmcp-instCard,
+html[data-dsh-layout-material='on'] .dshmcp-mkt-card {
+  background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 34%, transparent);
+  -webkit-backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
+  backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
+}
+/* Accessibility fallback: frosted surfaces fall back to the solid base. */
+@media (prefers-reduced-transparency: reduce) {
+  html[data-dsh-layout-material='on'] .dshmcp-list,
+  html[data-dsh-layout-material='on'] .dshmcp-instCards,
+  html[data-dsh-layout-material='on'] .dshmcp-instCard,
+  html[data-dsh-layout-material='on'] .dshmcp-mkt-card,
+  html[data-dsh-layout-material='on'] .dshmcp-mkt-list,
+  html[data-dsh-layout-material='on'] .dshmcp-mkt-cards,
+  html[data-dsh-layout-material='on'] .dshmcp-toolList {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: var(--dsh-layout-mat-solid, var(--dsh-layout-glass-base, #16161a)) !important;
+  }
 }
 html[data-dsh-layout-material='on'] [role="dialog"].dshmcp-modal,
 html[data-dsh-layout-material='on'] [role="dialog"].dshmcp-toolModal {

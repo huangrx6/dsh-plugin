@@ -478,6 +478,16 @@ html[data-dsh-layout-material='on'] .u-stat,
 html[data-dsh-layout-material='on'] .u-empty {
   background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 34%, transparent);
   border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 45%, transparent);
+  -webkit-backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
+  backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
+}
+@media (prefers-reduced-transparency: reduce) {
+  html[data-dsh-layout-material='on'] .u-stat,
+  html[data-dsh-layout-material='on'] .u-empty {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: var(--dsh-layout-mat-solid, var(--dsh-layout-glass-base, #16161a)) !important;
+  }
 }
 
 /* ── reduced motion ── */

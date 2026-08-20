@@ -754,12 +754,32 @@ html[data-dsh-layout-material='on'] .dshm-mkt-empty,
 html[data-dsh-layout-material='on'] .dshm-mkt-blank {
   background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 34%, transparent);
   border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 45%, transparent);
+  -webkit-backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
+  backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
 }
-/* card surfaces: same 34% glass pour, top highlight + ambient shadow
-   inherited from the base card rule */
+/* card surfaces: same 34% glass pour + the native material blur — a real
+   frosted card, not just a tinted one */
 html[data-dsh-layout-material='on'] .dshm-instCard,
 html[data-dsh-layout-material='on'] .dshm-mkt-card {
   background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 34%, transparent);
+  -webkit-backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
+  backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
+}
+/* Accessibility fallback: without transparency support the frosted cards
+   fall back to the solid material base, matching the native sheets. */
+@media (prefers-reduced-transparency: reduce) {
+  html[data-dsh-layout-material='on'] .dshm-instList,
+  html[data-dsh-layout-material='on'] .dshm-instCards,
+  html[data-dsh-layout-material='on'] .dshm-instCard,
+  html[data-dsh-layout-material='on'] .dshm-mkt-card,
+  html[data-dsh-layout-material='on'] .dshm-mkt-list,
+  html[data-dsh-layout-material='on'] .dshm-mkt-cards,
+  html[data-dsh-layout-material='on'] .dshm-detailCard,
+  html[data-dsh-layout-material='on'] .dshm-previewCard {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: var(--dsh-layout-mat-solid, var(--dsh-layout-glass-base, #16161a)) !important;
+  }
 }
 html[data-dsh-layout-material='on'] .dshm-filePanel,
 html[data-dsh-layout-material='on'] .dshm-previewHead,

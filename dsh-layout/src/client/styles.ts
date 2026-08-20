@@ -459,7 +459,8 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
    bg-layer-2 + 8% border + 12px radius — same as the usage stat cards
    and skill/mcp cards. Under the page material the groups frost like
    every other surface. */
-html[data-dsh-layout-material='on'] .dsh-layout-group { background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 34%, transparent); border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 45%, transparent); }
+html[data-dsh-layout-material='on'] .dsh-layout-group { background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 34%, transparent); border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 45%, transparent); -webkit-backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%)); backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%)); }
+@media (prefers-reduced-transparency: reduce) { html[data-dsh-layout-material='on'] .dsh-layout-group { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background: var(--dsh-layout-mat-solid, var(--dsh-layout-glass-base, #16161a)) !important; } }
 /* Setting row: label rail on the left, control right-aligned and vertically
    centered; 1px hairline between rows keeps the rhythm. Wide rows stack the
    control under the label at full width (editors, card grids, long segmented
