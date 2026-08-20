@@ -20,6 +20,7 @@ import { SettingsTopbarRuntime } from "./settings-topbar.ts";
 import { ShellRuntime } from "./shell.ts";
 import { ComposerFocusGuard } from "./composer-focus.ts";
 import { installMenuClamp } from "./menu-clamp.ts";
+import { installMenuOverflow } from "./menu-overflow.ts";
 import { DshLayoutClient } from "./persistence.ts";
 
 declare module "@deepseek-ai/dsh-client-ui-slots" {
@@ -95,6 +96,10 @@ export function apply(ctx: ClientContext): void {
   );
   ctx.effect(() => busySubmit.install(), "dsh-layout: busy submit");
   ctx.effect(() => installMenuClamp(document), "dsh-layout: menu clamp");
+  ctx.effect(
+    () => installMenuOverflow(document),
+    "dsh-layout: header overflow menu",
+  );
   ctx.effect(
     () => suppressor.install(),
     "dsh-layout: original stats suppression",

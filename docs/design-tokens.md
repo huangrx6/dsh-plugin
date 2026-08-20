@@ -489,6 +489,34 @@
 | **FAB** | 52px | 48px | launcher |
 | **行操作列** | flex-row | flex-column + align-end | mcp-manager |
 
+### 10.4 手机端头部配方（dsh-layout 原生顶栏，≤767px）
+
+参考效果图定稿：`[☰] 标题（完整/ellipsis）· 预设徽标 ···`，单行、全部元素共享行中心线。
+
+| 规则 | 值 | 说明 |
+|---|---|---|
+| **左缘标线** | 28px | 顶栏汉堡按钮（left:28px）、抽屉内图标行、会话列表共用同一条垂直线 |
+| **顶栏标题行** | padding-inline-start: 46px；padding-inline-end: 38px（有折叠项时） | 46 = 28px + 30px 汉堡 − 12px 交叠（内容与汉堡保留 8px 间距）；**行内禁止 overflow 滚动**——popover 面板锚在行内的单元 root 上，`overflow ≠ visible` 会把它裁剪成不可见 |
+| **标题吃满整行** | titleCluster / crumbs flex: 1 1 auto + min-width: 0；当前 crumb overflow ellipsis | 会话名完整显示，过长 ellipsis |
+| **行内保留** | 预设徽标（非交互，如"PTC模式"） | 徽标贴行尾紧挨 ···，中间无死区 |
+| **收进 ··· 菜单** | 全部交互动作（子代理、后台任务、Session log 等） | menu-overflow.ts 折叠触发按钮（display:none），root 保留作面板锚点；点条目回触原生按钮 |
+| **垂直居中** | 全部元素中心对齐行中心（y28） | 教训：不要对 `_header` 做子串/后缀通配——`[class*='_header']` 会误伤 `_headerActions` 把 chip 压低 8px；头部 padding 保持 stock，不做收紧覆盖 |
+| **··· / 汉堡按钮** | 16px 纯字形按钮（按钮即图标，无内边圈），top: calc(safe-area + 20px)（中心对齐行中心 y28） | 左右对称：墨迹各距屏幕 28px；点击区用 ::before inset -10px 隐形放大到 36px；汉堡图标用原生 hHd-Xa_panelIcon；z-index: 44；头部 padding 保持 stock 12px |
+| **··· 菜单清单** | fixed 定位在 body（避开标题行裁剪），z-index: 60，右缘 28px 与按钮对齐 | min-width 176px，条目带 1px 边框（8% 主标签色）+ 4% 底、hover 14%/6% |
+| **桌面回归** | 不折叠、无 ··· | 媒体查询边界自动恢复原生渲染 |
+
+### 10.5 输入区轨道（composer track，dsh-layout 原生 dock，任意宽度）
+
+输入卡上方的三个原生 dock 元素共用同一条轨道，与输入卡左右对齐、各自独立成卡：
+
+| 元素 | 选择器 | 宽度 | 对齐 | 说明 |
+|---|---|---|---|---|
+| 目标栏 | `[data-goal-bar]` | calc(100% - 2 * var(--dsh-composer-side-clearance)) | 跟随 dock 流 | 无 margin-bottom，与下方元素的间距由对方承担；内部 `_bar` 全圆角走 `--dsh-layout-radius-user` |
+| 任务面板 | `[data-testid='todo-panel']` | 同上 | margin-inline: auto（居中） | |
+| 用户提问卡 | `[data-slot='conversation.composer'] [class*='composerStack'] [class*='_frame']` | 同上 | margin-inline: auto（居中） | 接管 composer 槽，挂 stack 顶部；stock 全宽+缩进，统一为轨道宽 |
+| 队列 dock | `[data-queue-dock]` | 同上，另 max-width: var(--dsh-composer-card-max-width) | margin: 0 auto 8px | 行内 `_header`/`_row` 无圆角（平面列表） |
+
+
 **来源依据：**
 - 所有插件统一 `@media (max-width: 767px)` 作为 H5 断点
 - `@media (max-width: 480px)` 仅 launcher 和 mcp-manager 使用

@@ -376,27 +376,44 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
   min-height: calc(var(--dsh-layout-input-rows, 3) * 24px);
 }
 
-/* ── 输入区上方的目标栏 / 队列任务列表 ─────────────────────────────────────
+/* ── 输入区上方的目标栏 / 任务面板 / 队列任务列表 ───────────────────────────
    Stock behavior docks them flush onto the composer card: the goal bar is
    4×dock-inset narrower than the card, the queue dock pulls down with a
    NEGATIVE bottom margin (stack-gap + 3px) and its panel keeps only top
-   radii so it visually fuses with the card. Undock both instead: same
-   width as the composer card, an 8px gap of separation, full rounded
-   corners driven by the global layout radius tokens. The data attributes
-   (data-goal-bar / data-queue-dock) are stable across builds. */
+   radii so it visually fuses with the card. Undock all three instead:
+   same width as the composer card, centered on its track (margin-inline
+   auto), full rounded corners driven by the global layout radius tokens.
+   The data attributes (data-goal-bar / data-queue-dock / todo-panel
+   testid) are stable across builds. */
 [data-goal-bar] {
   /* The dock container itself shrinks by 4×dock-inset in addition to the
      side clearance — mirror the composer's exact track (side clearance
      only) so the bar's edges line up with the input card. Same width
-     formula as the queue dock below: both ride the composer track. */
+     formula as the todo panel and queue dock: all ride the composer
+     track. No margin-bottom — the stacked element owns its spacing. */
   width: calc(100% - 2 * var(--dsh-composer-side-clearance));
-  margin-bottom: 8px;
 }
 [data-goal-bar] [class*='_bar'] {
   width: 100%;
   max-width: var(--dsh-composer-card-max-width);
   border-radius: var(--dsh-layout-radius-user, 12px);
   border: none;
+}
+/* 任务面板（todo-panel）：与目标栏/队列 dock 同一条轨道。 */
+[data-testid='todo-panel'] {
+  width: calc(100% - 2 * var(--dsh-composer-side-clearance));
+  margin-inline: auto;
+}
+/* 用户提问卡片（dsh-client-ui-user-questions）：接管 conversation.composer
+   槽，挂在 composerStack 最上方、输入卡之上，与 goal-bar/todo/queue 同一条
+   轨道。Stock 用全宽 + 内边距缩进（padding: 6px calc(clearance+16px) 10px），
+   卡片盒子比目标栏宽——统一成同样的轨道宽度并居中。选择器用
+   [class*='composerStack'] 限定，_frame 是该包根容器（哈希类名，未来构建
+   会变，但结构槽位稳定）。 */
+[data-slot='conversation.composer'] [class*='composerStack'] [class*='_frame'] {
+  width: calc(100% - 2 * var(--dsh-composer-side-clearance));
+  margin-inline: auto;
+  box-sizing: border-box;
 }
 [data-queue-dock] {
   width: calc(100% - 2 * var(--dsh-composer-side-clearance));
@@ -616,33 +633,41 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
      wrap, shrink the breadcrumb trail, and keep the action clusters
      right-aligned on their wrapped lines. Class names are CSS-module
      hashes, so we match the stable _semantic suffixes instead. */
-  /* ── 原生对话顶栏：单行横滑 ──────────────────────────────────────────
+  /* ── 原生对话顶栏：单行 ──────────────────────────────────────────────
      Wrapping stacked the header into a 4-line tower (title / subagents /
-     tasks / session log) — a quarter of the phone screen gone. Instead
-     the whole title row rides ONE horizontally scrollable line, the
-     standard mobile breadcrumb pattern: the title crumb flexes down to
-     ellipsis, the action chips compress, and everything past the fold
-     swipes in from the right. */
+     tasks / session log) — a quarter of the phone screen gone. The row
+     stays ONE line: the title crumb flexes down to ellipsis and every
+     interactive action folds into ··· (menu-overflow.ts), so nothing can
+     overflow anymore. NO overflow-x scroller: an absolutely-positioned
+     popover (subagents / background tasks) anchors inside this row via
+     its unit root, and overflow != visible CLIPS it — the panels opened
+     invisible under the earlier scroll design. */
   [class*='_titleRow'] {
     /* !important overrides the stock "Narrow header wrap" rule — the
        native wrap is what stacked the header into a 4-line tower. */
     flex-wrap: nowrap !important;
     row-gap: 0 !important;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: none !important;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-x: contain;
   }
-  [class*='_titleRow']::-webkit-scrollbar { display: none; }
-  [class*='_titleCluster'] { flex: 0 1 auto; min-width: 0; }
-  [class*='_crumbs'] { min-width: 0; }
-  [class*='_crumb']:not([class*='_crumbSep']) { max-width: 30vw; }
+  /* 参考效果图的头部配方：[☰] 标题…… 预设徽标 ···。全部交互动作折进
+     ··· 后，标题簇吃满整行：crumbs 伸展 + 当前 crumb 按需 ellipsis，
+     徽标贴到行尾紧挨 ···，中间不再有死区。 */
+  [class*='_titleCluster'] { flex: 1 1 auto; min-width: 0; }
+  [class*='_crumbs'] { flex: 1 1 auto; min-width: 0; }
+  [class*='_crumb']:not([class*='_crumbSep']) { max-width: 100%; }
+  [class*='_crumbCurrent'] {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* 原生窄屏规则给 headerActions 加了 padding-top:8px，把徽标/chip 压到
+     标题中心线下方 4px（垂直不居中的根源）——清零，全部共享行中心。 */
   [class*='_headerActions'],
   [class*='_headerUtilities'] {
     flex: 0 0 auto;
     flex-wrap: nowrap;
     gap: 4px;
+    padding-block: 0 !important;
   }
   [class*='_headerUtilities'] { margin-left: 4px; }
   /* Compress the header chips themselves: tighter padding + smaller text
@@ -652,8 +677,10 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     padding-inline: 6px;
     font-size: 11px;
   }
-  /* Tighter header rhythm on phones. */
-  [class*='_header'] { padding-top: 8px !important; }
+  /* Stock keeps the phone header at its own 12px top padding (the old
+     8px tightening saved only 4px, mis-hit other _header components, and
+     once broke chip alignment via the substring selector). The fixed
+     corner buttons below are calibrated against the stock row center. */
   /* Popover panels anchored to those buttons (subagents / background
      tasks) can compute desktop-sized offsets; clamp any absolutely or
      fixed positioned popover to the phone viewport so it never spills. */
@@ -933,6 +960,14 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   html[data-dsh-layout-mobile-sidebar][data-dsh-layout-material='on'] [data-dsh-layout-sidebar-col] > div > div {
     background: transparent !important;
   }
+  /* 参考效果图：手机抽屉内的图标行与会话列表共用 28px 左缘，与顶栏汉堡
+     按钮同一条垂直线（汉堡 left:28px）。必须排在通用层 padding-inline:8px
+     之后（同特异性同 !important，源顺序取胜）；桌面 float 形态保持 8px。 */
+  @media (max-width: 767px) {
+    html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-sidebar-col] > div > div {
+      padding-inline-start: 28px !important;
+    }
+  }
   /* Compact native-app list rows; inline nodes ignore min-height, so the
      suffix match can only affect the row boxes themselves. */
   html[data-dsh-layout-mobile-sidebar] [data-dsh-layout-sidebar-col] [class*='projectRow'],
@@ -965,13 +1000,16 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger {
     position: fixed;
     z-index: 44;
-    top: calc(env(safe-area-inset-top, 0px) + 14px);
-    inset-inline-start: 8px;
-    width: 30px;
-    height: 30px;
+    /* 按钮即字形（16px，无内边圈）：墨迹直接落在 28px 线上，中心对齐
+       标题行中心 y28（top 20 + 8 半高）；点击区由 ::before 隐形放大。 */
+    top: calc(env(safe-area-inset-top, 0px) + 20px);
+    /* 28px：与抽屉内图标行/会话列表的左缘对齐（参考效果图）。 */
+    inset-inline-start: 28px;
+    width: 16px;
+    height: 16px;
     padding: 0;
     border: 0;
-    border-radius: calc(var(--dsh-layout-radius-user, 8px) - 4px);
+    border-radius: 0;
     background: transparent;
     color: var(--dsw-alias-label-secondary, #b3b3b8);
     display: grid;
@@ -982,11 +1020,12 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger:hover {
     color: var(--dsw-alias-label-primary, #f4f4f5);
   }
-  /* Session pages: the header's breadcrumb row starts at x20 — leave the
-     icon its seat so the two never collide. Hero pages have nothing up
-     there, the icon just sits in the empty corner. */
+  /* Session pages: the header's breadcrumb row clears the hamburger seat
+     (28px + 30px button − 12px overlap → 46px) so the two never collide.
+     Hero pages have nothing up there, the icon just sits in the empty
+     corner. */
   html[data-dsh-layout-mobile-sidebar] [class*='_titleRow'] {
-    padding-inline-start: 40px;
+    padding-inline-start: 46px;
   }
   /* Hidden while the drawer is open — closing moves to the drawer's own
      X (and the mask). Previously only the comment claimed this. */
@@ -1000,22 +1039,18 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   html[data-dsh-layout-mobile-sidebar-open] .dsh-layout-mobile-sidebar-trigger {
     display: none;
   }
-  /* Enlarged invisible tap target for the open handle. */
+  /* Enlarged invisible tap target: 16px glyph box + -10px halo = 36px. */
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger::before {
     content: '';
     position: absolute;
-    inset: -8px;
+    inset: -10px;
   }
-  /* Hamburger glyph: three hairlines, icon-weight like the stock panel
-     icons. */
-  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger > span {
-    width: 14px;
-    height: 10px;
-    border-radius: 0;
-    background:
-      linear-gradient(currentColor 0 0) center/100% 1.3px no-repeat,
-      linear-gradient(currentColor 0 0) 30% 50%/100% 1.3px no-repeat,
-      linear-gradient(currentColor 0 0) 70% 50%/100% 1.3px no-repeat;
+  /* Glyph: the stock hHd-Xa_panelIcon SVG (injected by the runtime) —
+     DSH's own sidebar toggle mark, colored by the button's currentColor. */
+  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger > svg {
+    display: block;
+    width: 16px;
+    height: 16px;
   }
   /* Close button: a bare X (no chrome) pinned to the drawer's top row —
      vertically centered on the OFFICIAL logo row (hHd-Xa_logoRow, 60px tall
@@ -1088,6 +1123,103 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     display: block;
   }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-mask[hidden] { display: none; }
+
+/* ── 手机端头部收纳：··· 更多菜单（menu-overflow.ts）─────────────────────
+   参考效果图的头部配方：[☰] 标题…… 预设徽标 ···。
+   手机上全部交互动作（子代理 / 后台任务 / Session log 等）折进右上角
+   ···（与左上角汉堡对称，同为 30px 透明纯 icon）；预设徽标是模式指示
+   （非交互），留在行内贴行尾。点 ··· 弹出动作清单，点条目回触原生
+   按钮，由原生弹出自己的面板（menu-clamp 负责把面板拉回视口）。 */
+.dsh-layout-header-more,
+.dsh-layout-header-overflow { display: none; }
+@media (max-width: 767px) {
+  .dsh-layout-header-more {
+    position: fixed;
+    z-index: 44;
+    /* 按钮即字形（16px，无内边圈）：墨迹右缘落在 28px 线上，与左侧汉堡
+       对称；中心对齐标题行中心 y28（top 20 + 8 半高）；点击区由
+       ::before 隐形放大到 36px。 */
+    top: calc(env(safe-area-inset-top, 0px) + 20px);
+    inset-inline-end: 28px;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--dsw-alias-label-secondary, #b3b3b8);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: color 120ms var(--ds-ease-in-out, ease);
+  }
+  .dsh-layout-header-more::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+  }
+  .dsh-layout-header-more:hover {
+    color: var(--dsw-alias-label-primary, #f4f4f5);
+  }
+  .dsh-layout-header-more[hidden] { display: none !important; }
+  /* Reserve the ··· seat at the row's end so the title never underlaps it:
+     ··· rides flush with the row's right edge (x362), content stops 8px
+     before its left edge → 30px button + 8px gap = 38px. */
+  [class*='_titleRow'][data-dsh-overflow='1'] { padding-inline-end: 38px !important; }
+}
+/* The sheet lives in <body> (fixed) — the scrolling titleRow would clip
+   an in-row popover. Top comes from the runtime (anchored under ···). */
+.dsh-layout-header-overflow {
+  position: fixed;
+  z-index: 60;
+  /* 右缘与 ··· 按钮对齐（同 28px）。 */
+  inset-inline-end: 28px;
+  min-width: 176px;
+  max-width: calc(100vw - 24px);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
+  border-radius: var(--dsh-layout-radius-user, 12px);
+  background: color-mix(in srgb, var(--dsw-alias-bg-layer-2, #1d1d21) 94%, transparent);
+  -webkit-backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
+  backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
+  box-shadow: var(--dsw-shadow-lv2, 0 10px 30px rgba(0, 0, 0, 0.35));
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dsh-layout-header-overflow[hidden] { display: none !important; }
+.dsh-layout-header-overflow__item {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: calc(var(--dsh-layout-radius-user, 12px) - 4px);
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent);
+  color: var(--dsw-alias-label-primary, #f4f4f5);
+  font-size: 12.5px;
+  line-height: 1.2;
+  text-align: start;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.dsh-layout-header-overflow__item:hover,
+.dsh-layout-header-overflow__item:focus-visible {
+  border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent);
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent);
+  outline: none;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .dsh-layout-header-overflow {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: var(--dsw-alias-bg-layer-2, #1d1d21) !important;
+  }
+}
 
 /* ── float 模式（任意宽度）：定宽悬浮面板 + 内容列独占 grid ─────────────────
    侧边栏不挤压内容：内容列永远独占第一列，侧边栏是 fixed 定宽浮层
