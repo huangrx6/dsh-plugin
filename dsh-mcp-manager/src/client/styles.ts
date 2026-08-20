@@ -312,7 +312,7 @@ const CSS = `
 /* --dsh-font-size-xl (14px/600) */
 .dshmcp-editorHead h3 { font-size: 14px; font-weight: 600; margin: 0; flex: 1; }
 /* --dsh-space-3xl padding (14px), --dsh-space-3xl gap (14px) */
-.dshmcp-editorBody { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+.dshmcp-editorBody { padding: 14px; display: flex; flex-direction: column; gap: 14px; overflow: auto; }
 /* --dsh-space-xl+3xl padding (10px 14px), --dsh-border-row (6%), --dsh-surface-elevated bg */
 .dshmcp-editorFoot { position: sticky; bottom: 0; display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 6%, transparent); background: var(--dsw-alias-bg-layer-3, #232327); }
 
