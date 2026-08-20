@@ -229,6 +229,17 @@ html[data-dsh-layout-material='on'][data-dsh-layout-bubble='glass'] [data-dsh-la
   backdrop-filter: blur(var(--dsh-layout-mat-blur, 16px)) saturate(var(--dsh-layout-mat-sat, 112%));
 }
 
+/* ── Markdown 代码块头部 ────────────────────────────────────────────────────
+   DSH's md-code-block banner ships at z-index 6 inside its own code surface;
+   that lifts the label/copy row above popovers anchored to the conversation
+   (model picker, overflow menu), so the picker appears under the banner
+   border. Drop the banner back to 0 — it only needs to sit above the code
+   body, which it does by document order. Hash-suffix match scoped to the
+   marked chat column; a rename degrades to the native banner stack. */
+[data-dsh-layout-chat-column] [class*='_bannerWrap_'] {
+  z-index: 0 !important;
+}
+
 /* ── 轨迹页 ─────────────────────────────────────────────────────────────────
    The trace view marks its scroller with a composer-overlay attribute, so
    every rule scopes to it without touching the conversation. Clear mode
