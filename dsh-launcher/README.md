@@ -82,12 +82,12 @@ Launcher 面板（浮层，半屏偏左下）
 `dsh-launcher` 依赖 `dsh-skill-manager` 和 `dsh-mcp-manager` 来填充工作区的 Skill / MCP section（不装的话 section 显示占位）。如果你想用 launcher 但不想装 Skill / MCP 市场，`dsh-skill-manager` / `dsh-mcp-manager` 可以单独不装。
 
 ```bash
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<version>/dsh-launcher-0.1.0.tgz
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<version>/dsh-skill-manager-0.1.0.tgz
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<version>/dsh-mcp-manager-0.1.0.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/0.1.0/dsh-launcher.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/0.1.0/dsh-skill-manager.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/0.1.0/dsh-mcp-manager.tgz
 ```
 
-`<version>` 换成 [Releases 页](https://github.com/huangrx6/dsh-plugin/releases) 最新 tag（例如 `v0.3.1`）。
+路径里的版本号换成 [Releases 页](https://github.com/huangrx6/dsh-plugin/releases) 最新 tag（路径带版本号，文件名不带）。
 
 ### 本地开发
 

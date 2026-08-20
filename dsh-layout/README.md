@@ -76,10 +76,10 @@ pnpm（≥ 9）会克隆仓库的对应子目录、安装依赖并执行 `prepar
 
 ### 方式二：固定版本（GitHub Release 预构建包，免本机构建）
 
-仓库打了 `v*` tag 后，GitHub Actions 会自动构建并把 npm tarball 挂到 [Releases](https://github.com/huangrx6/dsh-plugin/releases)。从 Release 页复制对应包的 `.tgz` 地址：
+仓库打了 `0.x.y` tag 后，GitHub Actions 会自动构建并把 npm tarball 挂到 [Releases](https://github.com/huangrx6/dsh-plugin/releases)。从 Release 页复制对应包的 `.tgz` 地址（路径带版本号、文件名不带）：
 
 ```bash
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/<tag>/dsh-layout-<version>.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/0.1.0/dsh-layout.tgz
 ```
 
 ### 方式三：本地开发（link 热迭代）

@@ -71,7 +71,7 @@ npx @deepseek-ai/dsh web --host 127.0.0.1 --port 3080
 **方式二：使用预构建包（快速试用）**
 
 ```bash
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/v0.6.2/dsh-launcher-0.6.2.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/0.1.0/dsh-launcher.tgz
 # ... 其他插件
 ```
 
@@ -324,16 +324,16 @@ export function installStyles(target: Document): () => void {
 发版只需打 tag 并推送：
 
 ```bash
-git tag v0.7.0
+git tag 0.7.0
 git push --tags
 ```
 
 GitHub Actions（`.github/workflows/release.yml`）会自动：
 
-1. 从 tag 名提取版本号（去掉 `v` 前缀）
+1. tag 名直接就是版本号（`0.x.y`，无 `v` 前缀）
 2. 用 `npm pkg set "version=$VERSION"` 写入每个插件的 `package.json`
 3. 按顺序构建所有插件
-4. `pnpm pack` 生成 tarball（版本化名 + 固定名）
+4. 产出 tarball 并去掉文件名里的版本号（详见 4.5）
 5. 上传到 GitHub Release
 
 ### 4.2 版本号自动注入
@@ -365,16 +365,13 @@ for pkg in dsh-launcher dsh-layout ... dsh-usage dsh-notify; do
 
 ### 4.5 Release 产物
 
-每个插件生成两个 tarball：
-
-1. **版本化名**（如 `dsh-notify-0.7.0.tgz`）— 安装/升级的主路径
-2. **固定名**（如 `dsh-notify.tgz`）— 仅供 `/releases/latest/download/` 一次性试用
-
-安装时使用版本化 URL：
+每个插件在 release 中产出一个不带版本号的 tarball（文件名固定为 `<package>.tgz`，如 `dsh-notify.tgz`）；版本号写到 **release tag + 路径** 上 —— `download/<version>/<package>.tgz`：
 
 ```bash
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/v0.7.0/dsh-notify-0.7.0.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/0.1.0/dsh-notify.tgz
 ```
+
+`releases/latest/download/` 是固定链接的兜底入口（不带版本号、不带路径前缀），指向当前最新 release；多次发布会撞 `ERR_PNPM_TARBALL_INTEGRITY`，仅供一次性试用，**不要用于升级路径**。
 
 ---
 
@@ -443,7 +440,7 @@ const handler: ConnectionRpcHandler = async (endpoint, payload) => {
 
 **原因：** 使用了 `releases/latest/download/` 固定链接，URL 不变但内容变了。
 
-**解决：** 使用版本化 URL（包含版本号的链接）。
+**解决：** 使用版本化路径 `releases/download/<version>/`。
 
 #### 样式不生效
 

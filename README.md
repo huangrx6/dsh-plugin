@@ -24,22 +24,22 @@
 
 ## 安装
 
-所有插件通过 GitHub Release 预构建包安装（已含 `lib/` 产物，无需本机构建）。**用版本化 URL**（含版本号）——pnpm 按 URL 缓存，版本号每次不同所以永不撞 `TARBALL_INTEGRITY`（这是 `latest` 固定链接升级时的已知坑）。**包内版本号 = tag 号**（CI 打 tag 时自动写进各 package.json，发版只需 `git tag v0.x.y && git push --tags`，无需手动 bump）。以 `v0.6.2` 为例，把两处版本号换成 [Releases 页](https://github.com/huangrx6/dsh-plugin/releases) 最新 tag 号（路径带 `v` 前缀，文件名不带）：
+所有插件通过 GitHub Release 预构建包安装（已含 `lib/` 产物，无需本机构建）。**用版本化路径**（`download/<version>/`）——pnpm 按 URL 缓存，每次发版路径不同所以永不撞 `TARBALL_INTEGRITY`（这是 `releases/latest/download/` 固定链接升级时的已知坑）。**包内版本号 = tag 号**（CI 打 tag 时自动写进各 package.json，发版只需 `git tag 0.x.y && git push --tags`，无需手动 bump）。以 `0.1.0` 为例，路径里的版本号换成 [Releases 页](https://github.com/huangrx6/dsh-plugin/releases) 最新 tag（**路径带版本号，文件名不带**）：
 
 ```bash
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/v0.6.2/dsh-launcher-0.6.2.tgz
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/v0.6.2/dsh-layout-0.6.2.tgz
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/v0.6.2/dsh-skill-manager-0.6.2.tgz
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/v0.6.2/dsh-mcp-manager-0.6.2.tgz
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/v0.6.2/dsh-remote-access-0.6.2.tgz
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/v0.6.2/dsh-agent-rules-0.6.2.tgz
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/v0.6.2/dsh-usage-0.6.2.tgz
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/v0.6.2/dsh-archive-manager-0.6.2.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/0.1.0/dsh-launcher.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/0.1.0/dsh-layout.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/0.1.0/dsh-skill-manager.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/0.1.0/dsh-mcp-manager.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/0.1.0/dsh-remote-access.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/0.1.0/dsh-agent-rules.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/0.1.0/dsh-usage.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/0.1.0/dsh-archive-manager.tgz
 ```
 
 **升级 = 换新版本号重跑**（URL 变了，pnpm 缓存自动失效）。装完重启 dsh（或 `/reload`）。
 
-> `releases/latest/download/` 固定链接（如 `.../dsh-remote-access.tgz`）仅供**一次性试用**：内容每次发布都会变而 URL 不变，pnpm 缓存 integrity 会冲突（`ERR_PNPM_TARBALL_INTEGRITY`）。升级请始终用版本化 URL。
+> `releases/latest/download/` 固定链接（如 `.../dsh-remote-access.tgz`）仅供**一次性试用**：内容每次发布都会变而 URL 不变，pnpm 缓存 integrity 会冲突（`ERR_PNPM_TARBALL_INTEGRITY`）。升级请始终用版本化路径（`download/<version>/`）。
 
 没有本地 `dsh` 命令时用 `npx @deepseek-ai/dsh plugin --profile web add ...`。
 

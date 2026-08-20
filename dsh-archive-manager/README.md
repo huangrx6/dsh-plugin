@@ -14,7 +14,7 @@ Built on the same dsh primitives `dsh-remote-access` and the official three mana
 ## Install
 
 ```bash
-dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/latest/download/dsh-archive-manager-0.1.0.tgz
+dsh plugin --profile web add https://github.com/huangrx6/dsh-plugin/releases/download/0.1.0/dsh-archive-manager.tgz
 ```
 
 Or for development:
