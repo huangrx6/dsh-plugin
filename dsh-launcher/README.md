@@ -6,6 +6,11 @@
 
 侧栏底部多了一个"个人插件"按钮——点击弹出 launcher 面板（个人插件 / 系统设置）；点"个人插件"进入全屏工作区，左栏菜单 + 右边卡片式内容，右栏里每个 section 就是一个 dsh-* 插件的可视化（Skill 管理 / MCP 市场 / 远程访问 / 归档管理 / 页面布局）。
 
+<p align="left">
+  <img src="../images/launcher/home-pc.png" width="720" alt="DSH 主页（PC）">
+  <br><em>侧栏底部「更多 → 个人插件」入口 — 桌面端</em>
+</p>
+
 ## 一图概览
 
 ```
@@ -27,6 +32,22 @@ Launcher 面板（浮层，半屏偏左下）
        ├─ 归档管理：沿用 dsh-archive-manager 现有功能
        └─ 页面布局：沿用 dsh-layout 现有功能
 ```
+
+<p align="left">
+  <img src="../images/launcher/panel-pc.png" width="480" alt="dsh-launcher 选择面板（PC）">
+  <img src="../images/launcher/panel-h5.png" width="200" alt="dsh-launcher 选择面板（H5）">
+  <br><em>点设置按钮后弹出的「个人插件 / 系统设置」二选一面板</em>
+</p>
+
+<p align="left">
+  <img src="../images/launcher/workspace-pc.png" width="720" alt="dsh-launcher 工作区（PC）">
+  <br><em>桌面端 — 点"个人插件"后的全屏工作区，左栏菜单 + 右栏卡片化内容</em>
+</p>
+
+<p align="left">
+  <img src="../images/launcher/workspace-h5.png" width="200" alt="dsh-launcher 工作区（H5）">
+  <br><em>移动端 — 工作区选择器位于顶栏 chip，按需展开左栏菜单</em>
+</p>
 
 ## 数据源（市场）
 
