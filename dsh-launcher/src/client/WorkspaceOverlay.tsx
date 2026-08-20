@@ -388,36 +388,6 @@ export function WorkspaceView({
         <IconClose size={14} />
       </button>
       <nav className="dsh-launcher-canvas-menu" aria-label={t("menuSection")}>
-        {/* H5-only collapsed toggle: shows the active section, expands the
-            tab grid as an overlay. Hidden on desktop. */}
-        <button
-          type="button"
-          className="dsh-launcher-menu-toggle"
-          aria-expanded={menuOpen}
-          aria-label={t("menuSection")}
-          onClick={() => {
-            setMenuOpen((open) => !open);
-          }}
-        >
-          {active !== undefined ? (
-            <span className="dsh-launcher-menu-toggle-inner">
-              <span className="dsh-launcher-menu-toggle-icon">
-                {active.icon}
-              </span>
-              <span className="dsh-launcher-menu-toggle-label">
-                {active.label}
-              </span>
-            </span>
-          ) : (
-            <span className="dsh-launcher-menu-toggle-label">
-              {t("menuSection")}
-            </span>
-          )}
-          <IconChevronDown
-            size={14}
-            {...(menuOpen ? { className: "is-open" } : {})}
-          />
-        </button>
         <div className="dsh-launcher-menu-scroll" data-open={menuOpen ? "true" : "false"}>
           <div className="dsh-launcher-menu-identity">
             <span className="dsh-launcher-menu-identity-icon">
@@ -460,7 +430,39 @@ export function WorkspaceView({
         </div>
       </nav>
       <main className="dsh-launcher-canvas-content" aria-busy={false}>
-        <SectionContent section={active} />
+        {/* H5: the menu toggle rides IN the section-title line instead of
+            claiming its own bar — one line of chrome, then content. */}
+        <div className="dsh-launcher-canvas-topbar">
+          <button
+            type="button"
+            className="dsh-launcher-menu-toggle"
+            aria-expanded={menuOpen}
+            aria-label={t("menuSection")}
+            onClick={() => {
+              setMenuOpen((open) => !open);
+            }}
+          >
+            {active !== undefined ? (
+              <span className="dsh-launcher-menu-toggle-inner">
+                <span className="dsh-launcher-menu-toggle-icon">
+                  {active.icon}
+                </span>
+                <span className="dsh-launcher-menu-toggle-label">
+                  {active.label}
+                </span>
+              </span>
+            ) : (
+              <span className="dsh-launcher-menu-toggle-label">
+                {t("menuSection")}
+              </span>
+            )}
+            <IconChevronDown
+              size={14}
+              {...(menuOpen ? { className: "is-open" } : {})}
+            />
+          </button>
+          <SectionContent section={active} />
+        </div>
         {renderSectionBody()}
       </main>
     </div>

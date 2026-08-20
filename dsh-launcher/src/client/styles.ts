@@ -274,8 +274,10 @@ export const LAUNCHER_STYLES = `
   padding: 12px 8px;
 }
 /* H5-only collapsed menu toggle — the sidebar handles navigation on
-   desktop, so the toggle never renders there. */
+   desktop, so the toggle never renders there. The topbar wrapper is a
+   plain block on desktop (title renders exactly as before). */
 .dsh-launcher-menu-toggle { display: none; }
+.dsh-launcher-canvas-topbar { display: block; }
 /* Exit lives at the rail's bottom, full-bleed with a hairline above —
    the sidebar's secondary action, like the reference layout. */
 .dsh-launcher-canvas-menu-label {
@@ -529,31 +531,50 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
   .dsh-launcher-canvas-menu {
     grid-area: tabbar;
     flex-direction: row;
-    align-items: center;
     border-right: 0;
-    border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
-    padding-bottom: 0;
+    border-bottom: 0;
     position: relative;
-    /* The collapsed toggle replaces the always-on tab grid — the menu
-       drops down over the content instead of eating viewport height. */
-    padding-bottom: 0;
+    /* The nav element is now just the dropdown anchor — the toggle moved
+       into the content's title line, so this bar costs zero height. */
+    height: 0;
+    min-height: 0;
+    overflow: visible;
   }
-  /* Collapsed one-line toggle: active section name + chevron. */
-  .dsh-launcher-menu-toggle {
+  /* Title line: toggle chip + section title/subtitle on ONE row. */
+  .dsh-launcher-canvas-topbar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    width: 100%;
-    min-height: 40px;
-    margin: 8px 12px;
-    padding: 6px 12px;
+    gap: 10px;
+    margin: 0 0 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
+  }
+  .dsh-launcher-canvas-topbar .dsh-launcher-section-header {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: 0;
+    min-width: 0;
+  }
+  .dsh-launcher-canvas-topbar .dsh-launcher-section-header-title { font-size: 15px; }
+  .dsh-launcher-canvas-topbar .dsh-launcher-section-header-subtitle {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* Compact toggle chip — hugs its content, sits left of the title. */
+  .dsh-launcher-menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: none;
+    min-height: 30px;
+    padding: 4px 10px;
     border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
     border-radius: calc(var(--dsh-layout-radius-user, 10px) - 2px);
     background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent);
     color: var(--dsw-alias-label-primary, #f4f4f5);
     font: inherit;
-    font-size: 13px;
+    font-size: 12px;
     cursor: pointer;
   }
   .dsh-launcher-menu-toggle-inner {
