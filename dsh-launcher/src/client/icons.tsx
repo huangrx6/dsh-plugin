@@ -78,6 +78,16 @@ export function IconChevronRight({ size = 14, className, title }: IconProps): Re
   )
 }
 
+/** Down chevron — the H5 menu-toggle affordance. */
+export function IconChevronDown({ size = 14, className, title }: IconProps): ReactElement {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden={title === undefined ? 'true' : undefined} className={className} width={size} height={size} role={title === undefined ? undefined : 'img'}>
+      {title === undefined ? null : <title>{title}</title>}
+      {svgInner('M4 6l4 4 4-4')}
+    </svg>
+  )
+}
+
 export function IconRefresh({ size = 14, className, title }: IconProps): ReactElement {
   return (
     <svg viewBox="0 0 16 16" fill="none" aria-hidden={title === undefined ? 'true' : undefined} className={className} width={size} height={size} role={title === undefined ? undefined : 'img'}>

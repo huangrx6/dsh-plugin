@@ -273,6 +273,9 @@ export const LAUNCHER_STYLES = `
   overscroll-behavior: contain;
   padding: 12px 8px;
 }
+/* H5-only collapsed menu toggle — the sidebar handles navigation on
+   desktop, so the toggle never renders there. */
+.dsh-launcher-menu-toggle { display: none; }
 /* Exit lives at the rail's bottom, full-bleed with a hairline above —
    the sidebar's secondary action, like the reference layout. */
 .dsh-launcher-canvas-menu-label {
@@ -529,20 +532,79 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
     align-items: center;
     border-right: 0;
     border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
-    padding-bottom: 2px;
+    padding-bottom: 0;
+    position: relative;
+    /* The collapsed toggle replaces the always-on tab grid — the menu
+       drops down over the content instead of eating viewport height. */
+    padding-bottom: 0;
   }
-  /* One equal-width button per section — every tab the same size, like a
-     segmented row. More than five sections fall back to scroll. */
+  /* Collapsed one-line toggle: active section name + chevron. */
+  .dsh-launcher-menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    min-height: 40px;
+    margin: 8px 12px;
+    padding: 6px 12px;
+    border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
+    border-radius: calc(var(--dsh-layout-radius-user, 10px) - 2px);
+    background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent);
+    color: var(--dsw-alias-label-primary, #f4f4f5);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .dsh-launcher-menu-toggle-inner {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .dsh-launcher-menu-toggle-icon { display: inline-flex; flex: none; }
+  .dsh-launcher-menu-toggle-icon svg { width: 16px; height: 16px; }
+  .dsh-launcher-menu-toggle-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+  .dsh-launcher-menu-toggle svg.is-open { transform: rotate(180deg); }
+  .dsh-launcher-menu-toggle > svg { transition: transform 160ms var(--ds-ease-in-out, ease); flex: none; }
+  /* The tab grid folds away and drops down OVER the content when opened —
+     it no longer occupies a permanent grid row at the top. */
   .dsh-launcher-menu-scroll {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 30;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
-    width: 100%;
-    padding: 10px 10px 8px;
-    overflow-x: auto;
-    overflow-y: hidden;
+    padding: 10px 12px 14px;
+    background: var(--dsw-alias-bg-layer-1, #1c1c1f);
+    border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
+    border-radius: 0 0 var(--dsh-layout-radius-user-lg, 12px) var(--dsh-layout-radius-user-lg, 12px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+    max-height: min(56vh, 420px);
+    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    /* collapsed */
+    opacity: 0;
+    transform: translateY(-6px);
+    pointer-events: none;
+    visibility: hidden;
+    transition: opacity 180ms var(--ds-ease-in-out, ease),
+                transform 180ms var(--ds-ease-in-out, ease),
+                visibility 180ms;
+  }
+  .dsh-launcher-menu-scroll[data-open='true'] {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    visibility: visible;
   }
   .dsh-launcher-menu-scroll::-webkit-scrollbar { display: none; }
   .dsh-launcher-canvas-menu-label { display: none; }
@@ -663,6 +725,8 @@ body[data-dsh-launcher-rail] .dsh-launcher-fab { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .dsh-launcher-fab { transition: none; }
   .dsh-launcher-fab:hover { transform: none; }
+  .dsh-launcher-menu-scroll,
+  .dsh-launcher-menu-toggle > svg { transition: none; }
 }
 
 @keyframes dsh-launcher-panel-mobile-in {

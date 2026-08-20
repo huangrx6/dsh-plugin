@@ -32,6 +32,7 @@ import type { PropsRenderSlots } from "@deepseek-ai/dsh-client-ui-slots";
 import type { SectionMetadata } from "../contracts.ts";
 import {
   IconArchive,
+  IconChevronDown,
   IconClose,
   IconGrid,
   IconLayout,
@@ -202,6 +203,9 @@ export function WorkspaceView({
   const [activeId, setActiveId] = useState<string>("");
   const [closing, setClosing] = useState(false);
   const canvasRef = useRef<HTMLDivElement | null>(null);
+  // H5 collapsible menu: the tab grid folds into a one-line toggle on
+  // phones; selecting a section (or toggling) closes it again.
+  const [menuOpen, setMenuOpen] = useState(false);
   const [metaSections, setMetaSections] = useState<readonly WorkspaceSection[]>(
     () => buildDefaultSections(t),
   );
@@ -384,7 +388,37 @@ export function WorkspaceView({
         <IconClose size={14} />
       </button>
       <nav className="dsh-launcher-canvas-menu" aria-label={t("menuSection")}>
-        <div className="dsh-launcher-menu-scroll">
+        {/* H5-only collapsed toggle: shows the active section, expands the
+            tab grid as an overlay. Hidden on desktop. */}
+        <button
+          type="button"
+          className="dsh-launcher-menu-toggle"
+          aria-expanded={menuOpen}
+          aria-label={t("menuSection")}
+          onClick={() => {
+            setMenuOpen((open) => !open);
+          }}
+        >
+          {active !== undefined ? (
+            <span className="dsh-launcher-menu-toggle-inner">
+              <span className="dsh-launcher-menu-toggle-icon">
+                {active.icon}
+              </span>
+              <span className="dsh-launcher-menu-toggle-label">
+                {active.label}
+              </span>
+            </span>
+          ) : (
+            <span className="dsh-launcher-menu-toggle-label">
+              {t("menuSection")}
+            </span>
+          )}
+          <IconChevronDown
+            size={14}
+            {...(menuOpen ? { className: "is-open" } : {})}
+          />
+        </button>
+        <div className="dsh-launcher-menu-scroll" data-open={menuOpen ? "true" : "false"}>
           <div className="dsh-launcher-menu-identity">
             <span className="dsh-launcher-menu-identity-icon">
               <IconGrid size={16} />
@@ -410,6 +444,7 @@ export function WorkspaceView({
                   className={`dsh-launcher-canvas-menu-item${section.id === active?.id ? " is-active" : ""}`}
                   onClick={() => {
                     setActiveId(section.id);
+                    setMenuOpen(false);
                   }}
                 >
                   <span className="dsh-launcher-canvas-menu-item-icon">
