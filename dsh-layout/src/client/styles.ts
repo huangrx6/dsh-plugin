@@ -366,6 +366,37 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
   min-height: calc(var(--dsh-layout-input-rows, 3) * 24px);
 }
 
+/* ── 输入区上方的目标栏 / 队列任务列表 ─────────────────────────────────────
+   Stock behavior docks them flush onto the composer card: the goal bar is
+   4×dock-inset narrower than the card, the queue dock pulls down with a
+   NEGATIVE bottom margin (stack-gap + 3px) and its panel keeps only top
+   radii so it visually fuses with the card. Undock both instead: same
+   width as the composer card, an 8px gap of separation, full rounded
+   corners driven by the global layout radius tokens. The data attributes
+   (data-goal-bar / data-queue-dock) are stable across builds. */
+[data-goal-bar] {
+  /* The dock container itself shrinks by 4×dock-inset in addition to the
+     side clearance — mirror the composer's exact track (side clearance
+     only) so the bar's edges line up with the input card. */
+  width: calc(100% - 2 * var(--dsh-composer-side-clearance));
+  margin-bottom: 8px;
+}
+[data-goal-bar] [class*='_bar'] {
+  width: 100%;
+  max-width: var(--dsh-composer-card-max-width);
+  border-radius: var(--dsh-layout-radius-user, 12px);
+}
+[data-queue-dock] {
+  width: 100%;
+  max-width: var(--dsh-composer-card-max-width);
+  margin: 0 auto 8px;
+  padding: 0;
+}
+[data-queue-dock] [class*='_panel'] {
+  border-radius: var(--dsh-layout-radius-user, 12px);
+  border: 1px solid var(--dsw-alias-border-l1);
+}
+
 /* ── 设置弹窗加固 ───────────────────────────────────────────────────────────
    DSH renders the settings dialog panel with overflow:hidden, which still
    makes it a programmatically scrollable box; focus scrolling can displace
@@ -882,19 +913,21 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     max-width: none !important;
   }
 
-  /* Edge handle: a slim bar at mid-height that OPENS the drawer; hidden once
-     open (closing moves to the top-right X button). */
+  /* Open handle: a compact hamburger chip pinned to the TOP-LEFT (over the
+     conversation header on session pages, over the empty corner on the
+     hero page). The old mid-left edge sliver was hard to find and awkward
+     to thumb; a header-corner button matches every mobile app's menu
+     seat. Hidden once the drawer is open (closing = the drawer's X). */
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger {
     position: fixed;
     z-index: 44;
-    inset-block-start: 50%;
-    inset-inline-start: 0;
-    width: 6px;
-    height: 60px;
-    margin-block-start: -30px;
+    top: calc(env(safe-area-inset-top, 0px) + 10px);
+    inset-inline-start: 12px;
+    width: 36px;
+    height: 36px;
     padding: 0;
-    border: 0;
-    border-radius: 0 6px 6px 0;
+    border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
+    border-radius: var(--dsh-layout-radius-user, 12px);
     background: color-mix(in srgb, var(--dsw-alias-bg-layer-3) 82%, transparent);
     color: var(--dsw-alias-label-primary);
     box-shadow: var(--dsw-shadow-lv1);
@@ -903,6 +936,12 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     display: grid;
     place-items: center;
     cursor: pointer;
+  }
+  /* Session pages: the header's breadcrumb row starts at x20 — give the
+     chip its seat so the two never collide. Hero pages have nothing up
+     there, the chip just sits in the empty corner. */
+  html[data-dsh-layout-mobile-sidebar] [class*='_titleRow'] {
+    padding-inline-start: 52px;
   }
   /* Hidden while the drawer is open — closing moves to the drawer's own
      X (and the mask). Previously only the comment claimed this. */
@@ -920,13 +959,17 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger::before {
     content: '';
     position: absolute;
-    inset: -12px -32px -12px 0;
+    inset: -8px;
   }
+  /* Hamburger glyph: three stacked hairlines instead of the old single dot. */
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger > span {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: currentColor;
+    width: 16px;
+    height: 12px;
+    border-radius: 0;
+    background:
+      linear-gradient(currentColor 0 0) center/100% 1.5px no-repeat,
+      linear-gradient(currentColor 0 0) 30% 50%/100% 1.5px no-repeat,
+      linear-gradient(currentColor 0 0) 70% 50%/100% 1.5px no-repeat;
   }
   /* Close button: a bare X (no chrome) pinned to the drawer's top row —
      vertically centered on the OFFICIAL logo row (hHd-Xa_logoRow, 60px tall
