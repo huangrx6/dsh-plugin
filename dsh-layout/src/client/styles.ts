@@ -606,23 +606,44 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
      wrap, shrink the breadcrumb trail, and keep the action clusters
      right-aligned on their wrapped lines. Class names are CSS-module
      hashes, so we match the stable _semantic suffixes instead. */
-  [class*='_titleRow'] { flex-wrap: wrap; row-gap: 6px; }
-  [class*='_titleCluster'] { flex: 1 1 100%; min-width: 0; }
+  /* ── 原生对话顶栏：单行横滑 ──────────────────────────────────────────
+     Wrapping stacked the header into a 4-line tower (title / subagents /
+     tasks / session log) — a quarter of the phone screen gone. Instead
+     the whole title row rides ONE horizontally scrollable line, the
+     standard mobile breadcrumb pattern: the title crumb flexes down to
+     ellipsis, the action chips compress, and everything past the fold
+     swipes in from the right. */
+  [class*='_titleRow'] {
+    /* !important overrides the stock "Narrow header wrap" rule — the
+       native wrap is what stacked the header into a 4-line tower. */
+    flex-wrap: nowrap !important;
+    row-gap: 0 !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+  [class*='_titleRow']::-webkit-scrollbar { display: none; }
+  [class*='_titleCluster'] { flex: 0 1 auto; min-width: 0; }
   [class*='_crumbs'] { min-width: 0; }
-  [class*='_crumb']:not([class*='_crumbSep']) { max-width: 44vw; }
+  [class*='_crumb']:not([class*='_crumbSep']) { max-width: 30vw; }
   [class*='_headerActions'],
   [class*='_headerUtilities'] {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    margin-left: auto;
-    gap: 6px;
-    /* flex:0 0 auto lets the cluster grow past the viewport and clip its
-       trailing buttons; capping at the row width forces the wrap above
-       to actually engage. */
-    max-width: 100%;
-    min-width: 0;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    gap: 4px;
   }
-  [class*='_headerUtilities'] { margin-left: 0; }
+  [class*='_headerUtilities'] { margin-left: 4px; }
+  /* Compress the header chips themselves: tighter padding + smaller text
+     so more of them fit the first screen. */
+  [class*='_headerActions'] button,
+  [class*='_headerUtilities'] button {
+    padding-inline: 6px;
+    font-size: 11px;
+  }
+  /* Tighter header rhythm on phones. */
+  [class*='_header'] { padding-top: 8px !important; }
   /* Popover panels anchored to those buttons (subagents / background
      tasks) can compute desktop-sized offsets; clamp any absolutely or
      fixed positioned popover to the phone viewport so it never spills. */
