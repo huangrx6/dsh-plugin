@@ -540,13 +540,16 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
     min-height: 0;
     overflow: visible;
   }
-  /* Title line: toggle chip + section title/subtitle on ONE row. */
+  /* Title line: toggle chip + section title on one row; wraps gracefully
+     (chip row, then title/subtitle) instead of squeezing when full. */
   .dsh-launcher-canvas-topbar {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
-    margin: 0 0 10px;
-    padding-bottom: 10px;
+    column-gap: 8px;
+    row-gap: 4px;
+    margin: 0 0 8px;
+    padding-bottom: 8px;
     border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
   }
   .dsh-launcher-canvas-topbar .dsh-launcher-section-header {
@@ -554,6 +557,7 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
     padding-bottom: 0;
     border-bottom: 0;
     min-width: 0;
+    flex: 1 1 160px;
   }
   .dsh-launcher-canvas-topbar .dsh-launcher-section-header-title { font-size: 15px; }
   .dsh-launcher-canvas-topbar .dsh-launcher-section-header-subtitle {
@@ -561,22 +565,23 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  /* Compact toggle chip — hugs its content, sits left of the title. */
+  /* Compact toggle chip — small, content-hugging, sits left of the title. */
   .dsh-launcher-menu-toggle {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     flex: none;
-    min-height: 30px;
-    padding: 4px 10px;
+    min-height: 26px;
+    padding: 2px 8px;
     border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
     border-radius: calc(var(--dsh-layout-radius-user, 10px) - 2px);
     background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent);
     color: var(--dsw-alias-label-primary, #f4f4f5);
     font: inherit;
-    font-size: 12px;
+    font-size: 11.5px;
     cursor: pointer;
   }
+  .dsh-launcher-menu-toggle-icon svg { width: 14px; height: 14px; }
   .dsh-launcher-menu-toggle-inner {
     display: inline-flex;
     align-items: center;
@@ -653,7 +658,7 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
   .dsh-launcher-canvas-menu-label { animation-name: dsh-launcher-tab-item-in; }
 
   .dsh-launcher-canvas-content {
-    padding: 20px 16px 80px;
+    padding: 12px 14px 80px;
   }
   .dsh-launcher-section-header { margin-bottom: 16px; padding-bottom: 12px; }
   .dsh-launcher-section-header-title { font-size: 15px; }
