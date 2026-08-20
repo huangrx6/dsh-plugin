@@ -78,10 +78,14 @@ export const LAUNCHER_STYLES = `
   --dsh-launcher-ease: cubic-bezier(0.22, 1, 0.36, 1);
   position: fixed;
   inset: 0;
-  /* No scrim on purpose: the mask is a transparent click-catcher
-     (click-outside closes). Dimming/blurring the whole page behind a
-     small popover read as abrupt. */
-  background: transparent;
+  /* Scrim per the unified modal-overlay recipe (§7.1): the two-option
+     popover opens over conversations too — a transparent click-catcher
+     left the chat fully visible behind it and read as cluttered. The
+     mask still click-closes; now it dims + blurs like every other
+     dialog. */
+  background: rgba(0, 0, 0, 0.45);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   z-index: 9999;
   display: flex;
   align-items: flex-end;
@@ -212,7 +216,12 @@ export const LAUNCHER_STYLES = `
   --dsh-launcher-ease: cubic-bezier(0.22, 1, 0.36, 1);
   position: fixed;
   inset: 0;
-  background: var(--dsw-alias-bg-module-platform, #0f0f12);
+  /* Always a scrim: the workspace floats over the dimmed, blurred app —
+     the mask reads even when the frosted material is off (the old opaque
+     platform fill hid the app completely, so no mask was perceived). */
+  background: color-mix(in srgb, var(--dsw-alias-bg-module-platform, #0f0f12) 88%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(108%);
+  backdrop-filter: blur(18px) saturate(108%);
   z-index: 9998;
   display: grid;
   grid-template-columns: 240px 1fr;
@@ -462,6 +471,16 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
 /* Accessibility + capability fallbacks mirror dsh-layout's own: keep the
    tint at full opacity, drop the blur entirely. */
 @media (prefers-reduced-transparency: reduce) {
+  .dsh-launcher-panel-mask {
+    background: rgba(0, 0, 0, 0.6);
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .dsh-launcher-canvas {
+    background: var(--dsw-alias-bg-module-platform, #0f0f12);
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
   html[data-dsh-layout-material='on'] .dsh-launcher-canvas,
   html[data-dsh-layout-material='on'] .dsh-launcher-panel,
   html[data-dsh-layout-material='on'] .dsh-launcher-fab {
@@ -515,33 +534,35 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
   /* The identity block and group headers collapse away on phones —
      the horizontal tab bar replaces the whole nav chrome. */
   .dsh-launcher-menu-identity { display: none; }
-  /* On phones the corner X floats bottom-right — the top edge belongs to
-     the equal-width tab row, so a top-right close would fight it. */
+  /* On phones the close X sits at the TOP-RIGHT, clear of the menu-switch
+     selector that owns the left side of the top bar. */
   .dsh-launcher-canvas-x {
-    top: auto;
-    bottom: 18px;
-    right: 16px;
-    width: 40px;
-    height: 40px;
-    box-shadow: var(--dsw-shadow-lv2, 0 8px 24px rgba(0, 0, 0, 0.3));
+    top: calc(env(safe-area-inset-top, 0px) + 12px);
+    left: auto;
+    right: 12px;
+    bottom: auto;
+    width: 32px;
+    height: 32px;
+    box-shadow: none;
   }
   .dsh-launcher-canvas-close { padding: 6px 10px; }
   .dsh-launcher-canvas-close span { display: none; }
 
   .dsh-launcher-canvas-menu {
     grid-area: tabbar;
-    flex-direction: row;
     border-right: 0;
     border-bottom: 0;
-    position: relative;
-    /* The nav element is now just the dropdown anchor — the toggle moved
-       into the content's title line, so this bar costs zero height. */
-    height: 0;
-    min-height: 0;
+    /* H5: the menu is a dropdown anchored to the canvas itself (见下方
+       .dsh-launcher-menu-scroll 的 38px)，不是侧栏轨道。这里的关键：
+       不声明 position: relative —— 否则 absolute 子元素就锚到这个零
+       高度盒子，top: 100% 解析成 0，画在 canvas 顶端、压在 toggle 上。
+       行高也别显式设：容器内没有 in-flow 子元素，grid 行自然就是 0。 */
     overflow: visible;
   }
-  /* Title line: toggle chip + section title on one row; wraps gracefully
-     (chip row, then title/subtitle) instead of squeezing when full. */
+  /* Title line: ONE select-style menu switch. The section title/description
+     wrapper is dropped on phones (the switch itself shows the current
+     section name), and the row clears the top-left close X by its own
+     inset — no other chrome rides here. */
   .dsh-launcher-canvas-topbar {
     display: flex;
     flex-wrap: wrap;
@@ -549,50 +570,49 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
     column-gap: 8px;
     row-gap: 4px;
     margin: 0 0 8px;
-    padding-bottom: 8px;
+    padding: 0 52px 8px 0;
     border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
   }
   .dsh-launcher-canvas-topbar .dsh-launcher-section-header {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: 0;
-    min-width: 0;
-    flex: 1 1 160px;
+    display: none;
   }
-  .dsh-launcher-canvas-topbar .dsh-launcher-section-header-title { font-size: 15px; }
-  .dsh-launcher-canvas-topbar .dsh-launcher-section-header-subtitle {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  /* Icon-only square toggle — the section title right next to it already
-     says the name, so the chip carries just the section icon (24px). No
-     label, no chevron; the open state tints the square. */
+  /* The header's only left chrome is a select-style menu switch: icon +
+     current section name + chevron — it reads as a dropdown the way a
+     native <select> does, so users won't mistake it for plain text. */
   .dsh-launcher-menu-toggle {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    gap: 6px;
     flex: none;
-    width: 26px;
-    height: 26px;
-    padding: 0;
-    gap: 0;
+    width: auto;
+    max-width: calc(100vw - 76px);
+    height: 32px;
+    padding: 0 10px;
     border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
     border-radius: calc(var(--dsh-layout-radius-user, 10px) - 2px);
-    background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent);
+    background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 3%, transparent);
     color: var(--dsw-alias-label-primary, #f4f4f5);
     font: inherit;
+    font-size: 13px;
+    font-weight: 550;
     cursor: pointer;
+    white-space: nowrap;
   }
   .dsh-launcher-menu-toggle[aria-expanded='true'] {
     background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
     border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent);
   }
-  /* Text label and chevron stay in the DOM (desktop/aria) but never
-     render on the phone square. */
-  .dsh-launcher-menu-toggle-label { display: none; }
-  .dsh-launcher-menu-toggle > svg { display: none; }
-  .dsh-launcher-menu-toggle-icon svg { width: 15px; height: 15px; }
+  /* Label + chevron stay live on phones now (the switch shows the name). */
+  .dsh-launcher-menu-toggle-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dsh-launcher-menu-toggle > svg {
+    flex: none;
+    color: var(--dsw-alias-label-tertiary, #8a8a8e);
+    transition: transform 160ms var(--ds-ease-in-out, ease);
+  }
+  .dsh-launcher-menu-toggle svg.is-open { transform: rotate(180deg); }
   .dsh-launcher-menu-toggle-inner {
     display: inline-flex;
     align-items: center;
@@ -601,21 +621,16 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
   }
   .dsh-launcher-menu-toggle-icon { display: inline-flex; flex: none; }
   .dsh-launcher-menu-toggle-icon svg { width: 16px; height: 16px; }
-  .dsh-launcher-menu-toggle-label {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-weight: 500;
-  }
-  .dsh-launcher-menu-toggle svg.is-open { transform: rotate(180deg); }
-  .dsh-launcher-menu-toggle > svg { transition: transform 160ms var(--ds-ease-in-out, ease); flex: none; }
   /* The tab grid folds away and drops down OVER the content when opened —
-     it no longer occupies a permanent grid row at the top. */
+     it no longer occupies a permanent grid row at the top. Anchors to
+     .dsh-launcher-canvas (the fixed overlay, no relative ancestor in
+     between on H5), so top clears the 32px select switch (content pad-top
+     12 + switch 32 = 44) + a little breathing room. */
   .dsh-launcher-menu-scroll {
     position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
+    top: 46px;
+    left: 12px;
+    right: 12px;
     z-index: 30;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
