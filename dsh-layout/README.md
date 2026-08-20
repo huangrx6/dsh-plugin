@@ -9,8 +9,8 @@
 设置页分三个页签：**全局 → 材质 → 对话**。每项默认保持原生；已修改的项带「已自定义」标记，可单独恢复（↶）或一键恢复全部默认。
 
 <p align="left">
-  <img src="../images/layout/pc.png" width="720" alt="dsh-layout 设置页（PC）">
-  &nbsp;&nbsp;<img src="../images/layout/h5.png" width="200" alt="dsh-layout 设置页（H5）">
+  <img src="../docs/images/layout/pc.png" width="720" alt="dsh-layout 设置页（PC）">
+  &nbsp;&nbsp;<img src="../docs/images/layout/h5.png" width="200" alt="dsh-layout 设置页（H5）">
   <br><em>页面布局入口在设置 → 插件 → 页面布局（PC + H5）</em>
 </p>
 

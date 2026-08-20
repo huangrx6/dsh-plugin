@@ -25,8 +25,8 @@
 **V1 交付四个能力**（对应 Settings → Plugins → 远程访问 面板）：
 
 <p align="left">
-  <img src="../images/remote-access/pc.png" width="540" alt="dsh-remote-access 面板（PC）">
-  &nbsp;&nbsp;<img src="../images/remote-access/h5.png" width="160" alt="dsh-remote-access 面板（H5）">
+  <img src="../docs/images/remote-access/pc.png" width="540" alt="dsh-remote-access 面板（PC）">
+  &nbsp;&nbsp;<img src="../docs/images/remote-access/h5.png" width="160" alt="dsh-remote-access 面板（H5）">
   <br><em>桌面端 — 设置 → 插件 → 远程访问（PC + H5）</em>
 </p>
 

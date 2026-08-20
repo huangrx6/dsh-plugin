@@ -78,14 +78,14 @@ pnpm run check   # typecheck + vitest + build
 `dsh-skill-manager` 自带一个 **Skill 市场** UI（`SkillMarketSection`）。当用户同时安装了 [`dsh-launcher`](../dsh-launcher) 时，该市场会在 launcher 的全屏工作区里出现——左侧菜单选 **Skill 管理**，右侧会看到卡片化市场。
 
 <p align="left">
-  <img src="../images/skill-manager/pc.png" width="540" alt="dsh-skill-manager 列表页（PC）">
-  &nbsp;&nbsp;<img src="../images/skill-manager/h5.png" width="160" alt="dsh-skill-manager 列表页（H5）">
+  <img src="../docs/images/skill-manager/pc.png" width="540" alt="dsh-skill-manager 列表页（PC）">
+  &nbsp;&nbsp;<img src="../docs/images/skill-manager/h5.png" width="160" alt="dsh-skill-manager 列表页（H5）">
   <br><em>桌面端 — 设置 → 插件 → 技能管理（PC + H5）</em>
 </p>
 
 <p align="left">
-  <img src="../images/skill-manager/pc-detail.png" width="540" alt="dsh-skill-manager 详情页（PC）">
-  &nbsp;&nbsp;<img src="../images/skill-manager/h5-detail.png" width="160" alt="dsh-skill-manager 详情页（H5）">
+  <img src="../docs/images/skill-manager/pc-detail.png" width="540" alt="dsh-skill-manager 详情页（PC）">
+  &nbsp;&nbsp;<img src="../docs/images/skill-manager/h5-detail.png" width="160" alt="dsh-skill-manager 详情页（H5）">
   <br><em>技能详情：选中某个 Skill 后</em>
 </p>
 

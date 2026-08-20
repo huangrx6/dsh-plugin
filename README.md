@@ -21,64 +21,64 @@
 
 ### dsh-launcher
 <p align="left">
-  <img src="./dsh-launcher/../images/launcher/home-pc.png" width="480" alt="dsh-launcher 主页（PC）">
-  &nbsp;&nbsp;<img src="./dsh-launcher/../images/launcher/home-h5.png" width="160" alt="dsh-launcher 主页（H5）">
+  <img src="./dsh-launcher/../docs/images/launcher/home-pc.png" width="480" alt="dsh-launcher 主页（PC）">
+  &nbsp;&nbsp;<img src="./dsh-launcher/../docs/images/launcher/home-h5.png" width="160" alt="dsh-launcher 主页（H5）">
   <br><em>侧栏底部「更多 → 个人插件」入口</em>
 </p>
 <p align="left">
-  <img src="./dsh-launcher/../images/launcher/workspace-pc.png" width="720" alt="dsh-launcher 工作区（PC）">
-  &nbsp;&nbsp;<img src="./dsh-launcher/../images/launcher/workspace-h5.png" width="160" alt="dsh-launcher 工作区（H5）">
+  <img src="./dsh-launcher/../docs/images/launcher/workspace-pc.png" width="720" alt="dsh-launcher 工作区（PC）">
+  &nbsp;&nbsp;<img src="./dsh-launcher/../docs/images/launcher/workspace-h5.png" width="160" alt="dsh-launcher 工作区（H5）">
   <br><em>点「个人插件」后全屏工作区（左栏菜单 + 右栏卡片化内容）</em>
 </p>
 
 ### dsh-layout
 <p align="left">
-  <img src="./dsh-layout/../images/layout/pc.png" width="540" alt="dsh-layout 设置页（PC）">
-  &nbsp;&nbsp;<img src="./dsh-layout/../images/layout/h5.png" width="160" alt="dsh-layout 设置页（H5）">
+  <img src="./dsh-layout/../docs/images/layout/pc.png" width="540" alt="dsh-layout 设置页（PC）">
+  &nbsp;&nbsp;<img src="./dsh-layout/../docs/images/layout/h5.png" width="160" alt="dsh-layout 设置页（H5）">
   <br><em>设置 → 插件 → 页面布局</em>
 </p>
 
 ### dsh-skill-manager
 <p align="left">
-  <img src="./dsh-skill-manager/../images/skill-manager/pc.png" width="420" alt="dsh-skill-manager 列表（PC）">
-  &nbsp;&nbsp;<img src="./dsh-skill-manager/../images/skill-manager/h5.png" width="160" alt="dsh-skill-manager 列表（H5）">
-  &nbsp;&nbsp;<img src="./dsh-skill-manager/../images/skill-manager/pc-detail.png" width="200" alt="dsh-skill-manager 详情（PC）">
-  &nbsp;&nbsp;<img src="./dsh-skill-manager/../images/skill-manager/h5-detail.png" width="160" alt="dsh-skill-manager 详情（H5）">
+  <img src="./dsh-skill-manager/../docs/images/skill-manager/pc.png" width="420" alt="dsh-skill-manager 列表（PC）">
+  &nbsp;&nbsp;<img src="./dsh-skill-manager/../docs/images/skill-manager/h5.png" width="160" alt="dsh-skill-manager 列表（H5）">
+  &nbsp;&nbsp;<img src="./dsh-skill-manager/../docs/images/skill-manager/pc-detail.png" width="200" alt="dsh-skill-manager 详情（PC）">
+  &nbsp;&nbsp;<img src="./dsh-skill-manager/../docs/images/skill-manager/h5-detail.png" width="160" alt="dsh-skill-manager 详情（H5）">
   <br><em>列表 + 详情：设置 → 插件 → 技能管理</em>
 </p>
 
 ### dsh-mcp-manager
 <p align="left">
-  <img src="./dsh-mcp-manager/../images/mcp-manager/pc.png" width="540" alt="dsh-mcp-manager 列表（PC）">
-  &nbsp;&nbsp;<img src="./dsh-mcp-manager/../images/mcp-manager/h5.png" width="160" alt="dsh-mcp-manager 列表（H5）">
+  <img src="./dsh-mcp-manager/../docs/images/mcp-manager/pc.png" width="540" alt="dsh-mcp-manager 列表（PC）">
+  &nbsp;&nbsp;<img src="./dsh-mcp-manager/../docs/images/mcp-manager/h5.png" width="160" alt="dsh-mcp-manager 列表（H5）">
   <br><em>设置 → 插件 → MCP 管理</em>
 </p>
 
 ### dsh-remote-access
 <p align="left">
-  <img src="./dsh-remote-access/../images/remote-access/pc.png" width="540" alt="dsh-remote-access 面板（PC）">
-  &nbsp;&nbsp;<img src="./dsh-remote-access/../images/remote-access/h5.png" width="160" alt="dsh-remote-access 面板（H5）">
+  <img src="./dsh-remote-access/../docs/images/remote-access/pc.png" width="540" alt="dsh-remote-access 面板（PC）">
+  &nbsp;&nbsp;<img src="./dsh-remote-access/../docs/images/remote-access/h5.png" width="160" alt="dsh-remote-access 面板（H5）">
   <br><em>设置 → 插件 → 远程访问</em>
 </p>
 
 ### dsh-agent-rules
 <p align="left">
-  <img src="./dsh-agent-rules/../images/agent-rules/pc.png" width="540" alt="dsh-agent-rules 面板（PC）">
-  &nbsp;&nbsp;<img src="./dsh-agent-rules/../images/agent-rules/h5.png" width="160" alt="dsh-agent-rules 面板（H5）">
+  <img src="./dsh-agent-rules/../docs/images/agent-rules/pc.png" width="540" alt="dsh-agent-rules 面板（PC）">
+  &nbsp;&nbsp;<img src="./dsh-agent-rules/../docs/images/agent-rules/h5.png" width="160" alt="dsh-agent-rules 面板（H5）">
   <br><em>编辑 ~/.dsh/AGENTS.md，注入每个会话的持久基准规则</em>
 </p>
 
 ### dsh-usage
 <p align="left">
-  <img src="./dsh-usage/../images/usage/pc.png" width="540" alt="dsh-usage 面板（PC）">
-  &nbsp;&nbsp;<img src="./dsh-usage/../images/usage/h5.png" width="160" alt="dsh-usage 面板（H5）">
+  <img src="./dsh-usage/../docs/images/usage/pc.png" width="540" alt="dsh-usage 面板（PC）">
+  &nbsp;&nbsp;<img src="./dsh-usage/../docs/images/usage/h5.png" width="160" alt="dsh-usage 面板（H5）">
   <br><em>订阅额度监控（GLM / MiniMax / Opencode 多账号）</em>
 </p>
 
 ### dsh-archive-manager
 <p align="left">
-  <img src="./dsh-archive-manager/../images/archive-manager/pc.png" width="540" alt="dsh-archive-manager panel (PC)">
-  &nbsp;&nbsp;<img src="./dsh-archive-manager/../images/archive-manager/h5.png" width="160" alt="dsh-archive-manager panel (H5)">
+  <img src="./dsh-archive-manager/../docs/images/archive-manager/pc.png" width="540" alt="dsh-archive-manager panel (PC)">
+  &nbsp;&nbsp;<img src="./dsh-archive-manager/../docs/images/archive-manager/h5.png" width="160" alt="dsh-archive-manager panel (H5)">
   <br><em>Settings → Archive manager</em>
 </p>
 
