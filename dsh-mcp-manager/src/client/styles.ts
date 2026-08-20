@@ -1254,7 +1254,7 @@ html[data-dsh-layout-material='on'] .dshmcp-toolModalBody > :first-child { backg
   .dshmcp-mkt-bar { gap: 10px; }
   .dshmcp-mkt-bar > * { min-height: 36px; }
   /* --dsh-btn-height H5 (36px) */
-  .dshmcp-mkt-viewseg { min-height: 36px; flex-wrap: wrap; }
+  .dshmcp-mkt-viewseg { flex-wrap: wrap; }
   .dshmcp-mkt-iconbtn, .dshmcp-iconBtn { width: 36px; height: 36px; }
   /* --dsh-group-padding H5 (8px) */
   .dshmcp-mkt-list, .dshmcp-instList { padding: 8px; }
