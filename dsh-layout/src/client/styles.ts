@@ -489,7 +489,7 @@ html[data-dsh-layout-material='on'] .dsh-layout-group { background: color-mix(in
 .dsh-layout-segmented { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 2px; border-radius: var(--dsh-layout-radius-user, 8px); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); }
 .dsh-layout-segmented button { min-height: 24px; padding: 2px 10px; border: 0; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px); background: transparent; color: var(--dsw-alias-label-secondary, #b3b3b8); font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
 .dsh-layout-segmented button:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
-.dsh-layout-segmented button[aria-pressed='true'] { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
+.dsh-layout-segmented button[aria-pressed='true'] { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
 .dsh-layout-segmented--fill { width: 100%; }
 .dsh-layout-segmented--fill button { flex: 1 1 0; min-width: 0; text-align: center; }
 /* Slider: 2px track, 12px accent knob; --dsh-layout-fill (set inline) fills
@@ -511,7 +511,7 @@ html[data-dsh-layout-material='on'] .dsh-layout-group { background: color-mix(in
 .dsh-layout-tiers { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; width: 100%; }
 .dsh-layout-tiers button { padding: 8px 10px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent); border-radius: var(--dsh-layout-radius-user, 8px); background: transparent; color: var(--dsw-alias-label-primary, #f4f4f5); text-align: left; font: inherit; cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
 .dsh-layout-tiers button:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent); }
-.dsh-layout-tiers button[aria-pressed='true'] { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 24%, transparent); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); }
+.dsh-layout-tiers button[aria-pressed='true'] { border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 14%, transparent); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); }
 .dsh-layout-tiers strong { display: block; overflow: hidden; font-size: 12px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
 .dsh-layout-tiers span { display: block; overflow: hidden; margin-top: 2px; color: var(--dsw-alias-label-tertiary, #8a8a8e); font-size: 11px; white-space: nowrap; text-overflow: ellipsis; }
 /* Metric chips: flat checkboxes; checked mirrors the selected card recipe. */

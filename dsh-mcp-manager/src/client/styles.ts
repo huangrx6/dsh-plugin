@@ -627,7 +627,7 @@ html[data-dsh-layout-scrollbar='hidden'] .dshmcp-textarea::-webkit-scrollbar { d
 .dshmcp-mkt-segItem:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); }
 .dshmcp-mkt-segItem:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #ffb74d); outline-offset: -2px; }
 /* --dsh-selected-bg (12%) */
-.dshmcp-mkt-segItem.is-active { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); font-weight: 500; }
+.dshmcp-mkt-segItem.is-active { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); color: var(--dsw-alias-label-primary, #f4f4f5); font-weight: 500; }
 .dshmcp-mkt-segName { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .dshmcp-mkt-segDot { flex: none; width: 6px; height: 6px; border-radius: 999px; background: var(--dsw-alias-state-success-primary, #4caf50); }
 .dshmcp-mkt-segItem.is-down .dshmcp-mkt-segDot { background: var(--dsw-alias-state-error-primary, #ef5350); }

@@ -270,7 +270,7 @@ const CSS = `
 .dshm-treeRow { display: flex; align-items: center; gap: 5px; height: 30px; padding-right: 8px; border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px); color: var(--dsw-alias-label-secondary, #b3b3b8); transition: background-color 120ms var(--ds-ease-in-out, ease); }
 .dshm-treeRow-folder { color: var(--dsw-alias-label-primary, #f4f4f5); }
 .dshm-treeRow:hover { background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); }
-.dshm-treeRow.is-selected { background: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 12%, transparent); }
+.dshm-treeRow.is-selected { background: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 8%, transparent); }
 .dshm-treeRow.is-focused { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 40%, transparent); }
 .dshm-treeRow .rct-tree-item-arrow { width: 15px; height: 15px; flex: none; display: inline-flex; align-items: center; justify-content: center; color: var(--dsw-alias-label-tertiary, #8a8a8e); cursor: pointer; }
 .dshm-treeRow .rct-tree-item-arrow svg { width: 10px; height: 10px; fill: currentColor; transition: transform 140ms var(--ds-ease-in-out, ease); }
@@ -393,7 +393,7 @@ const CSS = `
 .dshm-mkt-seg::-webkit-scrollbar { display: none; }
 .dshm-mkt-segBtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 26px; min-width: 56px; padding: 0 10px; border: 0; border-radius: 999px; background: transparent; color: var(--dsw-alias-label-secondary, #b3b3b8); font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; transition: background-color 120ms var(--ds-ease-in-out, ease), color 120ms var(--ds-ease-in-out, ease); }
 .dshm-mkt-segBtn:hover { color: var(--dsw-alias-label-primary, #f4f4f5); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 5%, transparent); }
-.dshm-mkt-segBtn.is-active { color: var(--dsw-alias-label-primary, #f4f4f5); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 12%, transparent); font-weight: 500; }
+.dshm-mkt-segBtn.is-active { color: var(--dsw-alias-label-primary, #f4f4f5); background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent); font-weight: 500; }
 .dshm-mkt-segBtn:focus-visible { outline: 2px solid var(--dsw-alias-state-business-primary, #6ea8fe); outline-offset: -2px; }
 .dshm-mkt-segLabel { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dshm-mkt-segDot { flex: none; width: 6px; height: 6px; border-radius: 999px; background: var(--dsw-alias-state-success-primary, #4caf50); }

@@ -171,7 +171,7 @@ export const USAGE_STYLES = `
   display: flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, var(--u-accent) 10%, transparent);
+  background: color-mix(in srgb, var(--u-accent) 8%, transparent);
   border: 1px solid color-mix(in srgb, var(--u-accent) 22%, transparent);
   border-radius: 8px;
 }
@@ -401,8 +401,8 @@ export const USAGE_STYLES = `
   color: var(--dsw-alias-label-primary, #f4f4f5);
 }
 .u-providerCard.is-selected {
-  background: color-mix(in srgb, var(--u-accent) 10%, transparent);
-  border-color: color-mix(in srgb, var(--u-accent) 50%, transparent);
+  background: color-mix(in srgb, var(--u-accent) 8%, transparent);
+  border-color: color-mix(in srgb, var(--u-accent) 36%, transparent);
   color: var(--dsw-alias-label-primary, #f4f4f5);
 }
 .u-providerCard-initials {
