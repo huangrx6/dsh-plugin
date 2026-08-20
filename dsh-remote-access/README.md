@@ -24,6 +24,12 @@
 
 **V1 交付四个能力**（对应 Settings → Plugins → 远程访问 面板）：
 
+<p align="left">
+  <img src="../images/remote-access/pc.png" width="540" alt="dsh-remote-access 面板（PC）">
+  &nbsp;&nbsp;<img src="../images/remote-access/h5.png" width="160" alt="dsh-remote-access 面板（H5）">
+  <br><em>桌面端 — 设置 → 插件 → 远程访问（PC + H5）</em>
+</p>
+
 1. **Enable / Disable** —— 一键执行 `tailscale serve --bg 3080` / `tailscale serve --3080 off`（失败自动回退 `serve reset`），启用幂等：已有规则不重复创建
 2. **URL + 二维码** —— 显示 `https://<设备名>.ts.net`，一键复制、扫码即达；二维码在 host（Node）侧生成，前端零依赖
 3. **远程目录选择器（自动）** —— 插件安装时经 bundle patch 静态完成切换，无需任何运行时操作；面板里的「远程目录选择器」字段是对当前运行树的诚实探测（有人手动改掉 patch 会显示「未检测到」）

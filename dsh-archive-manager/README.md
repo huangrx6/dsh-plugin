@@ -2,6 +2,12 @@
 
 **Archive manager for DeepSeek Harness.** Add a "Archive manager" entry to dsh Settings so you can:
 
+<p align="left">
+  <img src="../images/archive-manager/pc.png" width="540" alt="dsh-archive-manager panel (desktop)">
+  &nbsp;&nbsp;<img src="../images/archive-manager/h5.png" width="160" alt="dsh-archive-manager panel (H5)">
+  <br><em>Desktop — Settings → Archive manager (PC + H5)</em>
+</p>
+
 - List every session that has been hidden from a workspace (`workspaceRegistry.archivedSessionIds`)
 - Read each archived session's full message history inline (user / assistant / tool call / tool result)
 - **Restore** an archived session back to the workspace with one click

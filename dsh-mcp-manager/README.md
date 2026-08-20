@@ -68,6 +68,12 @@ pnpm run check   # typecheck + vitest + build
 
 `dsh-mcp-manager` 自带一个 **MCP 市场** UI（`McpMarketSection`）。当用户同时安装了 [`dsh-launcher`](../dsh-launcher) 时，该市场会在 launcher 的全屏工作区里出现——左侧菜单选 **MCP 管理**，右侧会看到卡片化市场。
 
+<p align="left">
+  <img src="../images/mcp-manager/pc.png" width="540" alt="dsh-mcp-manager 列表页（PC）">
+  &nbsp;&nbsp;<img src="../images/mcp-manager/h5.png" width="160" alt="dsh-mcp-manager 列表页（H5）">
+  <br><em>桌面端 — 设置 → 插件 → MCP 管理（PC + H5）</em>
+</p>
+
 市场的核心组件复用自 launcher（`dsh-launcher/client/market` 的 `MarketShelf`），本插件只负责：
 
 - `onInstall`：从 manifest item 的 `payload` 解析出 `McpServerConfig`（stdio / streamable-http 两种），调用现有的 `save` 端点（同一个 `dsh-mcp-manager` host RPC）。
