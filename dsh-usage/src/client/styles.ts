@@ -9,7 +9,9 @@
  */
 export const USAGE_STYLES = `
 /* ── top-level card ── */
-.u-card { max-width: 860px; }
+/* Fill the workspace content track like the skill/mcp card grids — no
+   860px cap leaving dead space on the right. */
+.u-card { max-width: none; }
 
 /* ── spin ── */
 @keyframes u-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
