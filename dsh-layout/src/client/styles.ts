@@ -1302,6 +1302,25 @@ html[data-dsh-layout-sidebar-float] [data-dsh-layout-sidebar-col] {
 @media (max-width: 768px) {
   [data-dsh-layout-workbench] { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important; }
 }
+
+/* ── launcher workspace / hero 状态：抑制对话页专属 chrome ───────────────
+   dsh-launcher 的全屏工作区（.dsh-launcher-canvas, z:9998）盖在对话之上，
+   但 mobile-sidebar trigger / ··· overflow 都是 append 到 body 的 fixed
+   元素（z:44 / 60），在前两层 z-stacking 下 launcher 边缘和 material 磨砂
+   态仍会透出——属于对话页的 affordance，在 launcher 占领舞台时不该出面。
+   同样的逻辑应用在 ··· overflow：新对话 hero 页（composer stack 上的
+   data-dsh-layout-hero 由 workbench.ts 条件性写入，聊天会话不带此标记）
+   没有子代理 / Session log 这类会话级动作。body:has() 不需要协调 launcher
+   的 slot 生命周期，DOM 变化样式立刻跟随。 */
+html:has(.dsh-launcher-canvas) .dsh-layout-mobile-sidebar-trigger,
+html:has(.dsh-launcher-canvas) .dsh-layout-mobile-sidebar-close,
+html:has(.dsh-launcher-canvas) .dsh-layout-mobile-sidebar-mask,
+html:has(.dsh-launcher-canvas) .dsh-layout-header-more,
+html:has(.dsh-launcher-canvas) .dsh-layout-header-overflow,
+html:has([data-dsh-layout-hero]) .dsh-layout-header-more,
+html:has([data-dsh-layout-hero]) .dsh-layout-header-overflow {
+  display: none !important;
+}
 `;
 
 export function installStyles(doc: Document): () => void {
