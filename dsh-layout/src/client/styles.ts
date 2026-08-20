@@ -582,7 +582,13 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   /* Popover panels anchored to those buttons (subagents / background
      tasks) can compute desktop-sized offsets; clamp any absolutely or
      fixed positioned popover to the phone viewport so it never spills. */
-  [class*='_popover'], [role='menu'] {
+  /* Subagent (.h8S2Va_menu) and background-task (.QsffPG_menu) flyouts
+     anchor position:absolute;left:0 under their trigger with a fixed
+     ~336px width — a right-half trigger pushes them past the viewport
+     (max-width caps width, not position). The menu-clamp runtime shifts
+     any visible flyout back inside with a translateX; CSS only caps the
+     width here. */
+  [class*='_menu'], [class*='_popover'], [role='menu'] {
     max-width: calc(100vw - 24px);
     box-sizing: border-box;
   }
