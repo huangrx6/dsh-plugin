@@ -7,6 +7,12 @@ const ROOT_ATTR = "data-dsh-layout-mobile-sidebar-open";
 const FRAME_SELECTOR = "[data-dsh-layout-frame]";
 const SIDEBAR_SELECTOR = "[data-dsh-layout-sidebar-col]";
 const CENTER_SELECTOR = "[data-dsh-layout-center-col]";
+/** Native DSH chat scroller — the stable landmark that only conversation /
+    trace views mount. Any other shell page (settings dialog, personal space,
+    profile, etc.) also has the three columns above but lacks this scroller,
+    so gating the drawer chrome on it keeps the trigger / close / mask on
+    chat pages only. Edge-swipe still opens the drawer on every page. */
+const SCROLL_SELECTOR = "[data-conversation-scroll]";
 /** The native rail/wide toggle (fish logo when collapsed, panel icon when
     wide) — DSH's own button, stable by class and present in both states. */
 const TOGGLE_SELECTOR = `${SIDEBAR_SELECTOR} button[class*='toggle']`;
@@ -221,11 +227,13 @@ export class MobileSidebarRuntime {
     const frame = this.doc.querySelector<HTMLElement>(FRAME_SELECTOR);
     const sidebar = this.doc.querySelector<HTMLElement>(SIDEBAR_SELECTOR);
     const center = this.doc.querySelector<HTMLElement>(CENTER_SELECTOR);
+    const scroll = this.doc.querySelector<HTMLElement>(SCROLL_SELECTOR);
     if (
       !this.active() ||
       frame === null ||
       sidebar === null ||
-      center === null
+      center === null ||
+      scroll === null
     ) {
       this.doc.documentElement.removeAttribute(
         "data-dsh-layout-mobile-sidebar",

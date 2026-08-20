@@ -156,7 +156,15 @@ export function installMenuOverflow(doc: Document): () => void {
   };
 
   const sweep = (): void => {
-    const row = doc.querySelector<HTMLElement>("[class*='_titleRow']");
+    // Scope the title row to the chrome header (plugin mark written only on
+    // chat / trace views). A stock page such as the personal space happens
+    // to render its own `_titleRow` with `_headerActions` / `_headerUtilities`
+    // clusters too — sweeping it there would hide the page's native
+    // menu / toggle behind the ··· sheet, and the page never sees a
+    // chat-flavoured folded row, so its own button never came back.
+    const row = doc.querySelector<HTMLElement>(
+      "[data-dsh-layout-chrome-header] [class*='_titleRow']",
+    );
     if (row === null) {
       closeSheet();
       if (more !== undefined) hide(more, true);

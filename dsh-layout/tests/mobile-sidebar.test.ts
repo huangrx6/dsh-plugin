@@ -22,7 +22,7 @@ function setup(mobile: boolean): World {
         <button id="session">Session</button>
         <div role="treeitem" id="treeitem">Session A</div>
       </div></div></aside>
-      <section data-dsh-layout-center-col>Chat</section>
+      <section data-dsh-layout-center-col><div data-conversation-scroll>Chat scroller</div></section>
       <aside data-dsh-layout-details-col></aside>
     </main>
   </body></html>`, { url: 'https://dsh-layout.test/' })
