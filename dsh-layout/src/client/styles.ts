@@ -616,6 +616,11 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     justify-content: flex-end;
     margin-left: auto;
     gap: 6px;
+    /* flex:0 0 auto lets the cluster grow past the viewport and clip its
+       trailing buttons; capping at the row width forces the wrap above
+       to actually engage. */
+    max-width: 100%;
+    min-width: 0;
   }
   [class*='_headerUtilities'] { margin-left: 0; }
   /* Popover panels anchored to those buttons (subagents / background
@@ -921,35 +926,36 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     max-width: none !important;
   }
 
-  /* Open handle: a compact hamburger chip pinned to the TOP-LEFT (over the
-     conversation header on session pages, over the empty corner on the
-     hero page). The old mid-left edge sliver was hard to find and awkward
-     to thumb; a header-corner button matches every mobile app's menu
-     seat. Hidden once the drawer is open (closing = the drawer's X). */
+  /* Open handle: a bare hamburger icon pinned to the TOP-LEFT, styled
+     like the stock panel icons (Xa_panelIcon) — transparent, no border,
+     no chip chrome. The old mid-left edge sliver was hard to find; a
+     header-corner icon is the standard mobile menu seat. Hidden once
+     the drawer is open (closing = the drawer's X). */
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger {
     position: fixed;
     z-index: 44;
-    top: calc(env(safe-area-inset-top, 0px) + 10px);
-    inset-inline-start: 12px;
-    width: 36px;
-    height: 36px;
+    top: calc(env(safe-area-inset-top, 0px) + 14px);
+    inset-inline-start: 8px;
+    width: 30px;
+    height: 30px;
     padding: 0;
-    border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
-    border-radius: var(--dsh-layout-radius-user, 12px);
-    background: color-mix(in srgb, var(--dsw-alias-bg-layer-3) 82%, transparent);
-    color: var(--dsw-alias-label-primary);
-    box-shadow: var(--dsw-shadow-lv1);
-    -webkit-backdrop-filter: blur(14px) saturate(125%);
-    backdrop-filter: blur(14px) saturate(125%);
+    border: 0;
+    border-radius: calc(var(--dsh-layout-radius-user, 8px) - 4px);
+    background: transparent;
+    color: var(--dsw-alias-label-secondary, #b3b3b8);
     display: grid;
     place-items: center;
     cursor: pointer;
+    transition: color 120ms var(--ds-ease-in-out, ease);
   }
-  /* Session pages: the header's breadcrumb row starts at x20 — give the
-     chip its seat so the two never collide. Hero pages have nothing up
-     there, the chip just sits in the empty corner. */
+  html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger:hover {
+    color: var(--dsw-alias-label-primary, #f4f4f5);
+  }
+  /* Session pages: the header's breadcrumb row starts at x20 — leave the
+     icon its seat so the two never collide. Hero pages have nothing up
+     there, the icon just sits in the empty corner. */
   html[data-dsh-layout-mobile-sidebar] [class*='_titleRow'] {
-    padding-inline-start: 52px;
+    padding-inline-start: 40px;
   }
   /* Hidden while the drawer is open — closing moves to the drawer's own
      X (and the mask). Previously only the comment claimed this. */
@@ -969,15 +975,16 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
     position: absolute;
     inset: -8px;
   }
-  /* Hamburger glyph: three stacked hairlines instead of the old single dot. */
+  /* Hamburger glyph: three hairlines, icon-weight like the stock panel
+     icons. */
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-trigger > span {
-    width: 16px;
-    height: 12px;
+    width: 14px;
+    height: 10px;
     border-radius: 0;
     background:
-      linear-gradient(currentColor 0 0) center/100% 1.5px no-repeat,
-      linear-gradient(currentColor 0 0) 30% 50%/100% 1.5px no-repeat,
-      linear-gradient(currentColor 0 0) 70% 50%/100% 1.5px no-repeat;
+      linear-gradient(currentColor 0 0) center/100% 1.3px no-repeat,
+      linear-gradient(currentColor 0 0) 30% 50%/100% 1.3px no-repeat,
+      linear-gradient(currentColor 0 0) 70% 50%/100% 1.3px no-repeat;
   }
   /* Close button: a bare X (no chrome) pinned to the drawer's top row —
      vertically centered on the OFFICIAL logo row (hHd-Xa_logoRow, 60px tall
