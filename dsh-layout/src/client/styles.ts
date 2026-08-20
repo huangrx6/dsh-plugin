@@ -413,6 +413,11 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
 /* 任务面板（todo-panel）：与目标栏/队列 dock 同一条轨道。 */
 [data-testid='todo-panel'] {
   width: calc(100% - 2 * var(--dsh-composer-side-clearance));
+  /* DSH 原生 max-width 用 var(--dsh-composer-card-max-width) - 4×dock-inset，
+     假设这块是 dock 内部盒子；但任务面板挂在输入卡之上，只需要共享外层
+     输入卡轨道。去掉那个减项；!important 是为了压制宿主类那条 calc 的
+     源码顺序胜出。 */
+  max-width: var(--dsh-composer-card-max-width) !important;
   margin-inline: auto;
 }
 /* 用户提问卡片（dsh-client-ui-user-questions）：接管 conversation.composer
