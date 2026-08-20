@@ -377,7 +377,8 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
 [data-goal-bar] {
   /* The dock container itself shrinks by 4×dock-inset in addition to the
      side clearance — mirror the composer's exact track (side clearance
-     only) so the bar's edges line up with the input card. */
+     only) so the bar's edges line up with the input card. Same width
+     formula as the queue dock below: both ride the composer track. */
   width: calc(100% - 2 * var(--dsh-composer-side-clearance));
   margin-bottom: 8px;
 }
@@ -385,16 +386,23 @@ html[data-dsh-layout-input-rows] [data-dsh-layout-composer-card] [data-input-mir
   width: 100%;
   max-width: var(--dsh-composer-card-max-width);
   border-radius: var(--dsh-layout-radius-user, 12px);
+  border: none;
 }
 [data-queue-dock] {
-  width: 100%;
+  width: calc(100% - 2 * var(--dsh-composer-side-clearance));
   max-width: var(--dsh-composer-card-max-width);
   margin: 0 auto 8px;
   padding: 0;
 }
 [data-queue-dock] [class*='_panel'] {
   border-radius: var(--dsh-layout-radius-user, 12px);
-  border: 1px solid var(--dsw-alias-border-l1);
+  border: none;
+}
+/* Queued rows read as flat list lines inside the panel — the header and
+   each expanded row drop their stock pill radii. */
+[data-queue-dock] [class*='_header'],
+[data-queue-dock] [class*='_row'] {
+  border-radius: 0;
 }
 
 /* ── 设置弹窗加固 ───────────────────────────────────────────────────────────
