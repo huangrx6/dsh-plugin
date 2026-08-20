@@ -557,6 +557,35 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
 
 /* ── 窄屏（< 768px）─────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
+  /* ── 原生对话顶栏加固 ─────────────────────────────────────────────────
+     The stock conversation header keeps its action clusters on one
+     no-wrap flex line (headerActions / headerUtilities are flex:0 0 auto),
+     so once plugins and the agent preset register buttons (session stats,
+     compact, subagents, background tasks, share…) the row overflows the
+     390px viewport and the buttons stack over each other. Let the row
+     wrap, shrink the breadcrumb trail, and keep the action clusters
+     right-aligned on their wrapped lines. Class names are CSS-module
+     hashes, so we match the stable _semantic suffixes instead. */
+  [class*='_titleRow'] { flex-wrap: wrap; row-gap: 6px; }
+  [class*='_titleCluster'] { flex: 1 1 100%; min-width: 0; }
+  [class*='_crumbs'] { min-width: 0; }
+  [class*='_crumb']:not([class*='_crumbSep']) { max-width: 44vw; }
+  [class*='_headerActions'],
+  [class*='_headerUtilities'] {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-left: auto;
+    gap: 6px;
+  }
+  [class*='_headerUtilities'] { margin-left: 0; }
+  /* Popover panels anchored to those buttons (subagents / background
+     tasks) can compute desktop-sized offsets; clamp any absolutely or
+     fixed positioned popover to the phone viewport so it never spills. */
+  [class*='_popover'], [role='menu'] {
+    max-width: calc(100vw - 24px);
+    box-sizing: border-box;
+  }
+
   /* 窄屏：标题行纵排、tab 铺满、设置行改为上下堆叠、档位卡 2 列。 */
   .dsh-layout-toprow { align-items: stretch; flex-direction: column; }
   .dsh-layout-settings__actions { margin-top: 0; justify-content: flex-start; }
