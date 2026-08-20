@@ -400,7 +400,7 @@ const CSS = `
 
 /* ── tools area (detail block + editor) ─────────────────────────────────── */
 /* --dsh-space-lg gap (8px) */
-.dshmcp-toolsArea { display: flex; flex-direction: column; gap: 8px; position: static; min-height: 0; max-height: min(46dvh, 360px); overflow-y: auto; overscroll-behavior: contain; }
+.dshmcp-toolsArea { display: flex; flex-direction: column; gap: 8px; position: static; }
 /* --dsh-space-xl gap (10px) */
 .dshmcp-toolsBar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 /* --dsh-font-size-sm (11px), --dsh-space-sm gap (5px) */
