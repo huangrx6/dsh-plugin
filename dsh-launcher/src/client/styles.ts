@@ -565,23 +565,34 @@ html[data-dsh-layout-material='on'] .dsh-launcher-fab {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  /* Compact toggle chip — small, content-hugging, sits left of the title. */
+  /* Icon-only square toggle — the section title right next to it already
+     says the name, so the chip carries just the section icon (24px). No
+     label, no chevron; the open state tints the square. */
   .dsh-launcher-menu-toggle {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    justify-content: center;
     flex: none;
-    min-height: 26px;
-    padding: 2px 8px;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    gap: 0;
     border: 1px solid color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 10%, transparent);
     border-radius: calc(var(--dsh-layout-radius-user, 10px) - 2px);
     background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 4%, transparent);
     color: var(--dsw-alias-label-primary, #f4f4f5);
     font: inherit;
-    font-size: 11.5px;
     cursor: pointer;
   }
-  .dsh-launcher-menu-toggle-icon svg { width: 14px; height: 14px; }
+  .dsh-launcher-menu-toggle[aria-expanded='true'] {
+    background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 8%, transparent);
+    border-color: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 16%, transparent);
+  }
+  /* Text label and chevron stay in the DOM (desktop/aria) but never
+     render on the phone square. */
+  .dsh-launcher-menu-toggle-label { display: none; }
+  .dsh-launcher-menu-toggle > svg { display: none; }
+  .dsh-launcher-menu-toggle-icon svg { width: 15px; height: 15px; }
   .dsh-launcher-menu-toggle-inner {
     display: inline-flex;
     align-items: center;
