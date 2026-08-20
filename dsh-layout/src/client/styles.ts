@@ -1135,6 +1135,46 @@ label:has(> .dsh-layout-file-button) { display: inline-flex; }
   }
   html[data-dsh-layout-mobile-sidebar] .dsh-layout-mobile-sidebar-mask[hidden] { display: none; }
 
+  /* ── H5 dialog scrim — body::after 玻璃拟态蒙版 ─────────────────────────
+     抽屉打开后点「个人插件 / 系统设置」之类的侧边栏功能，对话框弹起时，
+     抽屉 + 聊天内容从对话框边缘透出来，视觉上很乱。挂一块玻璃蒙版贴在
+     抽屉与对话框之间，让对话框后方的每一处都呈现一个「统一的磨砂面」。
+
+     body::after 用 :has() 条件渲染 —— 无 JS 生命周期协调，HTML 不动一
+     字节。z-index 999：抽屉 z:42 / 触发按钮 z:44 之下、DSH 原生 portal
+     对话框栈（通常 1000+）之上。pointer-events:none 让点击穿透到抽屉
+     自身的 X / 对话框的 chrome，不抢事件。 */
+  @media (max-width: 767px) {
+    html:has([role='dialog'][class*='_panel']) body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      pointer-events: none;
+      background: color-mix(in srgb, var(--dsw-alias-bg-layer-2, #1d1d21) 56%, transparent);
+      -webkit-backdrop-filter: blur(20px) saturate(120%);
+      backdrop-filter: blur(20px) saturate(120%);
+    }
+    /* 两层蒙版叠加会变成深黑：scrim 起来时把抽屉自身的 18% 暗色 dim 收起。 */
+    html:has([role='dialog'][class*='_panel']) .dsh-layout-mobile-sidebar-mask { display: none !important; }
+  }
+  @media (max-width: 767px) and (prefers-reduced-transparency: reduce) {
+    html:has([role='dialog'][class*='_panel']) body::after {
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+      background: color-mix(in srgb, var(--dsw-alias-bg-layer-2, #1d1d21) 78%, transparent) !important;
+    }
+  }
+  @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    @media (max-width: 767px) {
+      html:has([role='dialog'][class*='_panel']) body::after {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        background: color-mix(in srgb, var(--dsw-alias-bg-layer-2, #1d1d21) 78%, transparent);
+      }
+    }
+  }
+
 /* ── 手机端头部收纳：··· 更多菜单（menu-overflow.ts）─────────────────────
    参考效果图的头部配方：[☰] 标题…… 预设徽标 ···。
    手机上全部交互动作（子代理 / 后台任务 / Session log 等）折进右上角
