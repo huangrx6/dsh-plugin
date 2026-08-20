@@ -350,13 +350,17 @@ const CSS = `
   white-space: nowrap;
 }
 
-/* transcript — scrollable message timeline */
+/* transcript — scrollable message timeline; rows carry their own card
+   chrome, so the scroller only provides rhythm via the 6px gap. */
 .dam-timeline {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 6px 8px 12px;
+  padding: 10px 12px 14px;
   overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .dam-timeline-state {
   padding: 36px 16px;
@@ -367,24 +371,52 @@ const CSS = `
 }
 .dam-timeline-state--error { color: var(--dsw-alias-state-error-primary, #ef5350); }
 
-/* message row — user left-aligned, assistant/tool indented; role tag +
-   time head over a monospace body clamped to two lines (click expands). */
-.dam-msg { padding: 8px 10px; }
-.dam-msg--assistant,
+/* message rows — three visual tiers so the transcript reads at a glance:
+     user      accent-tinted card (left bar + 6% fill) — the loudest voice
+     assistant quiet 2.5% card — the reply
+     tool      borderless whisper lines — plumbing, smallest + dimmest
+   No more random 24px indents; separation comes from the tier styling
+   and a 6px rhythm gap between rows. */
+.dam-msg {
+  position: relative;
+  padding: 7px 10px 8px;
+  border-radius: calc(var(--dsh-layout-radius-user, 8px) - 2px);
+}
+.dam-msg--user {
+  background: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 6%, transparent);
+  padding-left: 12px;
+}
+.dam-msg--user::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--dsw-alias-state-business-primary, #6ea8fe) 70%, transparent);
+}
+.dam-msg--assistant {
+  background: color-mix(in srgb, var(--dsw-alias-label-primary, #fff) 2.5%, transparent);
+}
 .dam-msg--toolCall,
-.dam-msg--toolResult { margin-left: 24px; }
+.dam-msg--toolResult {
+  background: transparent;
+  padding: 3px 10px 4px;
+}
 .dam-msg-head {
   display: flex;
   align-items: baseline;
   gap: 8px;
   min-width: 0;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 .dam-msg-role {
   min-width: 0;
-  font-size: 10.5px;
+  font-size: 9.5px;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   line-height: 1.3;
   color: var(--dsw-alias-label-secondary, #b3b3b8);
   white-space: nowrap;
@@ -395,15 +427,25 @@ const CSS = `
   margin-left: auto;
   padding-left: 10px;
   flex-shrink: 0;
-  font-size: 10.5px;
+  font-size: 9.5px;
   color: var(--dsw-alias-label-tertiary, #8a8a8e);
   font-variant-numeric: tabular-nums;
 }
-.dam-msg-text {
+.dam-msg--user .dam-msg-text,
+.dam-msg--assistant .dam-msg-text {
   font-family: var(--ds-font-family-code, ui-monospace, "SF Mono", "JetBrains Mono", Consolas, monospace);
-  font-size: 11.5px;
+  font-size: 12px;
   line-height: 1.55;
   color: var(--dsw-alias-label-secondary, #b3b3b8);
+}
+.dam-msg--toolCall .dam-msg-text,
+.dam-msg--toolResult .dam-msg-text {
+  font-family: var(--ds-font-family-code, ui-monospace, "SF Mono", "JetBrains Mono", Consolas, monospace);
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--dsw-alias-label-tertiary, #8a8a8e);
+}
+.dam-msg-text {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   display: -webkit-box;
@@ -419,16 +461,16 @@ const CSS = `
   cursor: pointer;
 }
 
-/* role tints — tag color only, bodies stay neutral; tool rows recede */
+/* role tints on the tag only; bodies stay neutral */
 .dam-msg--user .dam-msg-role { color: var(--dsw-alias-state-business-primary, #6ea8fe); }
 .dam-msg--assistant .dam-msg-role { color: var(--dsw-alias-state-success-primary, #4caf50); }
 .dam-msg--toolCall .dam-msg-role {
   color: var(--dsw-alias-state-warning-primary, #d97706);
+  text-transform: none;
   font-family: var(--ds-font-family-code, ui-monospace, "SF Mono", "JetBrains Mono", Consolas, monospace);
+  font-size: 10px;
 }
-.dam-msg--toolResult .dam-msg-role { color: var(--dsw-alias-state-success-primary, #4caf50); }
-.dam-msg--toolCall .dam-msg-text,
-.dam-msg--toolResult .dam-msg-text { color: var(--dsw-alias-label-tertiary, #8a8a8e); }
+.dam-msg--toolResult .dam-msg-role { color: var(--dsw-alias-state-success-primary, #4caf50); text-transform: none; font-size: 10px; }
 
 /* batched-rendering footer inside the transcript */
 .dam-loadmore { display: flex; justify-content: center; padding: 10px 0 2px; }
