@@ -471,6 +471,15 @@ export const USAGE_STYLES = `
   .u-f select { height: 40px; }
 }
 
+/* ── dsh-layout material glass bridge — same frosted surface as the
+   skill/mcp cards so backgrounds stay consistent when the page material
+   is enabled ── */
+html[data-dsh-layout-material='on'] .u-stat,
+html[data-dsh-layout-material='on'] .u-empty {
+  background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 34%, transparent);
+  border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 45%, transparent);
+}
+
 /* ── reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   .u-btn, .u-mini, .u-stat, .u-statHeroFill, .u-statBarFill, .u-f input, .u-f select { transition: none; }

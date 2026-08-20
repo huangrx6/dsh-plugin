@@ -170,6 +170,13 @@ export const AGENT_RULES_STYLES = `
   .agr-note { margin: 4px 8px; }
 }
 
+/* ── dsh-layout material glass bridge — same frosted surface as the
+   skill/mcp cards so the group frame stays consistent under material ── */
+html[data-dsh-layout-material='on'] .agr-group {
+  background: color-mix(in srgb, var(--dsh-layout-glass-base, #16161a) 34%, transparent);
+  border-color: color-mix(in srgb, var(--dsh-layout-line, #3d414b) 45%, transparent);
+}
+
 /* ── reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   .agr-editor,
