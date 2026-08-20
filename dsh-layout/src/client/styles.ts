@@ -54,6 +54,16 @@ html[data-dsh-layout-scrollbar='hidden'] [role='dialog'][class*='_panel'] [class
   width: 0 !important; height: 0 !important; display: none !important;
 }
 
+/* ── 侧栏会话树左右边距对称 ──────────────────────────────────────────────
+   Stock: tree pads 4px left / 8px right and the treeBody spills 3px
+   past the column edge — measured row inset 8px left vs 15px right.
+   Calibrated live: 8px / 13px lands the row at 12px from BOTH column
+   edges (the right side absorbs the spill + scrollbar gutter). */
+[data-dsh-layout-sidebar-list] {
+  padding-left: 8px !important;
+  padding-right: 13px !important;
+}
+
 /* ── 页面背景（L0 画布）与全局开关 ──────────────────────────────────────────
    The native shell paints opaque surfaces (frame, conversation root, seat);
    when a background is set, lift #root above the fixed canvas and neutralize
