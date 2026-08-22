@@ -37,7 +37,13 @@ function labelOf(el: HTMLElement): string {
   return (el.getAttribute("aria-label") || el.textContent || "").trim();
 }
 
-/** Header action units: interactive slot children of the action clusters. */
+/** Header action units: interactive slot children of the action clusters.
+ *  As of recent DSH, the subagent (and now-collapsed task panel) trigger
+ *  moved out of `headerActions` into the breadcrumb `titleCluster` as a
+ *  standalone button — old selector `[class*='_headerActions']` misses it.
+ *  Scan both action clusters AND the title-cluster trigger buttons, skipping
+ *  breadcrumbs (crumb classes / current) and view tabs (`_tab`) which are
+ *  route-switchers, not session actions. */
 function collectUnits(row: HTMLElement): ActionUnit[] {
   const units: ActionUnit[] = [];
   const seen = new Set<Element>();
@@ -60,6 +66,18 @@ function collectUnits(row: HTMLElement): ActionUnit[] {
       if (trigger === null) continue;
       units.push({ root, trigger });
     }
+  }
+  // New DSH: subagent + task-panel merged into a single trigger button
+  // parked inside the title-cluster breadcrumb area (class `ZKlsPq_trigger`).
+  // Pick it up explicitly so it still folds into the ··· sheet on phones.
+  for (const trigger of row.querySelectorAll<HTMLElement>(
+    ".wSkVaW_titleCluster button[class*='_trigger']",
+  )) {
+    if (seen.has(trigger)) continue;
+    seen.add(trigger);
+    // The trigger itself is the unit — root is the trigger for compatibility
+    // with `hide()` which hides the root, and the trigger is what we click.
+    units.push({ root: trigger, trigger: trigger as HTMLButtonElement });
   }
   return units;
 }
