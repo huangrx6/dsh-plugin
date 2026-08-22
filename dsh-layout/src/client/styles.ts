@@ -80,7 +80,7 @@ html[data-dsh-layout-bg] [data-dsh-layout-details-col] > * > * {
   background-color: transparent !important;
   background-image: none !important;
 }
-.dsh-layout-background { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; contain: strict; background: #f4f6f9; }
+.dsh-layout-background { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; contain: strict; background: var(--dsw-alias-bg-base, #f4f6f9); }
 .dsh-layout-background[hidden] { display: none; }
 .dsh-layout-background__layer { position: absolute; inset: -5%; background-position: center; background-repeat: no-repeat; transition: background 180ms ease; }
 .dsh-layout-background__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }

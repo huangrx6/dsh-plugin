@@ -192,7 +192,7 @@ export const DEFAULT_SETTINGS: LayoutSettings = Object.freeze({
   global: Object.freeze({
     scrollbar: 'native' as const,
     radius: null,
-    background: Object.freeze({ mode: 'native' as const, color: '#f4f6f9', imageUrl: '', videoUrl: '' }),
+    background: Object.freeze({ mode: 'native' as const, color: 'var(--dsw-alias-bg-base, #f4f6f9)', imageUrl: '', videoUrl: '' }),
     dialog: Object.freeze({ width: null, height: null }),
     padding: Object.freeze({
       mode: 'auto' as const,
