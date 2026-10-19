@@ -86,6 +86,7 @@
 
 - 插件如何与 DSH 平台协作：[docs/architecture.md](./docs/architecture.md)
 - 源码解读：[docs/skill-manager.md](./docs/skill-manager.md) · [docs/mcp-manager.md](./docs/mcp-manager.md)
+- 桌面端（0.2.1-rc.2）兼容性评估：[docs/desktop-0.2.1-compat.md](./docs/desktop-0.2.1-compat.md)
 
 每个插件的**功能明细、使用说明、设置项对照、架构与开发指南**都在各自的 README 里，本页只做概览与导航。
 
